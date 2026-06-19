@@ -1,0 +1,257 @@
+<!--
+  Screen: S-01 Daily Brief List (Home / "Today")
+  CJX Stage: Arrive / Scan -> cjx-discovery
+  FR Mapping: Expected output V1.2 (brief list)
+  Source: ck_docs/UI_SPEC.md §3 S-01
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Today · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-discovery">
+  <div class="app-layout">
+    <nav class="sidebar hide-mobile-none">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <span class="brand-mark">26</span>
+          <span class="brand-text">WC26 Intelligence</span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link active" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content reading" data-cjx-entrance>
+      <!-- DateStamp (fresh) -->
+      <div class="date-stamp">
+        <span>Today · 19 Jun 2026</span>
+        <span class="fresh-pill">Updated 7:00 AM AEST</span>
+      </div>
+
+      <!-- Hero brief card -> S-02 today's brief -->
+      <a class="hero-card" href="s02-brief-detail.html">
+        <span class="section-eyebrow">Today's brief</span>
+        <h1 class="display-headline" style="margin-top:var(--space-2)">Brazil seize Group G as Serbia stumble</h1>
+        <p class="summary-deck">A clinical second-half display sends Brazil top of Group G, while Switzerland's draw keeps qualification finely poised heading into the final round.</p>
+        <div class="chip-row" style="margin-bottom:var(--space-4)">
+          <span class="result-chip win"><span class="rc-letter">W</span> BRA 3–1 SRB</span>
+          <span class="result-chip draw"><span class="rc-letter">D</span> SUI 1–1 CMR</span>
+          <span class="result-chip win"><span class="rc-letter">W</span> ARG 2–0 KOR</span>
+        </div>
+        <span class="read-cta">Read brief →</span>
+      </a>
+
+      <!-- Today's match results (completed, FT) -->
+      <h2 class="section-title">Today's results</h2>
+      <div class="score-grid">
+        <div class="score-card">
+          <div class="sc-head">
+            <span class="sc-group">Group G</span>
+            <span class="live-badge final"><span class="dot"></span> FT</span>
+          </div>
+          <div class="score-team winner">
+            <span class="st-name"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil</span>
+            <span class="st-score">3</span>
+          </div>
+          <div class="score-team">
+            <span class="st-name"><span class="flag" data-flag="rs" data-code="SRB"></span> Serbia</span>
+            <span class="st-score">1</span>
+          </div>
+        </div>
+        <div class="score-card">
+          <div class="sc-head">
+            <span class="sc-group">Group C</span>
+            <span class="live-badge final"><span class="dot"></span> FT</span>
+          </div>
+          <div class="score-team winner">
+            <span class="st-name"><span class="flag" data-flag="ar" data-code="ARG"></span> Argentina</span>
+            <span class="st-score">2</span>
+          </div>
+          <div class="score-team">
+            <span class="st-name"><span class="flag" data-flag="kr" data-code="KOR"></span> South Korea</span>
+            <span class="st-score">0</span>
+          </div>
+        </div>
+        <div class="score-card">
+          <div class="sc-head">
+            <span class="sc-group">Group A</span>
+            <span class="live-badge final"><span class="dot"></span> FT</span>
+          </div>
+          <div class="score-team winner">
+            <span class="st-name"><span class="flag" data-flag="mx" data-code="MEX"></span> Mexico</span>
+            <span class="st-score">1</span>
+          </div>
+          <div class="score-team">
+            <span class="st-name"><span class="flag" data-flag="no" data-code="NOR"></span> Norway</span>
+            <span class="st-score">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Up next: highlighted upcoming matches -->
+      <h2 class="section-title">Up next</h2>
+      <div class="next-match">
+        <span class="nm-eyebrow"><span class="dot"></span> Next kickoff</span>
+        <div class="nm-body">
+          <span class="nm-side"><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span>
+          <span class="nm-vs">VS</span>
+          <span class="nm-side">Cameroon <span class="flag" data-flag="cm" data-code="CMR"></span></span>
+        </div>
+        <div class="nm-meta">
+          <span class="nm-kick">Today · 20:00 AEST</span> · Group G · NRG Stadium, Houston
+        </div>
+        <div class="countdown" data-countdown data-offset-min="237" aria-label="Time until kickoff"></div>
+      </div>
+      <div class="fixture-list" style="margin-bottom:var(--space-4)">
+        <div class="fixture-row">
+          <div class="fixture-time">04:00<span class="ft-tz">Fri</span></div>
+          <div class="fixture-teams">
+            <span class="fixture-team"><span class="flag" data-flag="pt" data-code="POR"></span> Portugal</span>
+            <span class="fixture-vs">vs</span>
+            <span class="fixture-team"><span class="flag" data-flag="gh" data-code="GHA"></span> Ghana</span>
+          </div>
+          <div class="fixture-meta">
+            <span class="group-pill">Group H</span>
+            <span class="cd-inline" data-countdown data-cd="inline" data-offset-min="600"></span>
+          </div>
+        </div>
+        <div class="fixture-row">
+          <div class="fixture-time">10:00<span class="ft-tz">Fri</span></div>
+          <div class="fixture-teams">
+            <span class="fixture-team"><span class="flag" data-flag="mx" data-code="MEX"></span> Mexico</span>
+            <span class="fixture-vs">vs</span>
+            <span class="fixture-team"><span class="flag" data-flag="pl" data-code="POL"></span> Poland</span>
+          </div>
+          <div class="fixture-meta">
+            <span class="group-pill">Group A</span>
+            <span class="cd-inline" data-countdown data-cd="inline" data-offset-min="960"></span>
+          </div>
+        </div>
+      </div>
+      <a class="btn ghost" href="s05-upcoming-knockout.html">See all fixtures →</a>
+
+      <!-- Earlier briefs grid -->
+      <h2 class="section-title">Earlier</h2>
+      <div class="brief-grid">
+        <a class="card-link" href="s02-brief-detail.html">
+          <article class="card hoverable">
+            <div class="brief-card-date">18 Jun 2026</div>
+            <h3 class="brief-card-title">Argentina cruise; host nations hold firm</h3>
+            <div class="chip-row" style="margin-bottom:var(--space-3)">
+              <span class="result-chip win"><span class="rc-letter">W</span> ARG 2–0 KOR</span>
+              <span class="result-chip win"><span class="rc-letter">W</span> MEX 1–0 NOR</span>
+            </div>
+            <span class="read-cta">Read brief →</span>
+          </article>
+        </a>
+        <a class="card-link" href="s02-brief-detail.html">
+          <article class="card hoverable">
+            <div class="brief-card-date">17 Jun 2026</div>
+            <h3 class="brief-card-title">Opening upsets reshape Group D</h3>
+            <div class="chip-row" style="margin-bottom:var(--space-3)">
+              <span class="result-chip loss"><span class="rc-letter">L</span> GER 1–2 JPN</span>
+              <span class="result-chip draw"><span class="rc-letter">D</span> CRO 0–0 USA</span>
+            </div>
+            <span class="read-cta">Read brief →</span>
+          </article>
+        </a>
+        <a class="card-link" href="s02-brief-detail.html">
+          <article class="card hoverable">
+            <div class="brief-card-date">16 Jun 2026</div>
+            <h3 class="brief-card-title">Tournament kicks off in Mexico City</h3>
+            <div class="chip-row" style="margin-bottom:var(--space-3)">
+              <span class="result-chip win"><span class="rc-letter">W</span> MEX 2–1 NOR</span>
+            </div>
+            <span class="read-cta">Read brief →</span>
+          </article>
+        </a>
+        <a class="card-link" href="s02-brief-detail.html">
+          <article class="card hoverable">
+            <div class="brief-card-date">15 Jun 2026</div>
+            <h3 class="brief-card-title">Final friendlies set the stage</h3>
+            <div class="chip-row" style="margin-bottom:var(--space-3)">
+              <span class="result-chip draw"><span class="rc-letter">D</span> ENG 1–1 BRA</span>
+            </div>
+            <span class="read-cta">Read brief →</span>
+          </article>
+        </a>
+      </div>
+
+      <div style="margin-top:var(--space-8)">
+        <a class="btn ghost" href="s04-archive.html">View archive →</a>
+      </div>
+
+      <!-- Stars to watch — photo with graceful initials fallback if image fails -->
+      <h2 class="section-title">Stars to watch</h2>
+      <div class="stars-strip">
+        <div class="star-card">
+          <div class="star-avatar" style="--c:#75AADB">
+            <span class="sa-initials">LM</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg/240px-Lionel-Messi-Argentina-2022-FIFA-World-Cup_%28cropped%29.jpg" alt="Lionel Messi" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+          </div>
+          <div class="star-name">Lionel Messi</div>
+          <div class="star-meta"><span class="crest sm" style="background:#75AADB">ARG</span> Forward</div>
+        </div>
+        <div class="star-card">
+          <div class="star-avatar" style="--c:#0055A4">
+            <span class="sa-initials">KM</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Kylian_Mbapp%C3%A9_2019.jpg/240px-Kylian_Mbapp%C3%A9_2019.jpg" alt="Kylian Mbappé" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+          </div>
+          <div class="star-name">Kylian Mbappé</div>
+          <div class="star-meta"><span class="crest sm" style="background:#0055A4">FRA</span> Forward</div>
+        </div>
+        <div class="star-card">
+          <div class="star-avatar" style="--c:#C8102E">
+            <span class="sa-initials">JB</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Jude_Bellingham_2023_%28cropped%29.jpg/240px-Jude_Bellingham_2023_%28cropped%29.jpg" alt="Jude Bellingham" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+          </div>
+          <div class="star-name">Jude Bellingham</div>
+          <div class="star-meta"><span class="crest sm" style="background:#C8102E">ENG</span> Midfield</div>
+        </div>
+        <div class="star-card">
+          <div class="star-avatar" style="--c:#009C3B">
+            <span class="sa-initials">VJ</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Vinicius_Junior_2021.jpg/240px-Vinicius_Junior_2021.jpg" alt="Vinícius Júnior" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+          </div>
+          <div class="star-name">Vinícius Jr</div>
+          <div class="star-meta"><span class="crest sm" style="background:#009C3B">BRA</span> Forward</div>
+        </div>
+        <div class="star-card">
+          <div class="star-avatar" style="--c:#3C3B6E">
+            <span class="sa-initials">CP</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Christian_Pulisic_2018.jpg/240px-Christian_Pulisic_2018.jpg" alt="Christian Pulisic" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+          </div>
+          <div class="star-name">Christian Pulisic</div>
+          <div class="star-meta"><span class="crest sm" style="background:#3C3B6E">USA</span> Forward</div>
+        </div>
+      </div>
+
+      <!-- EmptyState (no-brief-yet) — shown pre-7AM / first run -->
+      <h2 class="section-title">Empty state · no-brief-yet (pre-7 AM / first run)</h2>
+      <div class="empty-state">
+        <div class="empty-icon">⏱</div>
+        <h3>Today's brief publishes at 7:00 AM AEST</h3>
+        <p>Auto-generated daily from official fixtures and standings. Check back shortly.</p>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Auto-published daily, 7:00 AM Australia/Melbourne.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

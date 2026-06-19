@@ -1,0 +1,225 @@
+/*
+  Design tokens — World Cup 2026 Intelligence
+  Source: ck_docs/UI_SPEC.md §2 Design System (dark sports-dashboard theme)
+*/
+
+:root {
+  /* Surfaces */
+  --bg: #060E22;
+  --surface: #0A1B3D;
+  --surface-elevated: #13294F;
+  --border: #1E3157;
+
+  /* Brand / Accent */
+  --primary: #2D6BF6;
+  --primary-hover: #1E54E0;
+  --accent-bright: #4D8BFF;
+  --primary-deep: #1A3AD0;
+
+  /* Text */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A9B6D4;
+  --text-muted: #6B7A9E;
+
+  /* Status */
+  --status-live: #2BD37E;   /* live / win / qualified */
+  --status-draw: #F4B740;   /* draw / in contention / warning */
+  --status-loss: #FF5A5A;   /* loss / eliminated / error */
+  --status-neutral: #6B7A9E;
+
+  /* Spacing scale (8px base grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-card: 12px;
+  --radius-pill: 999px;
+  --radius-input: 8px;
+
+  /* Elevation */
+  --shadow-modal: 0 8px 24px rgba(3, 8, 20, 0.6);
+
+  /* Layout widths */
+  --col-reading: 960px;
+  --col-standings: 1120px;
+  --nav-height: 60px;
+
+  /* Typography */
+  --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* page body never scrolls horizontally */
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- App layout (top-nav shell per UI_SPEC App Shell) ---- */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) var(--space-16);
+}
+
+/* Reading column for briefs (S-01, S-02, S-04) */
+.main-content.reading { max-width: var(--col-reading); }
+/* Wider column for standings (S-03) */
+.main-content.standings-wide { max-width: var(--col-standings); }
+
+/* ---- Top navigation bar ---- */
+.sidebar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.nav-inner {
+  max-width: var(--col-standings);
+  margin: 0 auto;
+  height: var(--nav-height);
+  padding: 0 var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.brand-mark {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary-deep), var(--accent-bright));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.nav-links {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ---- Footer ---- */
+.app-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: var(--space-6) var(--space-4);
+}
+.app-footer .footer-inner {
+  max-width: var(--col-standings);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  justify-content: space-between;
+}
+
+/* ---- Typography elements ---- */
+.display-headline {
+  font-size: 2rem; /* 32px */
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-3);
+}
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+.section-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: var(--space-8) 0 var(--space-4);
+}
+.group-label,
+.section-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.summary-deck {
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.meta-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+@media (min-width: 1024px) {
+  .display-headline { font-size: 2.5rem; } /* 40px on >=lg */
+}
+
+/* ---- Links ---- */
+a { color: var(--primary); }
+a:hover { color: var(--accent-bright); }
+
+/* ---- Focus visibility (a11y) ---- */
+:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 639px) {
+  .main-content { padding: var(--space-6) var(--space-3) var(--space-12); }
+  .display-headline { font-size: 1.75rem; }
+  .nav-inner { padding: 0 var(--space-3); gap: var(--space-2); }
+  .brand span.brand-text { display: none; } /* keep mark + links on one row */
+  /* keep links on a single row; scroll horizontally if they exceed width */
+  .nav-links {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-link { white-space: nowrap; padding: 8px 10px; }
+}

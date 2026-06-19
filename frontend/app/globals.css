@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #060E22;
+  --color-surface: #0A1B3D;
+  --color-surface-elevated: #13294F;
+  --color-border: #1E3157;
+  --color-primary: #2D6BF6;
+  --color-primary-hover: #1E54E0;
+  --color-accent-bright: #4D8BFF;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A9B6D4;
+  --color-text-muted: #6B7A9E;
+  --color-status-win: #2BD37E;
+  --color-status-draw: #F4B740;
+  --color-status-loss: #FF5A5A;
+  --color-status-neutral: #6B7A9E;
+
+  --font-family-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --radius-card: 12px;
+  --radius-pill: 999px;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #060E22;
+  color: #FFFFFF;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Prose styles for brief markdown body */
+.prose-brief h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.25;
+}
+
+.prose-brief h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prose-brief p {
+  margin-bottom: 1rem;
+  color: #FFFFFF;
+}
+
+.prose-brief ul,
+.prose-brief ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  color: #FFFFFF;
+}
+
+.prose-brief li {
+  margin-bottom: 0.25rem;
+}
+
+.prose-brief table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+}
+
+.prose-brief th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  color: #6B7A9E;
+  border-bottom: 1px solid #1E3157;
+}
+
+.prose-brief td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #1E3157;
+  color: #A9B6D4;
+}
+
+.prose-brief strong {
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.prose-brief a {
+  color: #2D6BF6;
+  text-decoration: underline;
+}
+
+.prose-brief a:hover {
+  color: #4D8BFF;
+}
+
+/* focus-visible ring for all interactive elements */
+:focus-visible {
+  outline: 2px solid #4D8BFF;
+  outline-offset: 2px;
+}
+
+/* prefers-reduced-motion: disable animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

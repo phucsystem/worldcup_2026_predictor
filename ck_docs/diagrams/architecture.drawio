@@ -1,0 +1,127 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram id="wc2026-arch" name="Architecture">
+    <mxGraphModel dx="1000" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1020" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="World Cup 2026 Intelligence — System Architecture" style="text;html=1;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#1A3AD0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="940" height="34" as="geometry" />
+        </mxCell>
+
+        <!-- External services -->
+        <mxCell id="apifootball" value="API-Football&#10;(fixtures · standings · events)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="70" y="56" width="210" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="deepseek" value="DeepSeek API&#10;deepseek-chat (LLM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="470" y="56" width="210" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="extlabel" value="External Services" style="text;html=1;align=center;fontSize=13;fontColor=#7F6000;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="760" y="76" width="200" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- Azure Container Apps Environment container -->
+        <mxCell id="azenv" value="Azure Container Apps Environment" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;align=left;spacingLeft=12;spacingTop=8;fillColor=#F5F5F5;strokeColor=#9AA7C7;dashed=1;fontColor=#3B4A66;fontStyle=2;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="30" y="160" width="960" height="500" as="geometry" />
+        </mxCell>
+
+        <!-- Pipeline Job box -->
+        <mxCell id="jobbox" value="Daily Brief Job · Container Apps Job&#10;cron 07:00 Australia/Melbourne · DST-safe guard" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;align=center;spacingTop=8;fillColor=#EAF0FB;strokeColor=#6C8EBF;fontColor=#23416E;fontStyle=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="55" y="200" width="500" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="graphlabel" value="LangGraph StateGraph" style="text;html=1;align=center;fontSize=12;fontColor=#23416E;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="55" y="248" width="500" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="collector" value="Collector&#10;(no LLM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="85" y="278" width="120" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="analyst" value="Analyst&#10;(DeepSeek)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="245" y="278" width="120" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="editor" value="Editor&#10;(DeepSeek)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="405" y="278" width="120" height="62" as="geometry" />
+        </mxCell>
+        <mxCell id="mathnote" value="standings_math computes all tables, position deltas &amp; best-thirds qualification — deterministic, unit-tested. LLM narrates only (never does table math)." style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontSize=11;fontColor=#23416E;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="75" y="356" width="460" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- PostgreSQL -->
+        <mxCell id="postgres" value="PostgreSQL&#10;(Azure Flexible Server)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#D5E8D4;strokeColor=#82B366;verticalAlign=top;fontStyle=1;fontSize=14;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="720" y="205" width="240" height="215" as="geometry" />
+        </mxCell>
+        <mxCell id="pgtables" value="• matches&#10;• standings (+ qualification)&#10;• articles (published)&#10;• agent_runs (observability)" style="text;html=1;whiteSpace=wrap;align=left;spacingLeft=12;fontSize=12;fontColor=#2D5E1E;" vertex="1" parent="1">
+          <mxGeometry x="736" y="278" width="214" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Serving tier -->
+        <mxCell id="api" value="FastAPI · read-only API&#10;/api/briefs · /api/standings&#10;(internal ingress)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="95" y="500" width="230" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="web" value="Next.js 16 SSR Dashboard&#10;Today · Standings · Archive&#10;(public ingress)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="400" y="500" width="240" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="acr" value="Azure Container Registry&#10;(API · web · job images)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#999999;fontColor=#444444;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="735" y="505" width="220" height="74" as="geometry" />
+        </mxCell>
+
+        <!-- Client -->
+        <mxCell id="browser" value="User Browser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="430" y="704" width="180" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: pipeline -->
+        <mxCell id="e_c_a" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#6C8EBF;strokeWidth=1.5;" edge="1" parent="1" source="collector" target="analyst">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_a_e" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#6C8EBF;strokeWidth=1.5;" edge="1" parent="1" source="analyst" target="editor">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: external calls -->
+        <mxCell id="e_col_af" value="fetch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#D6B656;fontColor=#7F6000;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.4;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="collector" target="apifootball">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_an_ds" value="interpret facts" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#D6B656;fontColor=#7F6000;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.4;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="analyst" target="deepseek">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ed_ds" value="write article" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#D6B656;fontColor=#7F6000;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.7;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="editor" target="deepseek">
+          <mxGeometry relative="1" x="-0.6" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edges: writes to DB -->
+        <mxCell id="e_col_pg" value="write matches / standings" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82B366;fontColor=#2D5E1E;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;" edge="1" parent="1" source="jobbox" target="postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ed_pg" value="write article + run log" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82B366;fontColor=#2D5E1E;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="jobbox" target="postgres">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edges: serving -->
+        <mxCell id="e_api_pg" value="read (published only)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#9673A6;fontColor=#5E3370;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="api" target="postgres">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="210" y="462" />
+              <mxPoint x="840" y="462" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_web_api" value="SSR fetch" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#9673A6;fontColor=#5E3370;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="web" target="api">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_br_web" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#B85450;fontColor=#8A2A22;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="browser" target="web">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: ACR images -->
+        <mxCell id="e_acr" value="images" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=open;dashed=1;strokeColor=#999999;fontColor=#666666;fontSize=12;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="acr" target="web">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

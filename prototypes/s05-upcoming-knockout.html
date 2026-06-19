@@ -1,0 +1,325 @@
+<!--
+  Screen: S-05 Upcoming Matches & Knockout Bracket
+  CJX Stage: Verify / Anticipate -> cjx-usage
+  FR Mapping: Expected output V1 (fixtures); brainstorm §"completed matches, fixtures ... qualification scenarios"; DB matches (status=scheduled), knockout bracket
+  Source: ck_docs/UI_SPEC.md §3 S-05
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixtures · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <span class="brand-mark">26</span>
+          <span class="brand-text">WC26 Intelligence</span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link active" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content standings-wide" data-cjx-entrance>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-6)">
+        <h1 class="page-title">Fixtures</h1>
+        <span class="meta-label">Times in Australia/Melbourne (AEST)</span>
+      </div>
+
+      <!-- View toggle: upcoming (default) / knockout -->
+      <div class="toggle-group" data-view-toggle role="tablist" aria-label="Fixtures view" style="margin-bottom:var(--space-6)">
+        <button class="toggle-btn active" data-view="upcoming" role="tab" aria-selected="true">Upcoming</button>
+        <button class="toggle-btn" data-view="knockout" role="tab" aria-selected="false">Knockout</button>
+      </div>
+
+      <!-- UPCOMING panel -->
+      <section data-view-panel="upcoming">
+        <h2 class="fixture-day-label" style="margin-top:0">Today · 19 Jun 2026</h2>
+        <div class="fixture-list">
+          <div class="fixture-row">
+            <div class="fixture-time">05:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="rs" data-code="SRB"></span> Serbia</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group G</span>
+              <span>SoFi Stadium, Inglewood</span>
+              <span class="cd-inline" data-countdown data-cd="inline" data-offset-min="75"></span>
+            </div>
+          </div>
+          <div class="fixture-row">
+            <div class="fixture-time">08:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="cm" data-code="CMR"></span> Cameroon</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group G</span>
+              <span>NRG Stadium, Houston</span>
+              <span class="cd-inline" data-countdown data-cd="inline" data-offset-min="180"></span>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="fixture-day-label">Fri · 20 Jun 2026</h2>
+        <div class="fixture-list">
+          <div class="fixture-row">
+            <div class="fixture-time">04:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="pt" data-code="POR"></span> Portugal</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="gh" data-code="GHA"></span> Ghana</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group H</span>
+              <span>Arrowhead, Kansas City</span>
+            </div>
+          </div>
+          <div class="fixture-row">
+            <div class="fixture-time">07:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="uy" data-code="URU"></span> Uruguay</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="kr" data-code="KOR"></span> South Korea</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group H</span>
+              <span>BMO Field, Toronto</span>
+            </div>
+          </div>
+          <div class="fixture-row">
+            <div class="fixture-time">10:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="mx" data-code="MEX"></span> Mexico</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="pl" data-code="POL"></span> Poland</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group A</span>
+              <span>Estadio Azteca, Mexico City</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="fixture-day-label">Sat · 21 Jun 2026</h2>
+        <div class="fixture-list">
+          <div class="fixture-row">
+            <div class="fixture-time">04:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="ar" data-code="ARG"></span> Argentina</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="sa" data-code="KSA"></span> Saudi Arabia</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group C</span>
+              <span>Mercedes-Benz, Atlanta</span>
+            </div>
+          </div>
+          <div class="fixture-row">
+            <div class="fixture-time">07:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="flag" data-flag="fr" data-code="FRA"></span> France</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="flag" data-flag="au" data-code="AUS"></span> Australia</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">Group D</span>
+              <span>SoFi Stadium, Inglewood</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KNOCKOUT panel -->
+      <section data-view-panel="knockout" hidden>
+        <p class="summary-deck" style="font-size:14px;margin-bottom:var(--space-6)">
+          Projected bracket — slots fill as groups conclude. Round-of-32 winners advance into the Round of 16 shown below.
+          Confirmed group winners are highlighted; remaining slots show their group seed (e.g. <strong>2B</strong> = group B runner-up).
+          <br><span style="color:var(--accent-bright)">Hover a match to trace its path to the final.</span>
+        </p>
+
+        <div class="bracket-scroll">
+          <div class="bracket">
+            <!-- Round of 16 (8 matches) -->
+            <div class="bracket-round">
+              <div class="bracket-round-title">Round of 16</div>
+              <div class="bracket-matches">
+                <div class="bracket-match">
+                  <div class="bracket-card decided">
+                    <div class="bracket-team winner"><span class="bt-name"><span class="flag" data-flag="mx" data-code="MEX"></span> Mexico <span class="bt-seed">1A</span></span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2B</span> Group B runner-up</span></div>
+                    <div class="bracket-card-label">R16-1 · 28 Jun</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">1C</span> Group C winner</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2D</span> Group D runner-up</span></div>
+                    <div class="bracket-card-label">R16-2 · 28 Jun</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">1E</span> Group E winner</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2F</span> Group F runner-up</span></div>
+                    <div class="bracket-card-label">R16-3 · 29 Jun</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card decided">
+                    <div class="bracket-team winner"><span class="bt-name"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil <span class="bt-seed">1G</span></span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2H</span> Group H runner-up</span></div>
+                    <div class="bracket-card-label">R16-4 · 29 Jun</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card decided">
+                    <div class="bracket-team winner"><span class="bt-name"><span class="flag" data-flag="ar" data-code="ARG"></span> Argentina <span class="bt-seed">1B</span></span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2A</span> Group A runner-up</span></div>
+                    <div class="bracket-card-label">R16-5 · 30 Jun</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">1D</span> Group D winner</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2C</span> Group C runner-up</span></div>
+                    <div class="bracket-card-label">R16-6 · 30 Jun</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">1F</span> Group F winner</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2E</span> Group E runner-up</span></div>
+                    <div class="bracket-card-label">R16-7 · 01 Jul</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">1H</span> Group H winner</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">2G</span> Group G runner-up</span></div>
+                    <div class="bracket-card-label">R16-8 · 01 Jul</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quarter-finals (4 matches) -->
+            <div class="bracket-round">
+              <div class="bracket-round-title">Quarter-finals</div>
+              <div class="bracket-matches">
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-1</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-2</span></div>
+                    <div class="bracket-card-label">QF1 · 04 Jul</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-3</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-4</span></div>
+                    <div class="bracket-card-label">QF2 · 04 Jul</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-5</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-6</span></div>
+                    <div class="bracket-card-label">QF3 · 05 Jul</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-7</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner R16-8</span></div>
+                    <div class="bracket-card-label">QF4 · 05 Jul</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Semi-finals (2 matches) -->
+            <div class="bracket-round">
+              <div class="bracket-round-title">Semi-finals</div>
+              <div class="bracket-matches">
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner QF1</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner QF2</span></div>
+                    <div class="bracket-card-label">SF1 · 08 Jul</div>
+                  </div>
+                </div>
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner QF3</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner QF4</span></div>
+                    <div class="bracket-card-label">SF2 · 09 Jul</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Final (1 match) + champion -->
+            <div class="bracket-round final-round">
+              <div class="bracket-round-title">Final</div>
+              <div class="bracket-matches">
+                <div class="bracket-match">
+                  <div class="bracket-card">
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner SF1</span></div>
+                    <div class="bracket-team"><span class="bt-name"><span class="bt-seed">W</span> Winner SF2</span></div>
+                    <div class="bracket-card-label">Final · 19 Jul · MetLife</div>
+                  </div>
+                  <div class="champion-card">
+                    <span class="ch-trophy">🏆</span>
+                    <span class="ch-eyebrow">Champion</span>
+                    <div class="ch-team">To be decided</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Third-place playoff -->
+        <h2 class="fixture-day-label">Third-place playoff</h2>
+        <div class="fixture-list" style="max-width:520px">
+          <div class="fixture-row">
+            <div class="fixture-time">06:00<span class="ft-tz">AEST</span></div>
+            <div class="fixture-teams">
+              <span class="fixture-team"><span class="bt-seed">L</span> Loser SF1</span>
+              <span class="fixture-vs">vs</span>
+              <span class="fixture-team"><span class="bt-seed">L</span> Loser SF2</span>
+            </div>
+            <div class="fixture-meta">
+              <span class="group-pill">3rd place</span>
+              <span>18 Jul · Miami</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Kickoff times converted to Australia/Melbourne.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

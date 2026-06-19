@@ -1,0 +1,87 @@
+<!--
+  Screen: S-04 Archive
+  CJX Stage: Return -> cjx-retention
+  FR Mapping: Expected output V1.2 (archive)
+  Source: ck_docs/UI_SPEC.md §3 S-04
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Archive · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-retention">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <span class="brand-mark">26</span>
+          <span class="brand-text">WC26 Intelligence</span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link active" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content reading" data-cjx-entrance>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)">
+        <h1 class="page-title">Archive</h1>
+        <span class="meta-label">5 briefs</span>
+      </div>
+
+      <h2 class="group-label" style="margin-bottom:var(--space-2)">June 2026</h2>
+      <div class="archive-list" style="margin-bottom:var(--space-8)">
+        <a class="archive-row" href="s02-brief-detail.html">
+          <span class="ar-day">19</span>
+          <span class="ar-title">Brazil seize Group G as Serbia stumble</span>
+          <span class="ar-chevron">›</span>
+        </a>
+        <a class="archive-row" href="s02-brief-detail.html">
+          <span class="ar-day">18</span>
+          <span class="ar-title">Argentina cruise; host nations hold firm</span>
+          <span class="ar-chevron">›</span>
+        </a>
+        <a class="archive-row" href="s02-brief-detail.html">
+          <span class="ar-day">17</span>
+          <span class="ar-title">Opening upsets reshape Group D</span>
+          <span class="ar-chevron">›</span>
+        </a>
+        <a class="archive-row" href="s02-brief-detail.html">
+          <span class="ar-day">16</span>
+          <span class="ar-title">Tournament kicks off in Mexico City</span>
+          <span class="ar-chevron">›</span>
+        </a>
+        <a class="archive-row" href="s02-brief-detail.html">
+          <span class="ar-day">15</span>
+          <span class="ar-title">Final friendlies set the stage</span>
+          <span class="ar-chevron">›</span>
+        </a>
+      </div>
+
+      <!-- EmptyState (no-archive) — pre-first-publish -->
+      <h2 class="group-label" style="margin-bottom:var(--space-2)">Empty state · no-archive (pre-first-publish)</h2>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No past briefs yet</h3>
+        <p>The first daily brief publishes at 7:00 AM AEST. Past briefs will collect here.</p>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Auto-published daily, 7:00 AM Australia/Melbourne.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

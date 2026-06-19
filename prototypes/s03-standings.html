@@ -1,0 +1,231 @@
+<!--
+  Screen: S-03 Standings
+  CJX Stage: Verify -> cjx-usage
+  FR Mapping: Expected output V1.2 (standings); DB standings; Acceptance (deterministic Python math)
+  Source: ck_docs/UI_SPEC.md §3 S-03
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Standings · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <span class="brand-mark">26</span>
+          <span class="brand-text">WC26 Intelligence</span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link active" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content standings-wide" data-cjx-entrance>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;margin-bottom:var(--space-6)">
+        <h1 class="page-title">Standings</h1>
+        <span class="meta-label">Snapshot: 19 Jun 2026</span>
+      </div>
+
+      <!-- View toggle: groups (default) / knockout -->
+      <div class="toggle-group" data-view-toggle role="tablist" aria-label="Standings view" style="margin-bottom:var(--space-6)">
+        <button class="toggle-btn active" data-view="groups" role="tab" aria-selected="true">Groups</button>
+        <button class="toggle-btn" data-view="knockout" role="tab" aria-selected="false">Knockout</button>
+      </div>
+
+      <!-- GROUPS panel -->
+      <section data-view-panel="groups">
+        <!-- GROUP A -->
+        <h2 class="group-label" style="margin-bottom:var(--space-3)">Group A</h2>
+        <div class="table-container" style="margin-bottom:var(--space-8)">
+          <table class="standings" aria-label="Group A standings">
+            <thead>
+              <tr>
+                <th class="pos-cell" scope="col">#</th>
+                <th class="team-cell" scope="col">Team</th>
+                <th scope="col">P</th><th scope="col">W</th><th scope="col">D</th><th scope="col">L</th>
+                <th scope="col">GF</th><th scope="col">GA</th><th scope="col">GD</th><th scope="col">Pts</th>
+                <th scope="col">Form</th><th scope="col">±</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight">
+                <td class="pos-cell"><span class="qual-dot qualified" title="Qualified">●</span> 1</td>
+                <td class="team-cell"><span class="flag" data-flag="mx" data-code="MEX"></span><span class="team-name">Mexico</span></td>
+                <td>3</td><td>2</td><td>1</td><td>0</td><td>5</td><td>2</td><td>+3</td><td class="pts-cell">7</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: win win draw">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,15 25,8 45,10 65,4"/>
+                    <circle cx="5" cy="15" r="2.5" fill="#2BD37E"/>
+                    <circle cx="25" cy="8" r="2.5" fill="#2BD37E"/>
+                    <circle cx="45" cy="10" r="2.5" fill="#F4B740"/>
+                    <circle cx="65" cy="4" r="2.5" fill="#2BD37E"/>
+                  </svg>
+                </td>
+                <td><span class="delta up">▲1</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot qualified" title="Qualified">●</span> 2</td>
+                <td class="team-cell"><span class="flag" data-flag="no" data-code="NOR"></span><span class="team-name">Norway</span></td>
+                <td>3</td><td>2</td><td>0</td><td>1</td><td>4</td><td>3</td><td>+1</td><td class="pts-cell">6</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: win loss win">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,6 25,16 45,12 65,5"/>
+                    <circle cx="5" cy="6" r="2.5" fill="#2BD37E"/>
+                    <circle cx="25" cy="16" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="45" cy="12" r="2.5" fill="#2BD37E"/>
+                    <circle cx="65" cy="5" r="2.5" fill="#2BD37E"/>
+                  </svg>
+                </td>
+                <td><span class="delta same">–</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot contention" title="In contention">○</span> 3</td>
+                <td class="team-cell"><span class="flag" data-flag="hr" data-code="CRO"></span><span class="team-name">Croatia</span></td>
+                <td>3</td><td>1</td><td>0</td><td>2</td><td>2</td><td>4</td><td>-2</td><td class="pts-cell">3</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: loss win loss">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,14 25,7 45,15 65,15"/>
+                    <circle cx="5" cy="14" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="25" cy="7" r="2.5" fill="#2BD37E"/>
+                    <circle cx="45" cy="15" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="65" cy="15" r="2.5" fill="#FF5A5A"/>
+                  </svg>
+                </td>
+                <td><span class="delta down">▼1</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot eliminated" title="Eliminated">✕</span> 4</td>
+                <td class="team-cell"><span class="flag" data-flag="nz" data-code="NZL"></span><span class="team-name">New Zealand</span></td>
+                <td>3</td><td>0</td><td>1</td><td>2</td><td>1</td><td>6</td><td>-5</td><td class="pts-cell">1</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: loss draw loss">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,15 25,11 45,16 65,17"/>
+                    <circle cx="5" cy="15" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="25" cy="11" r="2.5" fill="#F4B740"/>
+                    <circle cx="45" cy="16" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="65" cy="17" r="2.5" fill="#FF5A5A"/>
+                  </svg>
+                </td>
+                <td><span class="delta same">–</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- GROUP B -->
+        <h2 class="group-label" style="margin-bottom:var(--space-3)">Group B</h2>
+        <div class="table-container" style="margin-bottom:var(--space-8)">
+          <table class="standings" aria-label="Group B standings">
+            <thead>
+              <tr>
+                <th class="pos-cell" scope="col">#</th>
+                <th class="team-cell" scope="col">Team</th>
+                <th scope="col">P</th><th scope="col">W</th><th scope="col">D</th><th scope="col">L</th>
+                <th scope="col">GF</th><th scope="col">GA</th><th scope="col">GD</th><th scope="col">Pts</th>
+                <th scope="col">Form</th><th scope="col">±</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot qualified" title="Qualified">●</span> 1</td>
+                <td class="team-cell"><span class="flag" data-flag="ar" data-code="ARG"></span><span class="team-name">Argentina</span></td>
+                <td>3</td><td>3</td><td>0</td><td>0</td><td>6</td><td>0</td><td>+6</td><td class="pts-cell">9</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: win win win">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,7 25,5 45,5 65,4"/>
+                    <circle cx="5" cy="7" r="2.5" fill="#2BD37E"/>
+                    <circle cx="25" cy="5" r="2.5" fill="#2BD37E"/>
+                    <circle cx="45" cy="5" r="2.5" fill="#2BD37E"/>
+                    <circle cx="65" cy="4" r="2.5" fill="#2BD37E"/>
+                  </svg>
+                </td>
+                <td><span class="delta same">–</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot qualified" title="Qualified">●</span> 2</td>
+                <td class="team-cell"><span class="flag" data-flag="kr" data-code="KOR"></span><span class="team-name">South Korea</span></td>
+                <td>3</td><td>1</td><td>1</td><td>1</td><td>3</td><td>3</td><td>0</td><td class="pts-cell">4</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: draw win loss">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,10 25,6 45,15 65,9"/>
+                    <circle cx="5" cy="10" r="2.5" fill="#F4B740"/>
+                    <circle cx="25" cy="6" r="2.5" fill="#2BD37E"/>
+                    <circle cx="45" cy="15" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="65" cy="9" r="2.5" fill="#F4B740"/>
+                  </svg>
+                </td>
+                <td><span class="delta up">▲2</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot contention" title="In contention">○</span> 3</td>
+                <td class="team-cell"><span class="flag" data-flag="gh" data-code="GHA"></span><span class="team-name">Ghana</span></td>
+                <td>3</td><td>1</td><td>0</td><td>2</td><td>2</td><td>4</td><td>-2</td><td class="pts-cell">3</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: win loss loss">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,6 25,15 45,16 65,14"/>
+                    <circle cx="5" cy="6" r="2.5" fill="#2BD37E"/>
+                    <circle cx="25" cy="15" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="45" cy="16" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="65" cy="14" r="2.5" fill="#FF5A5A"/>
+                  </svg>
+                </td>
+                <td><span class="delta down">▼1</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot eliminated" title="Eliminated">✕</span> 4</td>
+                <td class="team-cell"><span class="flag" data-flag="sa" data-code="KSA"></span><span class="team-name">Saudi Arabia</span></td>
+                <td>3</td><td>0</td><td>1</td><td>2</td><td>1</td><td>5</td><td>-4</td><td class="pts-cell">1</td>
+                <td>
+                  <svg class="sparkline" width="70" height="20" viewBox="0 0 70 20" aria-label="form: loss draw loss">
+                    <polyline fill="none" stroke="#4D8BFF" stroke-width="2" points="5,16 25,11 45,16 65,17"/>
+                    <circle cx="5" cy="16" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="25" cy="11" r="2.5" fill="#F4B740"/>
+                    <circle cx="45" cy="16" r="2.5" fill="#FF5A5A"/>
+                    <circle cx="65" cy="17" r="2.5" fill="#FF5A5A"/>
+                  </svg>
+                </td>
+                <td><span class="delta same">–</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Qualification legend -->
+        <div class="chip-row" style="gap:var(--space-4)">
+          <span class="qual-tag qualified"><span class="qual-dot qualified">●</span> Qualified</span>
+          <span class="qual-tag contention"><span class="qual-dot contention">○</span> In contention</span>
+          <span class="qual-tag eliminated"><span class="qual-dot eliminated">✕</span> Eliminated</span>
+        </div>
+      </section>
+
+      <!-- KNOCKOUT panel — empty-stated until bracket data exists -->
+      <section data-view-panel="knockout" hidden>
+        <div class="empty-state">
+          <div class="empty-icon">🏆</div>
+          <h3>Knockout bracket locked</h3>
+          <p>The bracket populates once the group stage concludes. Group standings are live now.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Standings computed deterministically in Python.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

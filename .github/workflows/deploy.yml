@@ -1,0 +1,101 @@
+# OPTIONAL CI/CD — disabled by default.
+# To enable: remove the `if: false` condition from each job, configure the
+# repository secrets listed below, then push to main.
+#
+# Required secrets (Settings → Secrets → Actions):
+#   AZURE_CREDENTIALS         — output of: az ad sp create-for-rbac --sdk-auth
+#   ACR_LOGIN_SERVER          — e.g. myregistry.azurecr.io
+#   AZURE_RESOURCE_GROUP      — target resource group name
+#   POSTGRES_ADMIN_USER       — postgres admin username
+#   POSTGRES_ADMIN_PASSWORD   — postgres admin password
+#   API_FOOTBALL_KEY          — API-Football key
+#   DEEPSEEK_API_KEY          — DeepSeek key
+
+name: Build & Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  ACR_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+
+jobs:
+  build-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    if: false  # REMOVE THIS LINE to enable
+    outputs:
+      sha_tag: ${{ steps.tag.outputs.sha_tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: echo "sha_tag=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR login
+        run: az acr login --name ${{ env.ACR_SERVER }}
+
+      - name: Build & push API
+        run: |
+          docker build -f backend/Dockerfile.api \
+            -t ${{ env.ACR_SERVER }}/wc2026-api:${{ steps.tag.outputs.sha_tag }} \
+            -t ${{ env.ACR_SERVER }}/wc2026-api:latest \
+            backend/
+          docker push ${{ env.ACR_SERVER }}/wc2026-api:${{ steps.tag.outputs.sha_tag }}
+          docker push ${{ env.ACR_SERVER }}/wc2026-api:latest
+
+      - name: Build & push Job
+        run: |
+          docker build -f backend/Dockerfile.job \
+            -t ${{ env.ACR_SERVER }}/wc2026-job:${{ steps.tag.outputs.sha_tag }} \
+            -t ${{ env.ACR_SERVER }}/wc2026-job:latest \
+            backend/
+          docker push ${{ env.ACR_SERVER }}/wc2026-job:${{ steps.tag.outputs.sha_tag }}
+          docker push ${{ env.ACR_SERVER }}/wc2026-job:latest
+
+      - name: Build & push Frontend
+        run: |
+          docker build \
+            -t ${{ env.ACR_SERVER }}/wc2026-frontend:${{ steps.tag.outputs.sha_tag }} \
+            -t ${{ env.ACR_SERVER }}/wc2026-frontend:latest \
+            frontend/
+          docker push ${{ env.ACR_SERVER }}/wc2026-frontend:${{ steps.tag.outputs.sha_tag }}
+          docker push ${{ env.ACR_SERVER }}/wc2026-frontend:latest
+
+  deploy:
+    name: Deploy via Bicep
+    runs-on: ubuntu-latest
+    needs: build-push
+    if: false  # REMOVE THIS LINE to enable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Bicep
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          template: infra/main.bicep
+          parameters: >
+            envName=prod
+            acrServer=${{ secrets.ACR_LOGIN_SERVER }}
+            apiImageTag=${{ env.ACR_SERVER }}/wc2026-api:${{ needs.build-push.outputs.sha_tag }}
+            frontendImageTag=${{ env.ACR_SERVER }}/wc2026-frontend:${{ needs.build-push.outputs.sha_tag }}
+            jobImageTag=${{ env.ACR_SERVER }}/wc2026-job:${{ needs.build-push.outputs.sha_tag }}
+            postgresAdminUser=${{ secrets.POSTGRES_ADMIN_USER }}
+            postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+            apiFootballKey=${{ secrets.API_FOOTBALL_KEY }}
+            deepseekApiKey=${{ secrets.DEEPSEEK_API_KEY }}
+          failOnStdErr: false

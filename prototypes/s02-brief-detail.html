@@ -1,0 +1,122 @@
+<!--
+  Screen: S-02 Daily Brief Detail
+  CJX Stage: Read / Verify -> cjx-usage
+  FR Mapping: Expected output V1.1-2 (title/summary/body_md); Acceptance (correct end-to-end brief); provenance via model_used
+  Source: ck_docs/UI_SPEC.md §3 S-02
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brazil seize Group G · 19 Jun 2026 · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <span class="brand-mark">26</span>
+          <span class="brand-text">WC26 Intelligence</span>
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content reading" data-cjx-entrance>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)">
+        <a class="back-link" href="s01-brief-list.html">‹ Back to Today</a>
+        <span class="meta-label">19 Jun 2026 · AEST</span>
+      </div>
+
+      <h1 class="display-headline">Brazil seize Group G as Serbia stumble</h1>
+      <p class="summary-deck">A clinical second-half display sends Brazil top of Group G, while Switzerland's draw keeps qualification finely poised heading into the final round.</p>
+
+      <hr class="divider" style="border:none;border-top:1px solid var(--border);margin:var(--space-8) 0">
+
+      <article class="prose">
+        <h2>Group G</h2>
+        <p>Brazil produced their most complete performance of the tournament, turning a tight first half into a comfortable win once the second period opened up. The result moves them to maximum points and confirms top spot ahead of the final group fixtures.</p>
+        <p>Serbia, by contrast, now face a must-win scenario. Switzerland's draw with Cameroon leaves three teams still mathematically alive going into the last round.</p>
+
+        <!-- Embedded StandingsTable (Group G) — deterministic data, NOT LLM-generated -->
+        <div class="table-container" style="margin:var(--space-6) 0">
+          <table class="standings" aria-label="Group G standings">
+            <thead>
+              <tr>
+                <th class="pos-cell" scope="col">#</th>
+                <th class="team-cell" scope="col">Team</th>
+                <th scope="col">P</th>
+                <th scope="col">W</th>
+                <th scope="col">D</th>
+                <th scope="col">L</th>
+                <th scope="col">GF</th>
+                <th scope="col">GA</th>
+                <th scope="col">GD</th>
+                <th scope="col">Pts</th>
+                <th scope="col">±</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="highlight">
+                <td class="pos-cell"><span class="qual-dot qualified" title="Qualified">●</span></td>
+                <td class="team-cell"><span class="team-name">Brazil</span></td>
+                <td>3</td><td>3</td><td>0</td><td>0</td><td>7</td><td>1</td><td>+6</td><td class="pts-cell">9</td>
+                <td><span class="delta up">▲1</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot contention" title="In contention">○</span></td>
+                <td class="team-cell"><span class="team-name">Switzerland</span></td>
+                <td>3</td><td>1</td><td>1</td><td>1</td><td>4</td><td>4</td><td>0</td><td class="pts-cell">4</td>
+                <td><span class="delta same">–</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot contention" title="In contention">○</span></td>
+                <td class="team-cell"><span class="team-name">Serbia</span></td>
+                <td>3</td><td>1</td><td>0</td><td>2</td><td>3</td><td>5</td><td>-2</td><td class="pts-cell">3</td>
+                <td><span class="delta down">▼1</span></td>
+              </tr>
+              <tr>
+                <td class="pos-cell"><span class="qual-dot eliminated" title="Eliminated">✕</span></td>
+                <td class="team-cell"><span class="team-name">Cameroon</span></td>
+                <td>3</td><td>0</td><td>1</td><td>2</td><td>2</td><td>6</td><td>-4</td><td class="pts-cell">1</td>
+                <td><span class="delta same">–</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Upcoming</h2>
+        <p>The final round of Group G fixtures is scheduled for 22 June. Brazil are through regardless of result; the second qualification spot will be decided by Switzerland and Serbia's head-to-head outcomes.</p>
+      </article>
+
+      <hr class="divider" style="border:none;border-top:1px solid var(--border);margin:var(--space-8) 0">
+
+      <!-- Provenance footer (transparency for P-04) -->
+      <div class="provenance">
+        <span>model: deepseek</span>
+        <span>·</span>
+        <span>generated 07:00 AEST</span>
+        <span>·</span>
+        <span>tables computed in Python (not LLM)</span>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Auto-published daily, 7:00 AM Australia/Melbourne.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>
