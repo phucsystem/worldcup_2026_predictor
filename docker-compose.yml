@@ -15,7 +15,8 @@ services:
     ports:
       - "5432:5432"
 
-  backend:
+  # One-shot: apply migrations + seed the 12-group skeleton, then exit.
+  migrate:
     build:
       context: backend
       dockerfile: Dockerfile
@@ -24,9 +25,47 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    command:
+      - sh
+      - -c
+      - "alembic -c db/alembic.ini upgrade head && python -m app.data.seed_openfootball"
+    restart: "no"
+
+  backend:
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://wc:wc@postgres:5432/worldcup
+      API_FOOTBALL_KEY: ${API_FOOTBALL_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      BRIEF_TIMEZONE: ${BRIEF_TIMEZONE:-Australia/Melbourne}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "8000:8000"
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    environment:
+      # SSR runs inside the container — reach the API via the compose network DNS.
+      API_BASE: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
 
 volumes:
   pgdata:
