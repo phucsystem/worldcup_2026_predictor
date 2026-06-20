@@ -1,33 +1,76 @@
-# OPTIONAL CI/CD — disabled by default.
-# To enable: remove the `if: false` condition from each job, configure the
-# repository secrets listed below, then push to main.
+# CI/CD for the single-VM deployment.
+#   PRs            -> test only
+#   push to main   -> test -> build & push images to GHCR -> SSH deploy to the VM
 #
-# Required secrets (Settings → Secrets → Actions):
-#   AZURE_CREDENTIALS         — output of: az ad sp create-for-rbac --sdk-auth
-#   ACR_LOGIN_SERVER          — e.g. myregistry.azurecr.io
-#   AZURE_RESOURCE_GROUP      — target resource group name
-#   POSTGRES_ADMIN_USER       — postgres admin username
-#   POSTGRES_ADMIN_PASSWORD   — postgres admin password
-#   API_FOOTBALL_KEY          — API-Football key
-#   DEEPSEEK_API_KEY          — DeepSeek key
+# Required repo secrets (Settings -> Secrets -> Actions):
+#   SSH_HOST         — VM public IP or DNS name
+#   SSH_USER         — deploy user on the VM
+#   SSH_PRIVATE_KEY  — private key whose public half is in the VM's authorized_keys
+# Optional:
+#   DEPLOY_DIR       — repo path on the VM (default: ~/worldcup_2026_predictor)
+# App secrets (API_FOOTBALL_KEY, DEEPSEEK_API_KEY, SITE_ADDRESS) live in the VM
+# .env, NOT in CI. Images are public on GHCR, so the VM needs no registry login.
 
-name: Build & Deploy to Azure
+name: Build & Deploy to Azure VM
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
 
 env:
-  ACR_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  REGISTRY: ghcr.io
+  IMAGE_BACKEND: ghcr.io/phucsystem/wc2026-backend
+  IMAGE_FRONTEND: ghcr.io/phucsystem/wc2026-frontend
 
 jobs:
+  test:
+    name: Validate app
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Backend tests
+        working-directory: backend
+        run: uv run pytest
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend install
+        working-directory: frontend
+        run: npm ci
+
+      - name: Frontend tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Frontend build
+        working-directory: frontend
+        run: npm run build
+
   build-push:
     name: Build & push images
     runs-on: ubuntu-latest
-    if: false  # REMOVE THIS LINE to enable
-    outputs:
-      sha_tag: ${{ steps.tag.outputs.sha_tag }}
+    needs: test
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -35,67 +78,81 @@ jobs:
         id: tag
         run: echo "sha_tag=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Azure login
-        uses: azure/login@v2
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: ACR login
-        run: az acr login --name ${{ env.ACR_SERVER }}
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BACKEND }}:${{ steps.tag.outputs.sha_tag }}
+            ${{ env.IMAGE_BACKEND }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build & push API
-        run: |
-          docker build -f backend/Dockerfile.api \
-            -t ${{ env.ACR_SERVER }}/wc2026-api:${{ steps.tag.outputs.sha_tag }} \
-            -t ${{ env.ACR_SERVER }}/wc2026-api:latest \
-            backend/
-          docker push ${{ env.ACR_SERVER }}/wc2026-api:${{ steps.tag.outputs.sha_tag }}
-          docker push ${{ env.ACR_SERVER }}/wc2026-api:latest
-
-      - name: Build & push Job
-        run: |
-          docker build -f backend/Dockerfile.job \
-            -t ${{ env.ACR_SERVER }}/wc2026-job:${{ steps.tag.outputs.sha_tag }} \
-            -t ${{ env.ACR_SERVER }}/wc2026-job:latest \
-            backend/
-          docker push ${{ env.ACR_SERVER }}/wc2026-job:${{ steps.tag.outputs.sha_tag }}
-          docker push ${{ env.ACR_SERVER }}/wc2026-job:latest
-
-      - name: Build & push Frontend
-        run: |
-          docker build \
-            -t ${{ env.ACR_SERVER }}/wc2026-frontend:${{ steps.tag.outputs.sha_tag }} \
-            -t ${{ env.ACR_SERVER }}/wc2026-frontend:latest \
-            frontend/
-          docker push ${{ env.ACR_SERVER }}/wc2026-frontend:${{ steps.tag.outputs.sha_tag }}
-          docker push ${{ env.ACR_SERVER }}/wc2026-frontend:latest
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_FRONTEND }}:${{ steps.tag.outputs.sha_tag }}
+            ${{ env.IMAGE_FRONTEND }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy via Bicep
+    name: Deploy to VM
     runs-on: ubuntu-latest
     needs: build-push
-    if: false  # REMOVE THIS LINE to enable
+    if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v4
-
       - name: Azure login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy Bicep
-        uses: azure/arm-deploy@v2
+      # The VM's NSG only allows SSH from the operator IP. Open port 22 for this
+      # runner's IP just before deploying, and close it again no matter what.
+      - name: Open SSH for this runner
+        run: |
+          RUNNER_IP="$(curl -fsS https://api.ipify.org)"
+          az network nsg rule create \
+            -g "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --nsg-name "${{ secrets.AZURE_NSG_NAME }}" \
+            -n gha-deploy-tmp --priority 100 --access Allow --protocol Tcp \
+            --direction Inbound --destination-port-ranges 22 \
+            --source-address-prefixes "${RUNNER_IP}/32" -o none
+
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          template: infra/main.bicep
-          parameters: >
-            envName=prod
-            acrServer=${{ secrets.ACR_LOGIN_SERVER }}
-            apiImageTag=${{ env.ACR_SERVER }}/wc2026-api:${{ needs.build-push.outputs.sha_tag }}
-            frontendImageTag=${{ env.ACR_SERVER }}/wc2026-frontend:${{ needs.build-push.outputs.sha_tag }}
-            jobImageTag=${{ env.ACR_SERVER }}/wc2026-job:${{ needs.build-push.outputs.sha_tag }}
-            postgresAdminUser=${{ secrets.POSTGRES_ADMIN_USER }}
-            postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-            apiFootballKey=${{ secrets.API_FOOTBALL_KEY }}
-            deepseekApiKey=${{ secrets.DEEPSEEK_API_KEY }}
-          failOnStdErr: false
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd "${DEPLOY_DIR:-$HOME/worldcup_2026_predictor}"
+            git pull --ff-only
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            docker image prune -f
+          envs: DEPLOY_DIR
+        env:
+          DEPLOY_DIR: ${{ secrets.DEPLOY_DIR }}
+
+      - name: Close SSH for this runner
+        if: always()
+        run: |
+          az network nsg rule delete \
+            -g "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --nsg-name "${{ secrets.AZURE_NSG_NAME }}" \
+            -n gha-deploy-tmp -o none || true

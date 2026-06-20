@@ -1,0 +1,6 @@
+# SITE_ADDRESS comes from the VM .env (e.g. wc2026.example.com, or a free
+# *.sslip.io name against the public IP). Caddy auto-provisions Let's Encrypt
+# TLS for a public domain, or a local CA cert when set to localhost.
+{$SITE_ADDRESS} {
+	reverse_proxy frontend:3000
+}

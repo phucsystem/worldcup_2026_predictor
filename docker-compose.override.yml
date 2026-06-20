@@ -1,0 +1,13 @@
+# Local-dev port mappings. Compose auto-loads this file, so `docker compose up`
+# keeps the same host ports as before. Prod (docker-compose.prod.yml) is run
+# WITHOUT this file, so backend/postgres stay internal to the compose network.
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+  backend:
+    ports:
+      - "8000:8000"
+  frontend:
+    ports:
+      - "3000:3000"

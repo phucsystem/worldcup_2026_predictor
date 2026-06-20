@@ -12,8 +12,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    ports:
-      - "5432:5432"
 
   # One-shot: apply migrations + seed the 12-group skeleton, then exit.
   migrate:
@@ -49,8 +47,6 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    ports:
-      - "8000:8000"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
@@ -94,8 +90,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    ports:
-      - "3000:3000"
 
 volumes:
   pgdata:

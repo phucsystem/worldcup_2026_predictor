@@ -1,0 +1,42 @@
+# Production overlay: run with
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml <cmd>
+# Images are built in CI and pulled here (the VM never builds). Only Caddy
+# publishes host ports (80/443); backend + postgres stay internal.
+services:
+  postgres:
+    restart: unless-stopped
+
+  migrate:
+    image: ghcr.io/phucsystem/wc2026-backend:latest
+
+  backend:
+    image: ghcr.io/phucsystem/wc2026-backend:latest
+    restart: unless-stopped
+
+  scheduler:
+    image: ghcr.io/phucsystem/wc2026-backend:latest
+    environment:
+      SCHEDULER_INTERVAL_SECONDS: ${SCHEDULER_INTERVAL_SECONDS:-21600}
+
+  frontend:
+    image: ghcr.io/phucsystem/wc2026-frontend:latest
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS to your domain in the VM .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:
