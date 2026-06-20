@@ -14,7 +14,6 @@ import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Callable, TypeVar
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 T = TypeVar("T")
@@ -64,8 +63,27 @@ def merge_intelligence(intelligence: dict | None, stake_groups: list[dict] | Non
 
 def run_pipeline(target_date: date) -> int:
     """Run the brief pipeline for *target_date*. Returns 0 on success, 1 on failure."""
-    from app.data.repository import insert_agent_run, make_session_factory, upsert_article
+    from app.config import settings
+    from app.data.repository import (
+        insert_agent_run,
+        make_session_factory,
+        prune_logs,
+        upsert_article,
+    )
+    from app.logging_config import configure_logging
     from app.pipeline.graph import build_graph
+
+    configure_logging()
+
+    # Daily cadence is sufficient to bound the app_logs window; prune failures
+    # must never abort the run.
+    try:
+        with make_session_factory()() as session:
+            removed = prune_logs(session, settings.LOG_RETENTION_DAYS)
+        if removed:
+            log.info("Pruned %d log rows older than %d days", removed, settings.LOG_RETENTION_DAYS)
+    except Exception as exc:
+        log.warning("Log prune skipped: %s", exc)
 
     run_id = str(uuid.uuid4())
     started_at = datetime.now(tz=timezone.utc)
@@ -185,7 +203,15 @@ def main() -> None:
     )
     args = parser.parse_args()
     target = args.date or _today_in_brief_tz()
-    sys.exit(run_pipeline(target))
+
+    from app.logging_config import configure_logging, stop_logging
+
+    configure_logging()
+    try:
+        rc = run_pipeline(target)
+    finally:
+        stop_logging()  # flush buffered records before this short-lived process exits
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

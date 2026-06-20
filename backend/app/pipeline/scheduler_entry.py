@@ -31,28 +31,33 @@ def is_brief_time(now_utc: datetime, tz_name: str = "Australia/Melbourne") -> bo
 
 def main() -> None:
     from app.config import settings
+    from app.logging_config import configure_logging, stop_logging
     from app.pipeline.run import run_pipeline
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    configure_logging()
 
-    force = os.environ.get("FORCE_RUN", "").strip() == "1" or "--force" in sys.argv
+    try:
+        force = os.environ.get("FORCE_RUN", "").strip() == "1" or "--force" in sys.argv
 
-    now_utc = datetime.now(tz=timezone.utc)
+        now_utc = datetime.now(tz=timezone.utc)
 
-    if not force and not is_brief_time(now_utc, settings.BRIEF_TIMEZONE):
-        local_time = now_utc.astimezone(ZoneInfo(settings.BRIEF_TIMEZONE))
-        log.info(
-            "TZ guard: current time in %s is %s (hour=%d) — not 07:00, skipping.",
-            settings.BRIEF_TIMEZONE,
-            local_time.strftime("%H:%M"),
-            local_time.hour,
-        )
-        sys.exit(0)
-
-    local_dt = now_utc.astimezone(ZoneInfo(settings.BRIEF_TIMEZONE))
-    brief_date = local_dt.date()
-    log.info("TZ guard passed — running pipeline for %s", brief_date)
-    sys.exit(run_pipeline(brief_date))
+        if not force and not is_brief_time(now_utc, settings.BRIEF_TIMEZONE):
+            local_time = now_utc.astimezone(ZoneInfo(settings.BRIEF_TIMEZONE))
+            log.info(
+                "TZ guard: current time in %s is %s (hour=%d) — not 07:00, skipping.",
+                settings.BRIEF_TIMEZONE,
+                local_time.strftime("%H:%M"),
+                local_time.hour,
+            )
+            rc = 0
+        else:
+            local_dt = now_utc.astimezone(ZoneInfo(settings.BRIEF_TIMEZONE))
+            brief_date = local_dt.date()
+            log.info("TZ guard passed — running pipeline for %s", brief_date)
+            rc = run_pipeline(brief_date)
+    finally:
+        stop_logging()  # flush before this short-lived job exits
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

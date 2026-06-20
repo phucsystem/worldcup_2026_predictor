@@ -22,5 +22,10 @@ class Settings(BaseSettings):
     IDLE_SLEEP_SECONDS: int = 300
     LIVE_WINDOW_HOURS: int = 3
 
+    # App logging: persist INFO+ events to app_logs and prune rows older than
+    # LOG_RETENTION_DAYS. LOG_DB_ENABLED=False keeps stdout-only (tests/local).
+    LOG_RETENTION_DAYS: int = 14
+    LOG_DB_ENABLED: bool = True
+
 
 settings = Settings()

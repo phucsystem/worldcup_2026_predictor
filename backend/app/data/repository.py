@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import sqlalchemy as sa
@@ -101,6 +101,20 @@ agent_runs_table = sa.Table(
     sa.Column("cost_usd", sa.Numeric),
     sa.Column("status", sa.String),
     sa.Column("error", sa.Text),
+)
+
+
+# Mirror migration 0006 schema — line-level log events
+app_logs_table = sa.Table(
+    "app_logs",
+    _metadata,
+    sa.Column("id", sa.BigInteger, primary_key=True, autoincrement=True),
+    sa.Column("ts", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("level", sa.String, nullable=False),
+    sa.Column("source", sa.String, nullable=False),
+    sa.Column("message", sa.Text, nullable=False),
+    sa.Column("context", sa.JSON),
+    sa.Column("run_id", sa.String),
 )
 
 
@@ -308,6 +322,72 @@ def upsert_article(
     )
     session.execute(stmt)
     session.commit()
+
+
+# --- app_logs helpers ---------------------------------------------------------
+# These run under the logging path (Phase 2 DBLogHandler). They MUST stay free of
+# any logging calls, or a logged DB write would feed the handler and recurse.
+
+def insert_log_rows(session: Session, rows: list[dict]) -> None:
+    """Batch-insert log rows in a single statement. `rows` is a list of dicts
+    keyed by app_logs columns (ts, level, source, message, context, run_id)."""
+    if not rows:
+        return
+    session.execute(app_logs_table.insert(), rows)
+    session.commit()
+
+
+def query_logs(
+    session: Session,
+    *,
+    levels: list[str] | None = None,
+    q: str | None = None,
+    source: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[Any], int]:
+    """Return (page_rows, total) for the logs console. Newest first.
+
+    `levels` → `level IN (...)`; `q` → case-insensitive match across message and
+    source; `source` → exact logger-name match. `total` reflects the same filters
+    (ignoring limit/offset) so the UI can paginate."""
+    conditions = []
+    if levels:
+        conditions.append(app_logs_table.c.level.in_(levels))
+    if source:
+        conditions.append(app_logs_table.c.source == source)
+    if q:
+        pattern = f"%{q}%"
+        conditions.append(
+            sa.or_(
+                app_logs_table.c.message.ilike(pattern),
+                app_logs_table.c.source.ilike(pattern),
+            )
+        )
+
+    count_stmt = sa.select(sa.func.count()).select_from(app_logs_table)
+    page_stmt = sa.select(app_logs_table)
+    for cond in conditions:
+        count_stmt = count_stmt.where(cond)
+        page_stmt = page_stmt.where(cond)
+
+    total = session.execute(count_stmt).scalar_one()
+    rows = session.execute(
+        page_stmt.order_by(app_logs_table.c.ts.desc(), app_logs_table.c.id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).fetchall()
+    return list(rows), total
+
+
+def prune_logs(session: Session, retention_days: int) -> int:
+    """Delete log rows older than *retention_days*. Returns rows removed."""
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=retention_days)
+    result = session.execute(
+        app_logs_table.delete().where(app_logs_table.c.ts < cutoff)
+    )
+    session.commit()
+    return result.rowcount or 0
 
 
 def insert_agent_run(session: Session, run_record: dict[str, Any]) -> None:

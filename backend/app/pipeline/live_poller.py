@@ -52,7 +52,15 @@ def _kickoffs(session_factory) -> list[datetime]:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    import signal
+    import sys
+
+    from app.logging_config import configure_logging, stop_logging
+
+    configure_logging()
+    # `docker stop` sends SIGTERM, on which atexit does NOT run — flush + exit so
+    # the final buffered log batch isn't lost on every restart/redeploy.
+    signal.signal(signal.SIGTERM, lambda *_: (stop_logging(), sys.exit(0)))
 
     if not settings.API_FOOTBALL_KEY:
         log.error("API_FOOTBALL_KEY not set — live poller cannot run")

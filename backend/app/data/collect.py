@@ -29,7 +29,6 @@ from app.data.repository import (
 )
 from app.data.standings_math import compute_group_table, apply_position_deltas, qualification_status
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 
@@ -150,7 +149,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Collect WC 2026 data for a date")
     parser.add_argument("--date", required=True, type=_parse_date, help="YYYY-MM-DD")
     args = parser.parse_args()
-    sys.exit(run(args.date))
+
+    from app.logging_config import configure_logging, stop_logging
+
+    configure_logging()
+    try:
+        rc = run(args.date)
+    finally:
+        stop_logging()  # flush before this short-lived process exits
+    sys.exit(rc)
 
 
 if __name__ == "__main__":

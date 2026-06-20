@@ -136,6 +136,31 @@ export interface StandingsSnapshot {
   groups: GroupStandings[];
 }
 
+export interface LogEvent {
+  id: number;
+  ts: string;
+  level: string;
+  source: string;
+  message: string;
+  context: Record<string, unknown> | null;
+  run_id: string | null;
+}
+
+export interface LogPage {
+  items: LogEvent[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface LogQuery {
+  level?: string;
+  q?: string;
+  source?: string;
+  limit?: number;
+  offset?: number;
+}
+
 const NO_STORE = { cache: "no-store" } as const;
 
 async function apiFetch<T>(path: string): Promise<T | null> {
@@ -188,4 +213,20 @@ export async function getStars(): Promise<StarRow[]> {
 
 export async function getTournamentSummary(): Promise<TournamentSummary | null> {
   return apiFetch<TournamentSummary>("/api/tournament/summary");
+}
+
+// Unlike the other helpers, this throws on upstream failure so the same-origin
+// proxy can return a non-200 and the console's error state can engage (rather
+// than silently rendering an empty page).
+export async function getLogs(params: LogQuery = {}): Promise<LogPage> {
+  const qs = new URLSearchParams();
+  if (params.level) qs.set("level", params.level);
+  if (params.q) qs.set("q", params.q);
+  if (params.source) qs.set("source", params.source);
+  if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
+  const query = qs.toString();
+  const res = await fetch(`${API_BASE}/api/logs${query ? `?${query}` : ""}`, NO_STORE);
+  if (!res.ok) throw new Error(`logs upstream ${res.status}`);
+  return res.json() as Promise<LogPage>;
 }
