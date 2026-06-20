@@ -15,6 +15,15 @@ export interface BriefDetail {
   created_at: string | null;
 }
 
+export interface RecentResult {
+  outcome: "W" | "D" | "L";
+  home_team: string | null;
+  away_team: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  kickoff_utc: string | null;
+}
+
 export interface StandingRow {
   position: number | null;
   prev_position: number | null;
@@ -29,6 +38,7 @@ export interface StandingRow {
   points: number | null;
   qualification: string | null;
   logo?: string | null;
+  recent_results?: RecentResult[];
 }
 
 export interface FixtureRow {

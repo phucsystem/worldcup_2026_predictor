@@ -109,6 +109,87 @@ body {
   color: #4D8BFF;
 }
 
+/* ---- ResultChip (recent-form pills) ---- */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.result-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #13294F;
+  border: 1px solid #1E3157;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #FFFFFF;
+}
+.result-chip .rc-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #06121f;
+}
+.result-chip.win .rc-letter { background: #2BD37E; }
+.result-chip.draw .rc-letter { background: #F4B740; }
+.result-chip.loss .rc-letter { background: #FF5A5A; }
+
+/* ---- Sparkline (recent-form line) ---- */
+.sparkline { display: block; }
+.sparkline polyline {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawLine 0.8s ease forwards;
+}
+.sparkline circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: popDot 0.25s ease forwards;
+}
+.sparkline circle:nth-of-type(1) { animation-delay: 0.5s; }
+.sparkline circle:nth-of-type(2) { animation-delay: 0.62s; }
+.sparkline circle:nth-of-type(3) { animation-delay: 0.74s; }
+.sparkline circle:nth-of-type(4) { animation-delay: 0.86s; }
+.sparkline circle:nth-of-type(5) { animation-delay: 0.98s; }
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes popDot {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ---- SkeletonCard (loading state) ---- */
+.skeleton-card {
+  border: 1px solid #1E3157;
+  border-radius: 12px;
+  background: #0A1B3D;
+  padding: 1.5rem;
+}
+.skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #13294F 25%, #1E3157 50%, #13294F 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  margin-bottom: 0.75rem;
+}
+.skeleton-line:last-child { margin-bottom: 0; }
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
 /* focus-visible ring for all interactive elements */
 :focus-visible {
   outline: 2px solid #4D8BFF;
@@ -121,4 +202,7 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  .sparkline polyline { stroke-dashoffset: 0 !important; animation: none !important; }
+  .sparkline circle { opacity: 1 !important; animation: none !important; }
+  .skeleton-line { animation: none; }
 }

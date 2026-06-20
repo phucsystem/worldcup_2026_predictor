@@ -69,7 +69,7 @@ export default async function StandingsPage() {
           subtext="Check back after the first group stage matches."
         />
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1">
           {snapshot.groups.map((g) => (
             <StandingsTable key={g.group_name} groupName={g.group_name} rows={g.rows} />
           ))}
