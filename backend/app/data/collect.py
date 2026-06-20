@@ -16,7 +16,13 @@ from datetime import date
 
 from app.config import settings
 from app.data.api_football import APIFootballClient
-from app.data.repository import make_session_factory, upsert_matches, upsert_standings_snapshot
+from app.data.repository import (
+    make_session_factory,
+    upsert_matches,
+    upsert_standings_snapshot,
+    upsert_teams,
+    upsert_top_scorers,
+)
 from app.data.standings_math import compute_group_table, apply_position_deltas, qualification_status
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -36,11 +42,13 @@ def run(target_date: date) -> int:
     session_factory = make_session_factory()
 
     try:
-        # Group membership comes from the standings endpoint (structural);
-        # the table numbers below are still computed in Python from results.
-        log.info("Fetching team->group map + fixtures (league=%s season=%s)",
+        # Team metadata (incl. crest logos + group) comes from the standings
+        # endpoint (structural); the table numbers below are still computed in
+        # Python from results.
+        log.info("Fetching teams + fixtures (league=%s season=%s)",
                  client._league_id, client._season)
-        team_group = client.team_group_map()
+        teams = client.get_teams()
+        team_group = {t.name: t.group_name for t in teams if t.group_name}
         # Fetch the full tournament-to-date fixture set (not just one day) so the
         # computed standings snapshot is cumulative and correct, not single-day.
         matches = client.get_fixtures()
@@ -89,6 +97,23 @@ def run(target_date: date) -> int:
         except Exception as exc:
             log.error("Failed to upsert standings: %s", exc)
             return 1
+
+        try:
+            upsert_teams(session, teams)
+            log.info("Upserted %d teams (logos)", len(teams))
+        except Exception as exc:
+            log.error("Failed to upsert teams: %s", exc)
+            return 1
+
+        # Top scorers are a nice-to-have enrichment (1 extra API call). A failure
+        # here (e.g. plan/season without topscorers access) must not abort the
+        # whole collect — log and continue.
+        try:
+            scorers = client.get_top_scorers()
+            upsert_top_scorers(session, client._season, scorers)
+            log.info("Upserted %d top scorers (season %s)", len(scorers), client._season)
+        except Exception as exc:
+            log.warning("Top scorers enrichment skipped: %s", exc)
 
     log.info("Collection complete for %s", target_date)
     return 0

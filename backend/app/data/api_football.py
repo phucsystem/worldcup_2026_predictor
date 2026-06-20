@@ -4,7 +4,7 @@ from typing import Any
 import httpx
 
 from app.config import settings
-from app.data.models import Match, StandingRow
+from app.data.models import Match, StandingRow, Team, TopScorer
 from app.data.source import DataSource
 
 # WC 2026 identifiers on API-Football
@@ -118,21 +118,68 @@ class APIFootballClient(DataSource):
         data = self._get("/fixtures", params)
         return [_map_fixture(r) for r in data.get("response", [])]
 
-    def team_group_map(self) -> dict[str, str]:
-        """team name -> group name ('Group A'…), sourced from the standings
-        endpoint. Group membership is structural metadata; the table NUMBERS are
-        still computed deterministically in Python from match results."""
-        return {row.team: row.group_name for row in self.get_standings() if row.team}
-
-    def get_standings(self) -> list[StandingRow]:
-        data = self._get(
+    def _standings_response(self) -> dict:
+        return self._get(
             "/standings",
             {"league": self._league_id, "season": self._season},
         )
-        rows: list[StandingRow] = []
-        for league_block in data.get("response", []):
+
+    def get_teams(self) -> list[Team]:
+        """National team metadata (id, name, crest logo, group) from the
+        standings payload — no extra API call beyond the standings fetch. Group
+        membership is structural; table NUMBERS stay Python-computed from results."""
+        teams: list[Team] = []
+        for league_block in self._standings_response().get("response", []):
             for group in league_block.get("league", {}).get("standings", []):
-                # group is a list of team rows; group name comes from first entry's "group"
+                for entry in group:
+                    team = entry.get("team", {})
+                    name = team.get("name")
+                    team_id = team.get("id")
+                    # Skip rows missing an id/name: team_id is the PK, so coalescing
+                    # to 0 would silently collapse multiple teams onto one row.
+                    if not name or not team_id:
+                        continue
+                    teams.append(
+                        Team(
+                            team_id=team_id,
+                            name=name,
+                            logo_url=team.get("logo"),
+                            group_name=entry.get("group"),
+                        )
+                    )
+        return teams
+
+    def get_top_scorers(self) -> list[TopScorer]:
+        """Tournament top scorers (1 API call). Free plan: season 2022."""
+        data = self._get(
+            "/players/topscorers",
+            {"league": self._league_id, "season": self._season},
+        )
+        scorers: list[TopScorer] = []
+        for entry in data.get("response", []):
+            player = entry.get("player", {})
+            player_id = player.get("id")
+            if not player_id:
+                continue  # player_id is half the unique key; skip rather than collapse to 0
+            stats = entry.get("statistics") or [{}]
+            first = stats[0] if stats else {}
+            goals = (first.get("goals") or {}).get("total")
+            scorers.append(
+                TopScorer(
+                    player_id=player_id,
+                    name=player.get("name", ""),
+                    photo_url=player.get("photo"),
+                    team=(first.get("team") or {}).get("name"),
+                    goals=goals or 0,
+                )
+            )
+        return scorers
+
+    def get_standings(self) -> list[StandingRow]:
+        rows: list[StandingRow] = []
+        for league_block in self._standings_response().get("response", []):
+            for group in league_block.get("league", {}).get("standings", []):
+                # group is a list of team rows; group name comes from each entry's "group"
                 for entry in group:
                     group_name = entry.get("group", "")
                     rows.append(_map_standing_row(entry, group_name))

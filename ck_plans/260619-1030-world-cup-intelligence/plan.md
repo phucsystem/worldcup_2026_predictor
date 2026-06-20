@@ -31,9 +31,13 @@ All standings / qualification arithmetic computed **in Python** (deterministic, 
 | 4 | [Backend API & Frontend Slice](phase-04-backend-api-frontend-slice.md) | ✅ done | 3 |
 | 5 | [Scheduling & Reliability](phase-05-scheduling-reliability.md) | ✅ done | 3, 4 |
 | 6 | [Frontend Polish & Azure Deploy](phase-06-frontend-polish-azure-deploy.md) | 🟡 code+IaC done, live Azure deploy pending (user creds) | 4, 5 |
+| 7 | [Fixtures & Data Enrichment](phase-07-fixtures-data-enrichment.md) | ✅ code done (live enrichment needs API key) | 2, 4 |
+| 8 | [Frontend Prototype Parity](phase-08-frontend-prototype-parity.md) | pending | 7 |
 
 ## Execution strategy
 Phases 1→4 = the **vertical slice** (manual-trigger brief end-to-end + visible on site). Phase 5 automates it. Phase 6 polishes + ships to Azure. Ship-fast: get a *correct brief* visible by end of Phase 4 before investing in automation/polish.
+
+**Phases 7–8 (prototype parity):** close the gap between the live site and `prototypes/` — the two unbuilt screens (Fixtures, Changelog), the 5-link nav, and data-backed visual polish (team flags/logos, countdown clocks, live badges, "Up next", real top-scorer "Stars to watch"). Phase 7 adds the data + API; Phase 8 builds the UI. Source: `prototypes/` (s05, s06 + enhancements), `prototypes/README.md`.
 
 ## Key dependencies
 - API-Football API key (free tier) — needed Phase 2.
@@ -92,3 +96,18 @@ Design doc: `ck_plans/reports/brainstorm-design-260619-1018-world-cup-intelligen
 2. `DEEPSEEK_API_KEY` — to generate a real brief (`python -m app.pipeline.run --date YYYY-MM-DD`).
 3. Azure subscription + `az` — live deploy via `infra/*.bicep` (IaC written, validated by review only; `az bicep build` recommended before first deploy).
 4. Not committed to git — awaiting user approval.
+
+### Session 3 — 2026-06-20 (`/cook phase-07 --auto`)
+
+**Phase 7 (Fixtures & Data Enrichment) implemented — backend only.** 46/46 backend tests pass (13 new shaping tests); migration 0003 applies + reverses on local Postgres; all 3 new endpoints + back-compat standings return 200 via TestClient.
+
+**Delivered**
+- Migration 0003: `teams`, `top_scorers` tables + new `matches.stage` column (stage was previously unpersisted — required to group the knockout bracket by round).
+- Collector: `get_teams()` (team crests/logos extracted from the existing standings fetch — **no extra API call**), `get_top_scorers()` (1 extra call, non-fatal on error); `upsert_teams` / `upsert_top_scorers` (idempotent); `matches.stage` now persisted. Refactored `team_group_map()` → `get_teams()` (behavior-preserving, confirmed by review).
+- API: `/api/fixtures/upcoming` (day-grouped + `up_next`), `/api/fixtures/knockout` (bracket by round, empty-stated), `/api/stars` (ordered by goals); standings rows gain additive `logo`. Shaping logic split into pure, unit-tested functions.
+
+**Code review (mandatory):** no BLOCKER/HIGH. Applied M1 (guard missing team/player `id` → skip instead of collapsing to key 0) + L1 (stale `stage` "not persisted" comment). L2 (season-override divergence for `/stars`) left as observational — default path is correct.
+
+**Pending live collect (needs `API_FOOTBALL_KEY`, season 2022):** populated `teams`/`top_scorers` rows + knockout bracket data. Endpoints + shaping verified against empty DB; data-dependent criteria deferred (same as Phases 2–3).
+
+**Next:** Phase 8 (frontend prototype parity) consumes these endpoints. Not committed to git — awaiting user approval.

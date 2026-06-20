@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.data.repository import standings_table, make_engine, make_session_factory
+from app.data.repository import standings_table, teams_table, make_engine, make_session_factory
 
 router = APIRouter(prefix="/api/standings", tags=["standings"])
 
@@ -33,6 +33,7 @@ class StandingRow(BaseModel):
     gd: int | None
     points: int | None
     qualification: str | None
+    logo: str | None = None
 
 
 class GroupStandings(BaseModel):
@@ -58,6 +59,13 @@ def get_standings(date: Optional[date] = None):
             .where(standings_table.c.snapshot_date == snapshot_date)
             .order_by(standings_table.c.group_name, standings_table.c.position)
         ).fetchall()
+        logos = {
+            t.name: t.logo_url
+            for t in session.execute(
+                select(teams_table.c.name, teams_table.c.logo_url)
+            ).fetchall()
+            if t.logo_url
+        }
     finally:
         session.close()
 
@@ -76,6 +84,7 @@ def get_standings(date: Optional[date] = None):
             gd=r.gd,
             points=r.points,
             qualification=r.qualification,
+            logo=logos.get(r.team),
         )
         groups.setdefault(r.group_name, []).append(row)
 
