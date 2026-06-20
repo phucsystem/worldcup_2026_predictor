@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Frontend Prototype Parity"
-status: pending
+status: done (code complete; real fixtures/stars data needs API_FOOTBALL_KEY)
 priority: P2
 effort: "2-3d"
 dependencies: [7]
@@ -57,19 +57,24 @@ Close the gap between the live Next.js site and `prototypes/`: build the two unb
 7. Apply flags to standings + brief; a11y + reduced-motion pass.
 
 ## Todo List
-- [ ] 5-link nav with active state, mobile-friendly
-- [ ] `/fixtures` upcoming (day-grouped, countdown, flags) + knockout bracket + empty states
-- [ ] `/changelog` renders CHANGELOG.md (sanitized)
-- [ ] Home "Up next" + "Stars to watch" (real photos w/ fallback)
-- [ ] Flags/logos on standings + result chips
-- [ ] `npm run build` clean with backend down; `tsc --noEmit` clean
+- [x] 5-link nav with active state, mobile-friendly — `NavLinks` client comp (usePathname), `aria-current`
+- [x] `/fixtures` upcoming (day-grouped, countdown, flags) + knockout bracket + empty states
+- [x] `/changelog` renders CHANGELOG.md (sanitized) — see deviation note
+- [x] Home "Up next" + "Stars to watch" (real photos w/ fallback)
+- [x] Flags/logos on standings; result chips **N/A** — live `brief-card` has no match-result chips (only title/summary); no match data to flag without inventing it
+- [x] `npm run build` clean with backend down; type-check clean (next build type-checks)
 
 ## Success Criteria
-- [ ] All 6 prototype screens have a live route; nav matches prototype.
-- [ ] Fixtures shows real upcoming + knockout (2022 demo data); countdowns tick; LIVE at zero.
-- [ ] Stars to watch shows real top scorers with photos (fallback on load error).
-- [ ] Changelog renders from `CHANGELOG.md`.
-- [ ] Responsive + a11y (color never sole signal; reduced-motion respected); body never scrolls horizontally.
+- [x] All 6 prototype screens have a live route; nav matches prototype (Today/Standings/Fixtures/Archive/Changelog).
+- [ ] Fixtures shows real upcoming + knockout (2022 demo data); countdowns tick; LIVE at zero. — countdown/LIVE logic + empty states verified; **real data needs `API_FOOTBALL_KEY` + collect**
+- [ ] Stars to watch shows real top scorers with photos (fallback on load error). — component + fallback verified; **real data needs collect**
+- [x] Changelog renders from `CHANGELOG.md`.
+- [x] Responsive + a11y (color never sole signal; reduced-motion respected); body never scrolls horizontally.
+
+> **Deviations / notes from implementation:**
+> 1. **Changelog source location:** plan said repo-root `CHANGELOG.md`, but the frontend Docker build context is `frontend/` only (root file unreachable in the container; Next standalone ships only `public/` + traced files). Moved to **`frontend/public/CHANGELOG.md`** — single source, readable in `next dev` and shipped by the existing Dockerfile `COPY public`. `/changelog` reads it via `process.cwd()/public/CHANGELOG.md`.
+> 2. **Hydration:** `fixtures-view` day headers are formatted as a UTC calendar date (noon-UTC anchor, `timeZone: "UTC"`) so SSR and client agree regardless of server timezone (caught in code review).
+> 3. **Known limitation (acceptable):** knockout "winner" bold styling uses 90-min score; a tie decided on penalties (equal scores) bolds neither — revisit if the API exposes a winner/penalty field.
 
 ## Risk Assessment
 - External images may 404/offline → `onerror` fallback mandatory (no broken images).

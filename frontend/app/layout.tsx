@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import "./globals.css";
+import NavLinks from "@/components/nav-links";
 
 export const metadata: Metadata = {
   title: "WC26 Intelligence",
@@ -22,17 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               WC26 Intelligence
             </span>
-            <div className="flex gap-5 text-sm font-medium whitespace-nowrap" style={{ color: "#A9B6D4" }}>
-              <Link href="/" className="hover:text-white transition-colors" style={{ color: "inherit" }}>
-                Today
-              </Link>
-              <Link href="/standings" className="hover:text-white transition-colors" style={{ color: "inherit" }}>
-                Standings
-              </Link>
-              <Link href="/archive" className="hover:text-white transition-colors" style={{ color: "inherit" }}>
-                Archive
-              </Link>
-            </div>
+            <NavLinks />
           </nav>
         </header>
 

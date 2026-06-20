@@ -1,0 +1,35 @@
+# Changelog
+
+What's shipping on the World Cup 2026 Intelligence platform. Newest first.
+
+## v0.4.0 — 19 Jun 2026
+
+- **Added** — Fixtures page: upcoming matches by day with kickoff times in Australia/Melbourne, plus a projected knockout bracket (Round of 16 → Final).
+- **Added** — Top scorers ("Stars to watch") and national team crests across standings and fixtures.
+- **Added** — This changelog — a public progress log so anyone can follow what's shipping.
+- **Improved** — Top navigation now scrolls cleanly on mobile as new sections are added.
+
+## v0.3.0 — 18 Jun 2026
+
+- **Added** — Next.js SSR site: daily brief list, brief detail, standings tables, and archive are live.
+- **Improved** — Dark sports-dashboard design system applied across all screens (FIFA navy + electric blue).
+- **Fixed** — Standings columns now use tabular figures so numbers align across every group.
+
+## v0.2.0 — 17 Jun 2026
+
+- **Added** — Automated daily publishing: Azure Container Apps Job runs the pipeline on a 7:00 AM AEST cron, no manual step.
+- **Added** — Run logging in `agent_runs`: per-node timings, token counts, cost, and errors.
+- **Improved** — Re-runs are now idempotent — re-triggering a day never duplicates a brief.
+
+## v0.1.0 — 16 Jun 2026
+
+- **Milestone** — First end-to-end brief generated and stored in the database — the full chain works.
+- **Added** — LangGraph pipeline: Collector → Analyst → Editor. The LLM narrates only; it never does table math.
+- **Added** — Deterministic standings math computed in Python (points, goal difference, position deltas, qualification).
+- **Fixed** — Daylight-saving handling for the 7:00 AM Australia/Melbourne schedule.
+
+## On the roadmap
+
+- Premium model path (GPT-5 / Claude) behind the same provider interface.
+- Prediction agent — projected qualification odds per group.
+- Match-level fixture detail with key events.

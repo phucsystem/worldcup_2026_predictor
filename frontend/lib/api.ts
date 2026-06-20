@@ -28,6 +28,48 @@ export interface StandingRow {
   gd: number | null;
   points: number | null;
   qualification: string | null;
+  logo?: string | null;
+}
+
+export interface FixtureRow {
+  fixture_id: number;
+  home_team: string | null;
+  away_team: string | null;
+  home_logo: string | null;
+  away_logo: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  status: string | null;
+  stage: string | null;
+  group_name: string | null;
+  kickoff_utc: string | null;
+}
+
+export interface FixtureDay {
+  date: string;
+  fixtures: FixtureRow[];
+}
+
+export interface UpcomingFixtures {
+  up_next: FixtureRow | null;
+  days: FixtureDay[];
+}
+
+export interface KnockoutRound {
+  round: string;
+  ties: FixtureRow[];
+}
+
+export interface KnockoutBracket {
+  rounds: KnockoutRound[];
+}
+
+export interface StarRow {
+  player_id: number;
+  name: string;
+  team: string | null;
+  goals: number;
+  photo_url: string | null;
 }
 
 export interface GroupStandings {
@@ -67,4 +109,21 @@ export async function getBrief(date: string): Promise<BriefDetail | null> {
 export async function getStandings(date?: string): Promise<StandingsSnapshot | null> {
   const qs = date ? `?date=${date}` : "";
   return apiFetch<StandingsSnapshot>(`/api/standings${qs}`);
+}
+
+export async function getUpcomingFixtures(): Promise<UpcomingFixtures> {
+  return (
+    (await apiFetch<UpcomingFixtures>("/api/fixtures/upcoming")) ?? {
+      up_next: null,
+      days: [],
+    }
+  );
+}
+
+export async function getKnockout(): Promise<KnockoutBracket> {
+  return (await apiFetch<KnockoutBracket>("/api/fixtures/knockout")) ?? { rounds: [] };
+}
+
+export async function getStars(): Promise<StarRow[]> {
+  return (await apiFetch<StarRow[]>("/api/stars")) ?? [];
 }

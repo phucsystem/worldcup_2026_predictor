@@ -32,7 +32,7 @@ All standings / qualification arithmetic computed **in Python** (deterministic, 
 | 5 | [Scheduling & Reliability](phase-05-scheduling-reliability.md) | ✅ done | 3, 4 |
 | 6 | [Frontend Polish & Azure Deploy](phase-06-frontend-polish-azure-deploy.md) | 🟡 code+IaC done, live Azure deploy pending (user creds) | 4, 5 |
 | 7 | [Fixtures & Data Enrichment](phase-07-fixtures-data-enrichment.md) | ✅ code done (live enrichment needs API key) | 2, 4 |
-| 8 | [Frontend Prototype Parity](phase-08-frontend-prototype-parity.md) | pending | 7 |
+| 8 | [Frontend Prototype Parity](phase-08-frontend-prototype-parity.md) | ✅ code done (real fixtures/stars data needs API key) | 7 |
 
 ## Execution strategy
 Phases 1→4 = the **vertical slice** (manual-trigger brief end-to-end + visible on site). Phase 5 automates it. Phase 6 polishes + ships to Azure. Ship-fast: get a *correct brief* visible by end of Phase 4 before investing in automation/polish.
@@ -111,3 +111,21 @@ Design doc: `ck_plans/reports/brainstorm-design-260619-1018-world-cup-intelligen
 **Pending live collect (needs `API_FOOTBALL_KEY`, season 2022):** populated `teams`/`top_scorers` rows + knockout bracket data. Endpoints + shaping verified against empty DB; data-dependent criteria deferred (same as Phases 2–3).
 
 **Next:** Phase 8 (frontend prototype parity) consumes these endpoints. Not committed to git — awaiting user approval.
+
+### Session 4 — 2026-06-20 (`/cook phase-08`)
+
+**Phase 8 (Frontend Prototype Parity) implemented — frontend only.** `npm run build` clean (all 6 routes compile); runtime SSR smoke test: `/`, `/fixtures`, `/changelog`, `/standings` all 200 with backend DOWN (graceful empty states); 5-link nav + fixtures toggle render server-side; `/changelog` renders markdown.
+
+**Delivered**
+- 8 components: `team-flag`, `countdown`, `live-badge`, `star-card`, `fixture-row`, `knockout-bracket` (+ `nav-links`, `fixtures-view`). Client where needed (hooks/onError/usePathname); presentational ones directiveless.
+- Pages: `/fixtures` (server fetch → client `FixturesView` toggle: Upcoming day-grouped + Knockout bracket, empty-stated), `/changelog` (reads `frontend/public/CHANGELOG.md`, sanitized markdown).
+- 5-link nav (Today/Standings/Fixtures/Archive/Changelog) with active-route state; home "Up next" (countdown) + "Stars to watch" strip; team crests on standings.
+- `lib/api.ts`: fixtures/knockout/stars fetchers + types; additive `StandingRow.logo`.
+
+**Code review (mandatory):** no BLOCKER/HIGH. Fixed M1 (client-component date hydration mismatch → format day headers as UTC calendar date). L1 (penalty/level-score winner styling) documented as acceptable limitation.
+
+**Deviation:** changelog moved repo-root → `frontend/public/CHANGELOG.md` (frontend Docker build context is `frontend/` only; root file would render blank in the container). `brief-card` result-chip flags = N/A (no match-result data in the live brief summary).
+
+**Pending live data (needs `API_FOOTBALL_KEY`, season 2022):** real upcoming/knockout fixtures + top scorers. All UI, countdowns, fallbacks, and empty states verified against empty/offline API.
+
+**Status:** All 8 phases now code-complete. Remaining work is external-dependency-gated: live data (API keys) + Azure deploy (Phase 6, user creds). Phase 7 committed (`ba976d1c`); Phase 8 awaiting commit approval.

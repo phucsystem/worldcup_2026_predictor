@@ -2,6 +2,7 @@ import type { StandingRow } from "@/lib/api";
 import PositionDelta from "@/components/position-delta";
 import QualificationBadge from "@/components/qualification-badge";
 import type { QualificationStatus } from "@/components/qualification-badge";
+import TeamFlag from "@/components/team-flag";
 
 interface Props {
   groupName: string;
@@ -65,7 +66,10 @@ export default function StandingsTable({ groupName, rows }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3 font-medium" style={{ color: "#FFFFFF" }}>
-                    {row.team ?? "—"}
+                    <span className="flex items-center gap-2">
+                      <TeamFlag team={row.team} logo={row.logo} size={18} />
+                      {row.team ?? "—"}
+                    </span>
                   </td>
                   <td className="text-right px-3 py-3" style={{ color: "#A9B6D4" }}>{row.played ?? 0}</td>
                   <td className="text-right px-3 py-3" style={{ color: "#2BD37E" }}>{row.won ?? 0}</td>
