@@ -76,6 +76,16 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 `migrate` runs Alembic once, then backend/scheduler/frontend/caddy start.
 
+> **GHCR images must exist and be pullable first.** They're built by the first
+> successful `main` CI run. New GHCR packages are **private by default**, so a plain
+> `docker compose pull` returns `error from registry: denied`. After the first push,
+> make both packages public once: GitHub → your profile → **Packages** →
+> `wc2026-backend` / `wc2026-frontend` → Package settings → **Change visibility → Public**.
+> (Keep them private instead? Then `docker login ghcr.io` with a read-only PAT on the VM.)
+>
+> For purely **local** testing you don't need GHCR at all — build locally:
+> `docker compose up --build` (base + dev override, no prod overlay).
+
 ## Deploys
 Push to `main` → CI runs tests → builds & pushes `ghcr.io/phucsystem/wc2026-{backend,frontend}`
 → SSHes to the VM and runs `git pull` + `compose pull` + `up -d`. PRs run tests only.
