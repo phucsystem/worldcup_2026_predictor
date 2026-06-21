@@ -93,7 +93,17 @@ describe("goalscorers", () => {
       ev({ minute: 78, side: "home", player: "Vinícius" }),
     ];
     const out = goalscorers(events);
-    expect(out).toEqual([{ side: "home", player: "Vinícius", minutes: [51, 78] }]);
+    expect(out).toEqual([
+      {
+        side: "home",
+        player: "Vinícius",
+        minutes: [51, 78],
+        goals: [
+          { minute: 51, detail: "Normal Goal", assist: null },
+          { minute: 78, detail: "Normal Goal", assist: null },
+        ],
+      },
+    ]);
   });
 
   it("splits by side and ignores non-goal events", () => {
@@ -103,8 +113,18 @@ describe("goalscorers", () => {
       ev({ minute: 39, type: "Card", detail: "Yellow Card", side: "home", player: "X" }),
     ];
     const out = goalscorers(events);
-    expect(out).toContainEqual({ side: "away", player: "Mitrović", minutes: [23] });
-    expect(out).toContainEqual({ side: "home", player: "Rodrygo", minutes: [64] });
+    expect(out).toContainEqual({
+      side: "away",
+      player: "Mitrović",
+      minutes: [23],
+      goals: [{ minute: 23, detail: "Normal Goal", assist: null }],
+    });
+    expect(out).toContainEqual({
+      side: "home",
+      player: "Rodrygo",
+      minutes: [64],
+      goals: [{ minute: 64, detail: "Normal Goal", assist: null }],
+    });
     expect(out).toHaveLength(2);
   });
 });

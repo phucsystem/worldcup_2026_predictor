@@ -2,6 +2,10 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.7.1 — 22 Jun 2026
+
+- **Fixed** — Goalscorer data tests aligned with the new per-goal detail, restoring a green build on main.
+
 ## v0.7.0 — 22 Jun 2026
 
 - **Added** — Goalscorers cards on match pages: colored team-initial avatars, inline flags, and goal minutes with penalty/own-goal detail and assists.
