@@ -8,13 +8,6 @@ Hourly AI-generated FIFA WC 2026 intelligence pipeline.
 
 ![Home dashboard](ck_docs/screenshots/home.png)
 
-**Standings** (all 12 groups — deterministic tables + recent-form sparklines) and **Fixtures**:
-
-<p>
-  <img src="ck_docs/screenshots/standings.png" width="49%" alt="Standings — 12 group tables with form" />
-  <img src="ck_docs/screenshots/fixtures.png" width="49%" alt="Fixtures — upcoming matches by day" />
-</p>
-
 ## Architecture
 
 ![World Cup 2026 Intelligence — System Architecture](ck_docs/diagrams/architecture.png)
