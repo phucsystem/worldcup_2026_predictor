@@ -8,71 +8,40 @@
 
 ## 1. Architecture Diagram
 
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ Azure VM (Standard_B2als_v2, 2 vCPU / 4 GiB, australiaeast)         │
-│ Docker Compose Stack (base + prod overlay)                            │
-│                                                                        │
-│ ┌─────────────────────────────────────────────────────────────────┐  │
-│ │ Caddy (Port 443/80) — TLS reverse proxy, auto Let's Encrypt    │  │
-│ │ Routes: * → frontend:3000 (public surface)                      │  │
-│ │         /api/* rejected (backend internal-only)                 │  │
-│ └─────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│ ┌─────────────────────────────────────────────────────────────────┐  │
-│ │ Next.js 16 Frontend (Port 3000 internal)                        │  │
-│ │ ├─ App Router: /, /brief/[date], /standings, /fixtures, ...    │  │
-│ │ ├─ Route handlers: /api/live, /api/logs (→ backend)            │  │
-│ │ ├─ React components, Tailwind CSS, rehype-sanitize markdown    │  │
-│ │ └─ env: API_BASE=http://backend:8000 (server-side only)        │  │
-│ └─────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│ ┌─────────────────────────────────────────────────────────────────┐  │
-│ │ FastAPI Backend (Port 8000 internal)                            │  │
-│ │ ├─ Routers: briefs, fixtures, standings, tournament, stars      │  │
-│ │ ├─ Admin endpoints: /api/admin/collect, /api/admin/run-brief   │  │
-│ │ ├─ Logs endpoint: /api/logs (filters, pagination)              │  │
-│ │ ├─ Health: /health                                              │  │
-│ │ └─ CORS: localhost:3000 (dev) or disabled (prod)               │  │
-│ └─────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│ ┌─────────────────────────────────────────────────────────────────┐  │
-│ │ Scheduler (runs in backend container)                           │  │
-│ │ ├─ Interval: Every 6 hours (SCHEDULER_INTERVAL_SECONDS)         │  │
-│ │ ├─ DST-aware: Fires once/day at 7:00 AM AEST                   │  │
-│ │ └─ Calls: POST /api/admin/run-brief (internal via localhost)   │  │
-│ └─────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│ ┌─────────────────────────────────────────────────────────────────┐  │
-│ │ Live Poller (background process)                                │  │
-│ │ ├─ Monitors fixtures 3 hours post-kickoff                       │  │
-│ │ ├─ Polls API-Football ?live=all every LIVE_POLL_SECONDS (120s)  │  │
-│ │ ├─ Updates match scores/status in-memory and DB                 │  │
-│ │ └─ Sleeps IDLE_SLEEP_SECONDS (300s) between polling cycles     │  │
-│ └─────────────────────────────────────────────────────────────────┘  │
-│                                                                        │
-│ ┌─────────────────────────────────────────────────────────────────┐  │
-│ │ PostgreSQL 16 (Port 5432 internal)                              │  │
-│ │ ├─ Tables: matches, standings, articles, teams, top_scorers     │  │
-│ │ ├─ Tables: agent_runs, app_logs                                 │  │
-│ │ ├─ Alembic migrations (0001–0006)                               │  │
-│ │ └─ Seed data: 12-group skeleton on migrate                      │  │
-│ └─────────────────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Internet([Public Internet])
 
-External APIs:
-├─ API-Football (v3.football.api-sports.io)
-│  ├─ GET /fixtures?league=1&season=2026 (or 2022 for demo)
-│  ├─ GET /standings?league=1&season=2026
-│  ├─ GET /fixtures?live=all (live score updates)
-│  └─ GET /fixtures/statistics?fixture={id} (per-team match stats: possession, shots, xG, corners)
-│
-├─ DeepSeek API (api.deepseek.com)
-│  └─ POST /chat/completions (LLM brief generation + match verdicts)
-│
-└─ Azure / GitHub
-   └─ Container Registry (ghcr.io/phucsystem/wc2026-*)
-   └─ GitHub Actions CI/CD (test, build, deploy)
+    subgraph VM["Azure VM · Standard_B2als_v2 · 2 vCPU / 4 GiB · australiaeast — Docker Compose (base + prod overlay)"]
+        Caddy["<b>Caddy</b> (:443 / :80)<br/>TLS reverse proxy · auto Let's Encrypt<br/>* → frontend:3000 · /api/* rejected"]
+
+        Frontend["<b>Next.js 16 Frontend</b> (:3000 internal)<br/>App Router: /, /brief/[date], /standings, /fixtures<br/>Route handlers: /api/live, /api/logs → backend<br/>Tailwind CSS · rehype-sanitize markdown<br/>env: API_BASE=http://backend:8000 (server-side only)"]
+
+        Backend["<b>FastAPI Backend</b> (:8000 internal)<br/>Routers: briefs, fixtures, standings, tournament, stars<br/>Admin: /api/admin/collect, /api/admin/run-brief<br/>Logs: /api/logs · Health: /health · CORS dev-only"]
+
+        Scheduler["<b>Scheduler</b> (in backend container)<br/>Interval: every 6h (SCHEDULER_INTERVAL_SECONDS)<br/>DST-aware: fires once/day at 7:00 AM AEST<br/>Calls POST /api/admin/run-brief (localhost)"]
+
+        Poller["<b>Live Poller</b> (background process)<br/>Monitors fixtures 3h post-kickoff<br/>Polls API-Football ?live=all every 120s<br/>Updates scores/status · idle sleep 300s"]
+
+        DB[("<b>PostgreSQL 16</b> (:5432 internal)<br/>matches, standings, articles, teams, top_scorers<br/>agent_runs, app_logs<br/>Alembic migrations 0001–0007 · 12-group seed")]
+    end
+
+    subgraph Ext["External APIs"]
+        APIFootball["<b>API-Football</b> (v3.football.api-sports.io)<br/>/fixtures?league=1&season=2026<br/>/standings · /fixtures?live=all<br/>/fixtures/statistics?fixture={id}"]
+        DeepSeek["<b>DeepSeek API</b> (api.deepseek.com)<br/>POST /chat/completions<br/>LLM briefs + match verdicts"]
+        GitHub["<b>Azure / GitHub</b><br/>Container Registry ghcr.io/phucsystem/wc2026-*<br/>GitHub Actions CI/CD"]
+    end
+
+    Internet -->|HTTPS| Caddy
+    Caddy -->|HTTP| Frontend
+    Frontend -->|server-side| Backend
+    Scheduler -->|run-brief| Backend
+    Backend --> DB
+    Poller --> DB
+    Backend --> APIFootball
+    Poller --> APIFootball
+    Backend --> DeepSeek
+    GitHub -.deploy.-> VM
 ```
 
 ---
@@ -193,7 +162,15 @@ cost_usd: float                  # Total API cost
 error: str | None                # Error message if failed
 ```
 
-**Execution:** START → Collector → Analyst → Editor → END
+**Execution:**
+
+```mermaid
+flowchart LR
+    START((START)) --> Collector["<b>Collector</b><br/>Pure Python · no LLM<br/>fixtures, standings,<br/>computed_facts"]
+    Collector --> Analyst["<b>Analyst</b><br/>DeepSeek json_mode<br/>storylines, rankings,<br/>scenarios"]
+    Analyst --> Editor["<b>Editor</b><br/>DeepSeek json_mode<br/>title, summary,<br/>body_md"]
+    Editor --> END((END))
+```
 
 **Persistence:** On success, insert into `articles` table (upsert on brief_date); also persist to `agent_runs` (timing, tokens, cost).
 
@@ -290,73 +267,40 @@ error: str | None                # Error message if failed
 
 ### 3.1 Daily Brief Generation
 
-```
-Scheduler (7:00 AM AEST)
-    ↓
-POST /api/admin/run-brief?date=2026-06-21
-    ↓
-Backend LangGraph Pipeline
-    ├─ Collector Node
-    │  ├─ Fetch fixtures/standings from API-Football or load from DB
-    │  ├─ Compute group tables (Python)
-    │  ├─ Compute qualification (Python)
-    │  └─ Store: matches, standings, computed_facts in state
-    │
-    ├─ Analyst Node
-    │  ├─ Call DeepSeek with computed_facts
-    │  ├─ json_mode → storylines, surprise_teams, power_ranking, etc.
-    │  └─ Store: intelligence in state
-    │
-    └─ Editor Node
-       ├─ Call DeepSeek with intelligence
-       ├─ json_mode → {title, summary, body_md}
-       └─ Store: article in state
-    
-    ↓
-Persist to DB
-    ├─ Upsert articles.brief_date = 2026-06-21
-    └─ Insert agent_runs (timings, tokens, cost)
-    
-    ↓
-Frontend /brief/2026-06-21 reads:
-    ├─ articles.article.title
-    ├─ articles.article.body_md (rendered via react-markdown + rehype-sanitize)
-    └─ Standings table for the date
+```mermaid
+flowchart TB
+    Sched["Scheduler (7:00 AM AEST)"] --> Run["POST /api/admin/run-brief?date=2026-06-21"]
+    Run --> Pipeline
+
+    subgraph Pipeline["Backend LangGraph Pipeline"]
+        direction TB
+        Collector["<b>Collector Node</b><br/>Fetch fixtures/standings (API-Football or DB)<br/>Compute group tables + qualification (Python)<br/>→ matches, standings, computed_facts"]
+        Analyst["<b>Analyst Node</b><br/>Call DeepSeek with computed_facts<br/>json_mode → storylines, surprise_teams, power_ranking<br/>→ intelligence"]
+        Editor["<b>Editor Node</b><br/>Call DeepSeek with intelligence<br/>json_mode → title, summary, body_md<br/>→ article"]
+        Collector --> Analyst --> Editor
+    end
+
+    Pipeline --> Persist["<b>Persist to DB</b><br/>Upsert articles.brief_date<br/>Insert agent_runs (timings, tokens, cost)"]
+    Persist --> Read["<b>Frontend /brief/2026-06-21 reads</b><br/>article.title · article.body_md (react-markdown + rehype-sanitize)<br/>Standings table for the date"]
 ```
 
 ### 3.2 Live Match Tracking
 
-```
-User opens /fixtures/live
-    ↓
-Frontend requests GET /api/live (route handler)
-    ↓
-Backend /api/fixtures/live
-    ├─ Query matches table for in-play fixtures
-    ├─ Order by status + elapsed
-    └─ Return: fixture_id, teams, score, elapsed, status
-    
-    ↓
-LiveMatchCard component:
-    ├─ Poll /api/live every 30s
-    ├─ Interpolate elapsed time locally (elapsed += delta_seconds)
-    └─ Re-render score/time
+```mermaid
+flowchart TB
+    User(["User opens /fixtures/live"]) --> RouteHandler["Frontend GET /api/live (route handler)"]
+    RouteHandler --> BackendLive["<b>Backend /api/fixtures/live</b><br/>Query matches for in-play fixtures<br/>Order by status + elapsed<br/>Return fixture_id, teams, score, elapsed, status"]
+    BackendLive --> Card["<b>LiveMatchCard component</b><br/>Poll /api/live every 30s<br/>Interpolate elapsed locally<br/>Re-render score/time"]
+    Card -.poll 30s.-> RouteHandler
 ```
 
 ### 3.3 Standings Query
 
-```
-User views /standings?date=2026-06-21
-    ↓
-Frontend renders standings table:
-    ├─ GET /api/standings?date=2026-06-21
-    └─ Backend queries standings table for that brief_date
-    
-    ↓
-Display group table:
-    ├─ Rows sorted by position (1–4 per group)
-    ├─ Columns: rank, team, played, W-D-L, points, GD, GF
-    └─ Position delta (↑/↓) from previous date
+```mermaid
+flowchart TB
+    User(["User views /standings?date=2026-06-21"]) --> Fetch["Frontend GET /api/standings?date=2026-06-21"]
+    Fetch --> Backend["Backend queries standings table for that brief_date"]
+    Backend --> Display["<b>Display group table</b><br/>Rows sorted by position (1–4 per group)<br/>Columns: rank, team, played, W-D-L, points, GD, GF<br/>Position delta (↑/↓) from previous date"]
 ```
 
 ---
@@ -386,18 +330,13 @@ Display group table:
 
 ## 5. Deployment Topology
 
-```
-Public Internet
-    ↓ (HTTPS)
-Caddy (Port 443)
-    ↓ (HTTP)
-Next.js (Port 3000, internal)
-    ↓
-[Route handlers] → FastAPI (Port 8000, internal)
-                  ↓
-                PostgreSQL (Port 5432, internal)
-                  ↓
-                Disk (persistent volume)
+```mermaid
+flowchart TB
+    Internet([Public Internet]) -->|HTTPS| Caddy["Caddy (:443)"]
+    Caddy -->|HTTP| Next["Next.js (:3000, internal)"]
+    Next -->|Route handlers| FastAPI["FastAPI (:8000, internal)"]
+    FastAPI --> PG["PostgreSQL (:5432, internal)"]
+    PG --> Disk[("Disk (persistent volume)")]
 ```
 
 **Port Exposure:**

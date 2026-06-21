@@ -32,9 +32,11 @@ def is_brief_time(now_utc: datetime, tz_name: str = "Australia/Melbourne") -> bo
 def main() -> None:
     from app.config import settings
     from app.logging_config import configure_logging, stop_logging
+    from app.observability import configure_tracing
     from app.pipeline.run import run_pipeline
 
     configure_logging()
+    configure_tracing()
 
     try:
         force = os.environ.get("FORCE_RUN", "").strip() == "1" or "--force" in sys.argv

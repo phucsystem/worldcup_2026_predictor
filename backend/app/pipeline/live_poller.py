@@ -58,6 +58,8 @@ def main() -> None:
     from app.logging_config import configure_logging, stop_logging
 
     configure_logging()
+    # No configure_tracing() here: the poller never runs the LLM graph, so there
+    # is nothing to trace (its compose service intentionally omits LANGSMITH_*).
     # `docker stop` sends SIGTERM, on which atexit does NOT run — flush + exit so
     # the final buffered log batch isn't lost on every restart/redeploy.
     signal.signal(signal.SIGTERM, lambda *_: (stop_logging(), sys.exit(0)))

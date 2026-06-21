@@ -2,6 +2,10 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.8.1 — 22 Jun 2026
+
+- **Internal** — Added a Robot Framework end-to-end suite (finished match page, results navigation, page regression), run on every PR in CI.
+
 ## v0.8.0 — 22 Jun 2026
 
 - **Added** — Completed match pages now show full match statistics (possession, shots, shots on target, xG, corners) from official data.

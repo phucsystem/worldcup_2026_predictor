@@ -71,9 +71,11 @@ def run_pipeline(target_date: date) -> int:
         upsert_article,
     )
     from app.logging_config import configure_logging
+    from app.observability import configure_tracing
     from app.pipeline.graph import build_graph
 
     configure_logging()
+    configure_tracing()
 
     # Daily cadence is sufficient to bound the app_logs window; prune failures
     # must never abort the run.
@@ -121,7 +123,20 @@ def run_pipeline(target_date: date) -> int:
         graph = build_graph()
         # Per-node retry inside each node handles transient LLM errors.
         # Wrapping the full graph would re-run collector+analyst (paid calls) on editor failure.
-        final_state = graph.invoke(initial_state)
+        # config metadata/tags correlate the LangSmith trace with this agent_runs row
+        # (run_id); ignored when tracing is off.
+        final_state = graph.invoke(
+            initial_state,
+            config={
+                "run_name": f"brief-{target_date.isoformat()}",
+                "metadata": {
+                    "run_id": run_id,
+                    "brief_date": target_date.isoformat(),
+                    "env": settings.LANGSMITH_ENV,
+                },
+                "tags": [settings.LANGSMITH_ENV, "pipeline"],
+            },
+        )
     except Exception as exc:
         finished_at = datetime.now(tz=timezone.utc)
         factory = make_session_factory()
@@ -205,8 +220,10 @@ def main() -> None:
     target = args.date or _today_in_brief_tz()
 
     from app.logging_config import configure_logging, stop_logging
+    from app.observability import configure_tracing
 
     configure_logging()
+    configure_tracing()
     try:
         rc = run_pipeline(target)
     finally:

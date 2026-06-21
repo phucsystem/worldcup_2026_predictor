@@ -2,11 +2,19 @@
 
 Hourly AI-generated FIFA WC 2026 intelligence pipeline.
 
+## Screenshots
+
+**Today** — AI-generated daily brief, live match, latest results, and what's at stake:
+
+![Home dashboard](ck_docs/screenshots/home.png)
+
 ## Architecture
 
 ![World Cup 2026 Intelligence — System Architecture](ck_docs/diagrams/architecture.png)
 
 A **scheduler** container runs a **LangGraph** pipeline (`Collector → Analyst → Editor`) on an interval. The Collector pulls fixtures/standings from **API-Football** and computes all tables, position deltas, and best-thirds qualification deterministically in `standings_math` (unit-tested); the **DeepSeek** LLM only narrates the pre-computed facts. Results persist to **PostgreSQL**; the article is published only after the Editor succeeds (keep-last-good). A read-only **FastAPI** serves briefs/standings to the **Next.js 16 SSR** dashboard.
+
+Pipeline runs are observable two ways: every run records timings, tokens, and cost to the `agent_runs` table (surfaced at `/logs`), and — when `LANGSMITH_TRACING` is enabled — full LLM traces stream to **LangSmith** for live monitoring. Tracing is off by default; see [`ck_docs/deployment-guide.md`](ck_docs/deployment-guide.md) §6.5.
 
 The whole stack runs as one `docker-compose` deployment on a single Azure VM behind Caddy (TLS). See [docs/deployment.md](docs/deployment.md).
 

@@ -17,8 +17,8 @@
         <mxCell id="deepseek" value="DeepSeek API&#10;deepseek-chat (LLM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;fontSize=14;" vertex="1" parent="1">
           <mxGeometry x="470" y="56" width="210" height="64" as="geometry" />
         </mxCell>
-        <mxCell id="extlabel" value="External Services" style="text;html=1;align=center;fontSize=13;fontColor=#7F6000;fontStyle=2;" vertex="1" parent="1">
-          <mxGeometry x="760" y="76" width="200" height="22" as="geometry" />
+        <mxCell id="langsmith" value="LangSmith&#10;tracing · monitoring (opt-in)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="740" y="56" width="210" height="64" as="geometry" />
         </mxCell>
 
         <!-- Azure Container Apps Environment container -->
@@ -114,6 +114,11 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e_br_web" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#B85450;fontColor=#8A2A22;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="browser" target="web">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge: pipeline traces to LangSmith (opt-in) -->
+        <mxCell id="e_pipe_ls" value="traces" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#2E8B8B;fontColor=#1F6B6B;fontSize=12;fontStyle=1;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.14;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="jobbox" target="langsmith">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 

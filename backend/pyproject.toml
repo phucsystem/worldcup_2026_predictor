@@ -12,6 +12,9 @@ dependencies = [
     "httpx>=0.27",
     "langgraph>=0.2",
     "langchain-openai>=0.2",
+    # Imported directly in nodes_collector (@traceable); pin explicitly rather
+    # than rely on the langchain-core transitive.
+    "langsmith>=0.8",
 ]
 
 [dependency-groups]

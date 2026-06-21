@@ -27,5 +27,13 @@ class Settings(BaseSettings):
     LOG_RETENTION_DAYS: int = 14
     LOG_DB_ENABLED: bool = True
 
+    # LangSmith tracing (optional). Off unless TRACING is true AND a key is set,
+    # so CI/local stay untraced by default. LANGSMITH_ENV is a trace tag only.
+    LANGSMITH_TRACING: bool = False
+    LANGSMITH_API_KEY: Optional[str] = None
+    LANGSMITH_PROJECT: str = "worldcup-2026"
+    LANGSMITH_ENV: str = "dev"
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+
 
 settings = Settings()

@@ -6,6 +6,8 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 from typing import Any
 
+from langsmith import traceable
+
 from app.data.models import Match, StandingRow
 from app.data.standings_math import (
     apply_position_deltas,
@@ -189,6 +191,7 @@ def _build_facts(
     }
 
 
+@traceable(run_type="chain", name="collector")
 def collector_node(state: BriefState) -> BriefState:
     t0 = time.perf_counter()
     brief_date = date.fromisoformat(state["brief_date"])

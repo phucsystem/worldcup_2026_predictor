@@ -12,8 +12,10 @@ from app.api.logs import router as logs_router
 from app.api.standings import router as standings_router
 from app.api.tournament import router as tournament_router
 from app.logging_config import configure_logging, stop_logging
+from app.observability import configure_tracing
 
 configure_logging()
+configure_tracing()
 log = logging.getLogger("app.api")
 
 

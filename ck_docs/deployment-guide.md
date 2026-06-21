@@ -195,6 +195,7 @@ cat .env
 # Shows:
 API_FOOTBALL_KEY=...
 DEEPSEEK_API_KEY=...
+LANGSMITH_API_KEY=...   # optional — only if tracing is enabled (see 6.5)
 ...
 ```
 
@@ -274,6 +275,42 @@ az consumption budget list -g rg-wc2026-prod
 - API-Football quota: ~$0–10/mo (depends on calls)
 - DeepSeek LLM: ~$1–5/mo (1 brief/day, ~1000 tokens)
 - **Total target:** ≤$30/mo
+
+### 6.5 LangSmith Tracing (optional)
+
+LangSmith adds trace-level visibility on top of `agent_runs`/`app_logs`: per-run trace trees
+(`collector → analyst → editor`) with prompts, token counts, per-node latency, and retries, plus
+built-in monitoring dashboards and alerts. The hand-rolled `agent_runs`/`/logs` tooling stays
+authoritative — LangSmith is additive.
+
+**Enable** (per environment, in the VM `.env`):
+```
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=ls__...        # from smith.langchain.com
+LANGSMITH_PROJECT=worldcup-2026  # optional, this is the default
+# LANGSMITH_ENV defaults to "prod" in the prod overlay (trace tag only)
+```
+Then restart the services that run the pipeline:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d backend scheduler
+```
+
+**Disable / kill switch:** set `LANGSMITH_TRACING=false` (or remove the key) and restart. Tracing is
+also off automatically anywhere the key is absent — local, CI.
+
+**Correlation:** each trace's `run_id` metadata matches the `agent_runs.run_id` row for the same run.
+
+**Caveats:**
+- **Cost figures:** LangSmith's dollar charts assume OpenAI pricing and will misprice DeepSeek. Treat
+  `agent_runs.cost_usd` (and section 6.4 above) as canonical for cost.
+- **Free-tier ceiling (~5k traces/mo):** reachable with frequent scheduler/live-poller activity. If hit,
+  lower the cadence or keep tracing scoped to a single environment via `LANGSMITH_TRACING`.
+- **Data egress:** full prompts/outputs are sent to LangSmith SaaS. Acceptable here (public football data
+  + generated narration); revisit if sensitive data ever enters the pipeline.
+
+**One-time UI setup** (at smith.langchain.com): create the `worldcup-2026` project; after the first traced
+run, confirm the Monitoring tab shows trace volume / latency / error rate; add an alert on the error-rate
+threshold with an **email** notification.
 
 ---
 

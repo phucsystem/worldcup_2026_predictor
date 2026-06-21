@@ -42,6 +42,11 @@ services:
       # so set API_FOOTBALL_SEASON=2022 in .env for real demo data (2026 needs a paid plan).
       API_FOOTBALL_LEAGUE: ${API_FOOTBALL_LEAGUE:-1}
       API_FOOTBALL_SEASON: ${API_FOOTBALL_SEASON:-2026}
+      # LangSmith tracing — off unless TRACING=true AND a key is set (see .env.example).
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-worldcup-2026}
+      LANGSMITH_ENV: ${LANGSMITH_ENV:-dev}
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +74,10 @@ services:
       API_FOOTBALL_LEAGUE: ${API_FOOTBALL_LEAGUE:-1}
       API_FOOTBALL_SEASON: ${API_FOOTBALL_SEASON:-2026}
       SCHEDULER_INTERVAL_SECONDS: ${SCHEDULER_INTERVAL_SECONDS:-1800}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-worldcup-2026}
+      LANGSMITH_ENV: ${LANGSMITH_ENV:-dev}
     depends_on:
       backend:
         condition: service_healthy

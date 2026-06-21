@@ -12,11 +12,16 @@ services:
   backend:
     image: ghcr.io/phucsystem/wc2026-backend:latest
     restart: unless-stopped
+    # LANGSMITH_TRACING/API_KEY/PROJECT interpolate from the VM .env via base compose;
+    # default the trace env tag to prod here.
+    environment:
+      LANGSMITH_ENV: ${LANGSMITH_ENV:-prod}
 
   scheduler:
     image: ghcr.io/phucsystem/wc2026-backend:latest
     environment:
       SCHEDULER_INTERVAL_SECONDS: ${SCHEDULER_INTERVAL_SECONDS:-21600}
+      LANGSMITH_ENV: ${LANGSMITH_ENV:-prod}
 
   frontend:
     image: ghcr.io/phucsystem/wc2026-frontend:latest
