@@ -122,6 +122,9 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://wc:wc@localhost:5432/worldcup
       API_BASE: http://localhost:8000
+      # Send the Browser library's Chromium to a stable, cacheable path (default
+      # is inside site-packages, which is recreated every run and can't be cached).
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.pw-browsers
     steps:
       - uses: actions/checkout@v4
 
@@ -163,10 +166,19 @@ jobs:
             curl -fsS http://localhost:3000/ >/dev/null && break || sleep 2
           done
 
+      # Cache the Chromium binary across runs (the dominant cost). Keyed on the
+      # pinned robotframework-browser version, so a bump re-downloads. A miss just
+      # falls back to a fresh download — never breaks the run.
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.pw-browsers
+          key: pw-browsers-${{ runner.os }}-${{ hashFiles('e2e/requirements.txt') }}
+
       - name: Install Robot Framework + Browser
         run: |
           pip install -r e2e/requirements.txt
-          # Downloads Chromium into the Browser library's own playwright-core.
+          # Downloads Chromium into PLAYWRIGHT_BROWSERS_PATH; skipped on a cache hit.
           rfbrowser init chromium
           # System libraries for headless Chromium on the Linux runner.
           sudo npx --yes playwright install-deps chromium || true
