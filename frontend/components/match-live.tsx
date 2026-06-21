@@ -5,6 +5,8 @@ import type { FixtureDetail } from "@/lib/api";
 import TeamFlag from "@/components/team-flag";
 import MatchTimeline from "@/components/match-timeline";
 import Goalscorers from "@/components/goalscorers";
+import MatchScorersStrip from "@/components/match-scorers-strip";
+import FlagBackdrop from "@/components/flag-backdrop";
 import { liveMinute } from "@/lib/live";
 
 interface Props {
@@ -62,8 +64,10 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
     <>
       <section
         className="next-match is-live"
+        data-flag-bg
         aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}`}
       >
+        <FlagBackdrop home={fixture.home_team} away={fixture.away_team} />
         <span className="nm-eyebrow">
           <span className="dot" /> Live now · {label}
         </span>
@@ -82,11 +86,23 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
             <TeamFlag team={fixture.away_team} logo={fixture.away_logo} size={40} />
           </span>
         </div>
+        <MatchScorersStrip events={fixture.events} />
         <div className="nm-meta">{fixture.group_name ?? "Live"}</div>
         <div className="nm-live-clock-wrap">
           <span className="nm-live-clock" aria-hidden="true">
             {clock}
           </span>
+        </div>
+        <div className="nm-watch-wrap">
+          <a
+            className="nm-watch"
+            href="https://www.sbs.com.au/sport/football"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Watch this match live on the SBS website (opens in a new tab)"
+          >
+            <span className="nw-dot" aria-hidden="true" /> Watch live on SBS
+          </a>
         </div>
       </section>
 

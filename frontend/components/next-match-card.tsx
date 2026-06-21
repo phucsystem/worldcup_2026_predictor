@@ -3,6 +3,7 @@ import type { FixtureRow } from "@/lib/api";
 import TeamFlag from "@/components/team-flag";
 import Countdown from "@/components/countdown";
 import LocalTime from "@/components/local-time";
+import FlagBackdrop from "@/components/flag-backdrop";
 
 interface Props {
   fixture: FixtureRow | null;
@@ -17,6 +18,7 @@ export default function NextMatchCard({ fixture, stakeText, linked = true }: Pro
 
   const body = (
     <>
+      <FlagBackdrop home={fixture.home_team} away={fixture.away_team} />
       <span className="nm-eyebrow">
         <span className="dot" /> Next kickoff
       </span>
@@ -48,6 +50,7 @@ export default function NextMatchCard({ fixture, stakeText, linked = true }: Pro
     return (
       <section
         className="next-match"
+        data-flag-bg
         aria-label={`Next match: ${fixture.home_team ?? "TBD"} vs ${fixture.away_team ?? "TBD"}.`}
       >
         {body}
@@ -58,6 +61,7 @@ export default function NextMatchCard({ fixture, stakeText, linked = true }: Pro
   return (
     <Link
       className="next-match"
+      data-flag-bg
       href={`/match/${fixture.fixture_id}`}
       aria-label={`Next match: ${fixture.home_team ?? "TBD"} vs ${fixture.away_team ?? "TBD"}. View match analysis.`}
     >

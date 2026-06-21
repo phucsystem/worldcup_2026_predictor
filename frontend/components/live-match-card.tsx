@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { FixtureRow } from "@/lib/api";
 import TeamFlag from "@/components/team-flag";
+import FlagBackdrop from "@/components/flag-backdrop";
 import { liveMinute } from "@/lib/live";
 
 interface Props {
@@ -69,9 +70,11 @@ export default function LiveMatchCard({ initial }: Props) {
   return (
     <Link
       className="next-match is-live"
+      data-flag-bg
       href={`/match/${fixture.fixture_id}`}
       aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}. View match analysis.`}
     >
+      <FlagBackdrop home={fixture.home_team} away={fixture.away_team} />
       <span className="nm-eyebrow">
         <span className="dot" /> Live now · {label}
       </span>
