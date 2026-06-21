@@ -72,10 +72,17 @@ export function buildTimeline(events: MatchEvent[]): TimelineRow[] {
   });
 }
 
+export interface ScorerGoal {
+  minute: number;
+  detail: string | null;
+  assist: string | null;
+}
+
 export interface ScorerEntry {
   side: "home" | "away" | null;
   player: string | null;
   minutes: number[];
+  goals: ScorerGoal[];
 }
 
 export function goalscorers(events: MatchEvent[]): ScorerEntry[] {
@@ -85,11 +92,12 @@ export function goalscorers(events: MatchEvent[]): ScorerEntry[] {
     const key = `${e.side}|${e.player}`;
     let entry = byKey.get(key);
     if (!entry) {
-      entry = { side: e.side, player: e.player, minutes: [] };
+      entry = { side: e.side, player: e.player, minutes: [], goals: [] };
       byKey.set(key, entry);
       order.push(key);
     }
     entry.minutes.push(e.minute);
+    entry.goals.push({ minute: e.minute, detail: e.detail, assist: e.assist });
   }
   return order.map((k) => byKey.get(k)!);
 }

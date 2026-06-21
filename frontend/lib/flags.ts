@@ -120,3 +120,31 @@ export function flagSvg(team: string | null): string | null {
   const code = TEAM_FLAG_CODE[team.trim()];
   return code ? (FLAGS[code] ?? null) : null;
 }
+
+function hexLuminance(hex: string): number {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// Representative team color for an avatar badge: the flag's first saturated
+// fill (skips near-white/near-black bands so e.g. Serbia reads red, not white).
+export function flagPrimaryColor(team: string | null): string | null {
+  const svg = flagSvg(team);
+  if (!svg) return null;
+  const fills = [...svg.matchAll(/fill="(#[0-9a-fA-F]{3,6})"/g)].map((m) => m[1]);
+  for (const hex of fills) {
+    const lum = hexLuminance(hex);
+    if (lum > 235 || lum < 25) continue;
+    return hex;
+  }
+  return fills[0] ?? null;
+}
+
+// Readable initials color for a colored avatar background.
+export function avatarTextColor(bgHex: string): string {
+  return hexLuminance(bgHex) > 150 ? "#0B1020" : "#fff";
+}

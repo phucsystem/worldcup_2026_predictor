@@ -2,6 +2,12 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.7.0 — 22 Jun 2026
+
+- **Added** — Goalscorers cards on match pages: colored team-initial avatars, inline flags, and goal minutes with penalty/own-goal detail and assists.
+- **Improved** — Latest Results now highlights the winner (green score) and dims the losing side for at-a-glance reading.
+- **Fixed** — Match hero flag backdrop no longer renders as solid blocks behind the banner.
+
 ## v0.6.0 — 21 Jun 2026
 
 - **Added** — Official Buy Me a Coffee button in the header for visitors who want to back the project.

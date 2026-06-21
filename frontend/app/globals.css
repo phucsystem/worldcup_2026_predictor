@@ -1665,7 +1665,16 @@ tr.log-detail-row > td {
 .mt-score.away { color: var(--status-loss); border-color: rgba(255, 90, 90, 0.45); }
 
 /* ---- Goalscorers ---- */
+.kp-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 800; color: #fff;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 2px 8px rgba(3, 8, 20, 0.4);
+}
 .scorers { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-4); }
+.scorer-card .kp-avatar { width: 46px; height: 46px; font-size: 15px; }
 .scorer-card {
   display: flex; gap: var(--space-4);
   background: var(--surface); border: 1px solid var(--border);
