@@ -22,16 +22,17 @@ results are stable in CI.
 # 1. Bring the stack up (frontend on :3000, backend + postgres)
 docker compose up -d --build
 
-# 2. Install the e2e deps (once)
-python -m venv e2e/.venv && source e2e/.venv/bin/activate
-pip install -r e2e/requirements.txt
-rfbrowser init            # downloads the Playwright browser (once)
-
-# 3. Seed + run
-./e2e/run.sh              # or: HEADLESS=False ./e2e/run.sh to watch
+# 2. Seed + run — run.sh bootstraps e2e/.venv and downloads the browser on first
+#    run, then calls the venv's robot directly (no shell activation needed, so
+#    this works the same in bash, zsh, and fish).
+./e2e/run.sh                  # or: HEADLESS=False ./e2e/run.sh to watch
 ```
 
 Reports land in `e2e/results/` (`report.html`, `log.html`).
+
+> Prefer activating the venv yourself? It already exists at `e2e/.venv`. Activation
+> is shell-specific: `source e2e/.venv/bin/activate` (bash/zsh) or
+> `source e2e/.venv/bin/activate.fish` (fish). `run.sh` avoids this entirely.
 
 ## CI
 
