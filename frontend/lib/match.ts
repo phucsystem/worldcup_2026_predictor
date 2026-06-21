@@ -24,6 +24,8 @@ export interface TimelineRow {
   type: string | null;
   detail: string | null;
   player: string | null;
+  assist: string | null;
+  team: string | null;
   side: "home" | "away" | null;
   // Side credited with the goal (own goal credits the opponent) — null on
   // non-goal rows. Drives the running-score chip colour.
@@ -65,11 +67,43 @@ export function buildTimeline(events: MatchEvent[]): TimelineRow[] {
       type: e.type,
       detail: e.detail,
       player: e.player,
+      assist: e.assist,
+      team: e.team,
       side: e.side,
       scoringSide,
       score,
     };
   });
+}
+
+// API-Football `subst` events carry the player coming ON in `player` and the
+// player going OFF in `assist`. This is the documented convention; the live DB
+// was unavailable to verify against a real payload when this was written.
+export function subOnOff(e: Pick<MatchEvent, "player" | "assist">): {
+  on: string | null;
+  off: string | null;
+} {
+  return { on: e.player, off: e.assist };
+}
+
+// MatchEvent has no stable id, so identity is a composite of the fields that
+// uniquely place an event in the match. Used to detect events newly arrived on
+// a live poll (Phase E highlight).
+type EventIdentity = Pick<
+  MatchEvent,
+  "minute" | "extra" | "type" | "detail" | "player" | "team" | "side"
+>;
+
+export function eventKey(e: EventIdentity): string {
+  // `detail` and `team` are included so player-less events (VAR rulings, subs
+  // with a missing name) at the same minute don't collide and miss a highlight.
+  return [e.minute, e.extra ?? "", e.type ?? "", e.detail ?? "", e.player ?? "", e.team ?? "", e.side ?? ""].join("|");
+}
+
+// Keys present in `events` but not in `prevKeys` — i.e. events that appeared
+// since the previous poll. Order follows `events`.
+export function freshEventKeys(prevKeys: Set<string>, events: MatchEvent[]): string[] {
+  return (events ?? []).map(eventKey).filter((k) => !prevKeys.has(k));
 }
 
 export interface ScorerGoal {

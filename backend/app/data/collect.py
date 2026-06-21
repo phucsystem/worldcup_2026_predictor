@@ -168,6 +168,13 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
                 m.events = client.get_events(m.fixture_id) or None
             except Exception as exc:
                 log.warning("Live events fetch failed for %s: %s", m.fixture_id, exc)
+            # Live statistics: re-fetched every poll (overwrite, no once-only guard
+            # — that guard is for the finished-match backfill). Independently
+            # guarded so a stats failure never drops the events/score upsert.
+            try:
+                m.statistics = client.get_fixture_statistics(m.fixture_id) or None
+            except Exception as exc:
+                log.warning("Live statistics fetch failed for %s: %s", m.fixture_id, exc)
         if ours:
             upsert_matches(session, ours)
     log.info("Live refresh: %d in-play (%d ours) upserted", len(live), len(ours))
