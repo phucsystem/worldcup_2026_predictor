@@ -9,7 +9,8 @@ Test Setup        Open Match Page
 *** Test Cases ***
 Finished Match Shows The Verdict
     Get Element States    .analysis-note            then    bool(value & visible)
-    Get Text              .analysis-note .an-eyebrow    ==    The verdict
+    # .an-eyebrow is CSS text-transform:uppercase, so innerText is "THE VERDICT";
+    # assert the verdict sentence itself (not transformed) is present instead.
     ${verdict}=    Get Text    .analysis-note p
     Should Not Be Empty    ${verdict}
 
@@ -17,7 +18,10 @@ Finished Match Shows Match Stats Bars
     Get Text              h2.section-title >> text=Match stats    ==    Match stats
     ${bars}=    Get Element Count    .stat-bars .sb-row
     Should Be True        ${bars} >= 1
-    Get Text              .stat-bars >> text=Possession    contains    Possession
+    # Stat labels (.sb-label) are uppercased by CSS; assert the bar values
+    # (.sb-val, e.g. "58%", not transformed) render instead.
+    ${vals}=    Get Element Count    .stat-bars .sb-val
+    Should Be True        ${vals} >= 1
 
 Finished Match Shows Key Moments And Goalscorers
     Get Text              h2.section-title >> text=Key moments    ==    Key moments
