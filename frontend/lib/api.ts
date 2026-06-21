@@ -59,6 +59,7 @@ export interface TournamentSummary {
 
 export interface RecentResult {
   outcome: "W" | "D" | "L";
+  fixture_id: number | null;
   home_team: string | null;
   away_team: string | null;
   home_score: number | null;

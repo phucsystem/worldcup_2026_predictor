@@ -34,6 +34,7 @@ def _get_session():
 
 class RecentResult(BaseModel):
     outcome: str  # "W" | "D" | "L" from the owning team's perspective
+    fixture_id: int | None = None  # links the result row to its match page
     home_team: str | None
     away_team: str | None
     home_score: int | None
@@ -119,6 +120,7 @@ def recent_results_by_team(
             bucket.append(
                 RecentResult(
                     outcome=match_outcome(team, m),
+                    fixture_id=m.get("fixture_id"),
                     home_team=m.get("home_team"),
                     away_team=m.get("away_team"),
                     home_score=m.get("home_score"),
@@ -166,6 +168,7 @@ def get_standings(date: Optional[date] = None):
         }
         finished_rows = session.execute(
             select(
+                matches_table.c.fixture_id,
                 matches_table.c.home_team,
                 matches_table.c.away_team,
                 matches_table.c.home_score,
@@ -180,6 +183,7 @@ def get_standings(date: Optional[date] = None):
     recent_map = recent_results_by_team(
         [
             {
+                "fixture_id": m.fixture_id,
                 "home_team": m.home_team,
                 "away_team": m.away_team,
                 "home_score": m.home_score,

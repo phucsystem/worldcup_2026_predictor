@@ -6,6 +6,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
 - **Added** — Completed match pages now show full match statistics (possession, shots, shots on target, xG, corners) from official data.
 - **Added** — A one-line match verdict on completed matches — a neutral recap of the result, scorers, and group impact, narrated only from real data.
+- **Fixed** — "Latest Results" rows now open the match page (score, stats, verdict, timeline) instead of the day's brief.
 - **Fixed** — Local Docker dev now hot-reloads: frontend edits recompile live without a container restart.
 
 ## v0.7.1 — 22 Jun 2026

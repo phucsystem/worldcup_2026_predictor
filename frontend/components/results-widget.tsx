@@ -95,7 +95,7 @@ export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
           return (
             <Link
               key={row.key}
-              href={`/brief/${row.briefDate}`}
+              href={row.fixtureId != null ? `/match/${row.fixtureId}` : `/brief/${row.briefDate}`}
               className={`match-row${winHome ? " winner-home" : ""}${winAway ? " winner-away" : ""}`}
               style={{ order: grouped ? groupedOrder[row.key] : dateOrder[row.key] }}
             >

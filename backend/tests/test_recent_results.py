@@ -13,8 +13,9 @@ def _dt(y, m, d, h=12):
     return datetime(y, m, d, h, 0, tzinfo=timezone.utc)
 
 
-def _match(home, away, hs, as_, status="FT", kickoff=None):
+def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None):
     return {
+        "fixture_id": fixture_id,
         "home_team": home,
         "away_team": away,
         "home_score": hs,
@@ -115,3 +116,18 @@ class TestRecentResultsByTeam:
         matches = [_match("Brazil", "Serbia", None, None, status="FT", kickoff=_dt(2026, 6, 12))]
         out = recent_results_by_team(matches)
         assert out == {}
+
+    def test_fixture_id_carried_for_both_teams(self):
+        # the result row must carry its fixture_id so the UI can link to /match/{id}
+        matches = [_match("Brazil", "Serbia", 3, 1, kickoff=_dt(2026, 6, 12), fixture_id=42)]
+        out = recent_results_by_team(matches)
+        assert out["Brazil"][0].fixture_id == 42
+        assert out["Serbia"][0].fixture_id == 42
+
+    def test_fixture_id_defaults_none_when_absent(self):
+        matches = [{
+            "home_team": "Brazil", "away_team": "Serbia", "home_score": 3,
+            "away_score": 1, "status": "FT", "kickoff_utc": _dt(2026, 6, 12),
+        }]
+        out = recent_results_by_team(matches)
+        assert out["Brazil"][0].fixture_id is None

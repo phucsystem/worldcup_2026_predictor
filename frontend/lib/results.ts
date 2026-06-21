@@ -29,6 +29,7 @@ export function resultsToChips(results: RecentResult[]): ChipProps[] {
 
 export interface ResultWidgetRow {
   key: string;
+  fixtureId: number | null; // links the row to /match/{id}; falls back to the brief when absent
   dateLabel: string; // "Fri, 12 Jun" — server-formatted (timezone-anchored)
   briefDate: string; // "2026-06-12" for /brief/{date}
   group: string;
@@ -67,6 +68,7 @@ export function groupedResultRows(
         const as = r.away_score;
         rows.push({
           key,
+          fixtureId: r.fixture_id ?? null,
           dateLabel: kickoffDayLabel(r.kickoff_utc),
           briefDate: dateKey(r.kickoff_utc),
           group: g.group_name,
