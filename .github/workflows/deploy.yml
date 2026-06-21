@@ -9,7 +9,9 @@
 # Optional:
 #   DEPLOY_DIR       — repo path on the VM (default: ~/worldcup_2026_predictor)
 # App secrets (API_FOOTBALL_KEY, DEEPSEEK_API_KEY, SITE_ADDRESS) live in the VM
-# .env, NOT in CI. Images are public on GHCR, so the VM needs no registry login.
+# .env, NOT in CI. New GHCR packages are PRIVATE by default — after the first push,
+# set wc2026-backend/wc2026-frontend to Public once (or have the VM docker-login),
+# else `docker compose pull` fails with "denied". See docs/deployment.md.
 
 name: Build & Deploy to Azure VM
 
@@ -29,6 +31,22 @@ jobs:
   test:
     name: Validate app
     runs-on: ubuntu-latest
+    # Some backend tests hit a real DB (e.g. /api/tournament/summary), so the job
+    # needs a Postgres matching the app's default DATABASE_URL.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: wc
+          POSTGRES_PASSWORD: wc
+          POSTGRES_DB: worldcup
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U wc -d worldcup"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://wc:wc@localhost:5432/worldcup
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +57,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Run migrations
+        working-directory: backend
+        run: uv run alembic -c db/alembic.ini upgrade head
 
       - name: Backend tests
         working-directory: backend
