@@ -1012,17 +1012,17 @@ a.next-match.is-live:hover {
   position: relative;
   margin: 0;
   padding-left: var(--space-4);
-  font-size: 26px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 .rw-title::before {
   content: '';
   position: absolute;
-  left: 0; top: 3px; bottom: 3px;
-  width: 5px;
+  left: 0; top: 5px; bottom: 5px;
+  width: 4px;
   border-radius: 2px;
-  background: var(--status-live);
+  background: var(--accent-bright);
   transform: skewX(-12deg);
 }
 .rw-toggle-bar {
@@ -1031,6 +1031,7 @@ a.next-match.is-live:hover {
   justify-content: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-input);
@@ -1058,22 +1059,30 @@ a.next-match.is-live:hover {
 }
 .results-widget.grouped .rw-switch { background: var(--status-live); }
 .results-widget.grouped .rw-switch::after { transform: translateX(18px); }
-.rw-list { display: block; }
-.results-widget.grouped .rw-list { display: flex; flex-direction: column; }
+.rw-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(77, 139, 255, 0.22);
+  border-radius: var(--radius-input);
+  background:
+    linear-gradient(180deg, rgba(19, 41, 79, 0.92) 0%, rgba(10, 27, 61, 0.96) 100%);
+  box-shadow: 0 18px 44px rgba(3, 8, 20, 0.28);
+}
 .match-row {
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto auto auto 1fr auto;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-8) var(--space-2) var(--space-4);
+  padding: var(--space-8) var(--space-4) var(--space-4);
   border-top: 1px solid var(--border);
   text-decoration: none;
   color: var(--text-secondary);
   transition: background 0.12s ease;
 }
 .match-row:hover { background: var(--surface); }
-.match-row:last-child { border-bottom: 1px solid var(--border); }
+.match-row:first-child { border-top: 0; }
 .mr-date {
   position: absolute;
   top: 10px; left: 50%;
@@ -1081,13 +1090,14 @@ a.next-match.is-live:hover {
   padding: 2px 10px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-muted);
-  background: var(--bg);
-  border: 1px solid var(--border);
+  color: #CFE0FF;
+  background: rgba(45, 107, 246, 0.16);
+  border: 1px solid rgba(77, 139, 255, 0.34);
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }
-.results-widget.grouped .mr-date { display: none; }
+.results-widget.grouped .mr-date,
+.results-widget.has-date-headers:not(.grouped) .mr-date { display: none; }
 .mr-team { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
 .mr-team.home { justify-content: flex-end; }
 .mr-team.away { justify-content: flex-start; }
@@ -1123,8 +1133,8 @@ a.next-match.is-live:hover {
 .mr-arrow { color: var(--status-live); font-size: 18px; font-weight: 700; text-align: right; }
 .rw-group-header {
   display: none;
-  padding: var(--space-4) var(--space-2) var(--space-2);
-  border-top: 2px solid var(--border);
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  border-top: 1px solid rgba(77, 139, 255, 0.22);
   font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
@@ -1132,6 +1142,19 @@ a.next-match.is-live:hover {
   color: var(--status-live);
 }
 .results-widget.grouped .rw-group-header { display: block; }
+.rw-date-header {
+  display: none;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid rgba(77, 139, 255, 0.22);
+  background:
+    linear-gradient(90deg, rgba(45, 107, 246, 0.24), rgba(43, 211, 126, 0.06));
+  color: #DCE8FF;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.results-widget:not(.grouped) .rw-date-header { display: block; }
+.rw-date-header.first { border-top: 0; }
 
 /* ---- What's at stake cards ---- */
 .stake-grid {
@@ -1221,7 +1244,7 @@ a.next-match.is-live:hover {
   .match-row {
     grid-template-columns: 1fr auto auto auto 1fr;
     gap: var(--space-2);
-    padding: var(--space-8) 0 var(--space-3);
+    padding: var(--space-8) var(--space-2) var(--space-3);
   }
   .mr-arrow { display: none; }
   .mr-name { font-size: 13px; }
