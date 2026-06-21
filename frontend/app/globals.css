@@ -1150,7 +1150,8 @@ a.next-match.is-live:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.mr-team.lose .mr-name { font-weight: 600; color: var(--text-secondary); }
+.mr-team.lose { opacity: 0.5; }
+.mr-team.lose .mr-name { font-weight: 600; }
 .mr-score {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
@@ -1160,7 +1161,9 @@ a.next-match.is-live:hover {
   min-width: 24px;
   text-align: center;
 }
-.mr-score.win { color: var(--text-primary); }
+.mr-score.win { color: var(--status-live); }
+.match-row.winner-home .mr-score:not(.win),
+.match-row.winner-away .mr-score:not(.win) { color: var(--text-secondary); opacity: 0.5; }
 .mr-center {
   display: flex;
   flex-direction: column;
