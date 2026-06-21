@@ -99,6 +99,22 @@ export interface FixtureRow {
   updated_at: string | null;
 }
 
+// Mirrors backend app.api.fixtures.MatchEvent (normalize_events output).
+export interface MatchEvent {
+  minute: number;
+  extra: number | null;
+  type: string | null;
+  detail: string | null;
+  player: string | null;
+  assist: string | null;
+  team: string | null;
+  side: "home" | "away" | null;
+}
+
+export interface FixtureDetail extends FixtureRow {
+  events: MatchEvent[];
+}
+
 export interface FixtureDay {
   date: string;
   fixtures: FixtureRow[];
@@ -201,6 +217,10 @@ export async function getUpcomingFixtures(): Promise<UpcomingFixtures> {
 
 export async function getLiveFixtures(): Promise<FixtureRow[]> {
   return (await apiFetch<FixtureRow[]>("/api/fixtures/live")) ?? [];
+}
+
+export async function getFixture(fixtureId: number): Promise<FixtureDetail | null> {
+  return apiFetch<FixtureDetail>(`/api/fixtures/${fixtureId}`);
 }
 
 export async function getKnockout(): Promise<KnockoutBracket> {

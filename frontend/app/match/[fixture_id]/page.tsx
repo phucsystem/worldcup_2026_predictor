@@ -1,0 +1,121 @@
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { getFixture, getStandings } from "@/lib/api";
+import { matchState, placeholderForecast } from "@/lib/match";
+import NextMatchCard from "@/components/next-match-card";
+import MatchHeroFinal from "@/components/match-hero-final";
+import MatchTimeline from "@/components/match-timeline";
+import Goalscorers from "@/components/goalscorers";
+import FormCompare from "@/components/form-compare";
+import QualificationStakes from "@/components/qualification-stakes";
+import ForecastCard from "@/components/forecast-card";
+import ForecastOutcome from "@/components/forecast-outcome";
+import MatchLive from "@/components/match-live";
+
+export const dynamic = "force-dynamic";
+
+export default async function MatchPage({ params }: { params: Promise<{ fixture_id: string }> }) {
+  const { fixture_id } = await params;
+  const id = Number(fixture_id);
+  if (!Number.isFinite(id)) notFound();
+
+  const [fixture, standings] = await Promise.all([getFixture(id), getStandings()]);
+  if (!fixture) notFound();
+
+  const state = matchState(fixture.status);
+  const homeTeam = fixture.home_team ?? "Home";
+  const awayTeam = fixture.away_team ?? "Away";
+  const forecast = placeholderForecast(homeTeam, awayTeam);
+
+  const group = standings?.groups.find((g) => g.group_name === fixture.group_name) ?? null;
+  const groupRows = group?.rows ?? [];
+  const homeRow = groupRows.find((r) => r.team === fixture.home_team);
+  const awayRow = groupRows.find((r) => r.team === fixture.away_team);
+
+  const updatedAt = fixture.updated_at
+    ? new Date(fixture.updated_at).toLocaleString("en-AU", {
+        timeZone: "Australia/Melbourne",
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null;
+
+  const forecastCard = <ForecastCard forecast={forecast} homeTeam={homeTeam} awayTeam={awayTeam} />;
+  const formCompare = (
+    <FormCompare
+      home={{ team: fixture.home_team, logo: homeRow?.logo ?? fixture.home_logo, results: homeRow?.recent_results ?? [] }}
+      away={{ team: fixture.away_team, logo: awayRow?.logo ?? fixture.away_logo, results: awayRow?.recent_results ?? [] }}
+    />
+  );
+  const stakes = <QualificationStakes groupName={fixture.group_name} rows={groupRows} state={state} />;
+
+  return (
+    <div className="px-6 py-8" style={{ maxWidth: "960px", margin: "0 auto" }}>
+      <nav aria-label="Breadcrumb">
+        <Link
+          href="/"
+          className="text-sm mb-6 inline-block hover:text-white transition-colors focus-visible:rounded"
+          style={{ color: "#6B7A9E" }}
+        >
+          ← Back to Today
+        </Link>
+      </nav>
+
+      <div className="flex flex-col" style={{ gap: "var(--space-6)" }}>
+        {state === "live" ? (
+          <MatchLive initial={fixture} forecastSlot={forecastCard} formSlot={formCompare} stakesSlot={stakes} />
+        ) : state === "finished" ? (
+          <>
+            <MatchHeroFinal fixture={fixture} />
+            {forecastCard}
+            <ForecastOutcome
+              forecast={forecast}
+              homeTeam={fixture.home_team}
+              awayTeam={fixture.away_team}
+              homeLogo={fixture.home_logo}
+              awayLogo={fixture.away_logo}
+              homeScore={fixture.home_score}
+              awayScore={fixture.away_score}
+            />
+            {fixture.events.length > 0 ? (
+              <>
+                <h2 className="section-title">Key moments</h2>
+                <MatchTimeline events={fixture.events} homeTeam={fixture.home_team} awayTeam={fixture.away_team} />
+                <h2 className="section-title">Goalscorers</h2>
+                <Goalscorers
+                  events={fixture.events}
+                  homeTeam={fixture.home_team}
+                  awayTeam={fixture.away_team}
+                  homeLogo={fixture.home_logo}
+                  awayLogo={fixture.away_logo}
+                />
+              </>
+            ) : null}
+            {stakes}
+          </>
+        ) : (
+          <>
+            <NextMatchCard fixture={fixture} linked={false} />
+            {forecastCard}
+            {formCompare}
+            {stakes}
+          </>
+        )}
+
+        <footer style={{ marginTop: "var(--space-4)" }}>
+          <Link
+            href="/"
+            className="inline-block text-sm mb-4 hover:text-white transition-colors"
+            style={{ color: "var(--accent-bright)" }}
+          >
+            Read the full brief →
+          </Link>
+          <p className="provenance">
+            <span>Data: API-Football</span>
+            {updatedAt ? <span>· Updated {updatedAt} AEST</span> : null}
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,220 @@
+<!--
+  Screen: S-11 Betting Recommendation (ranked betting-insights prototype)
+  CJX Stage: Anticipate / Verify -> cjx-usage
+  Scope: upcoming match analysis, ranked win probabilities, and TAB-style market
+         comparison options. This page does not display live TAB odds; it shows
+         model fair prices and sends users to tab.com.au to compare real markets.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Betting Recommendations · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <img class="brand-logo" src="logo.svg" alt="WC26 Intelligence">
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+          <a class="nav-link active" href="s11-betting-recommendation.html" aria-current="page">Betting</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content betting-wide" data-cjx-entrance>
+      <div class="bet-shell">
+        <section class="bet-hero" aria-labelledby="bet-title">
+          <div class="bet-hero-copy">
+            <span class="section-eyebrow">Upcoming matches · model ranking</span>
+            <h1 id="bet-title" class="display-headline">Betting recommendations by win possibility</h1>
+            <p class="summary-deck">Rank the next fixtures by strongest model lean, then compare common TAB market options before making any decision.</p>
+          </div>
+          <aside class="bet-responsible" aria-label="Responsible betting note">
+            <span class="br-kicker">18+ only</span>
+            <p>Informational only. Not betting advice. No live TAB odds shown here. Compare real markets on TAB, set limits, and do not bet because of this page alone.</p>
+          </aside>
+        </section>
+
+        <section class="bet-controls" aria-label="Recommendation filters">
+          <div class="bet-control-group">
+            <span class="bet-control-label">Sort</span>
+            <div class="toggle-group" role="group" aria-label="Sort recommendations">
+              <button class="toggle-btn active" type="button">Highest win lean</button>
+              <button class="toggle-btn" type="button">Kickoff time</button>
+            </div>
+          </div>
+          <div class="bet-control-group">
+            <span class="bet-control-label">Market</span>
+            <div class="toggle-group" role="group" aria-label="Market focus">
+              <button class="toggle-btn active" type="button">Match winner</button>
+              <button class="toggle-btn" type="button">Safer angles</button>
+              <button class="toggle-btn" type="button">Goals</button>
+            </div>
+          </div>
+          <a class="btn bet-tab-link" href="https://www.tab.com.au/" target="_blank" rel="noopener noreferrer">Compare on TAB</a>
+        </section>
+
+        <section class="bet-rank-board" aria-label="Ranked win possibilities">
+          <article class="bet-rank-card top-pick">
+            <div class="bet-rank-number">1</div>
+            <div class="bet-match-main">
+              <span class="bet-kickoff">Today · 22:00 AEST · Group G</span>
+              <div class="bet-teams">
+                <span><span class="flag" data-flag="br" data-code="BRA"></span> Brazil</span>
+                <span class="bet-vs">vs</span>
+                <span>Serbia <span class="flag" data-flag="rs" data-code="SRB"></span></span>
+              </div>
+              <p>Brazil have the cleanest edge on the board: superior attack, group control, and a Serbian side forced into risk.</p>
+            </div>
+            <div class="bet-prob-panel">
+              <div class="bet-pick">Brazil win</div>
+              <div class="bet-pct">64%</div>
+              <div class="bet-prob-bar" aria-label="Brazil 64 percent, draw 22 percent, Serbia 14 percent">
+                <span class="home" style="width:64%"></span>
+                <span class="draw" style="width:22%"></span>
+                <span class="away" style="width:14%"></span>
+              </div>
+              <span class="bet-confidence high">Strong lean</span>
+            </div>
+          </article>
+
+          <article class="bet-rank-card">
+            <div class="bet-rank-number">2</div>
+            <div class="bet-match-main">
+              <span class="bet-kickoff">Tomorrow · 20:00 AEST · Group G</span>
+              <div class="bet-teams">
+                <span><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span>
+                <span class="bet-vs">vs</span>
+                <span>Cameroon <span class="flag" data-flag="cm" data-code="CMR"></span></span>
+              </div>
+              <p>Switzerland's route is lower variance: compact defence, midfield control, and a draw also works for their group position.</p>
+            </div>
+            <div class="bet-prob-panel">
+              <div class="bet-pick">Switzerland win</div>
+              <div class="bet-pct">52%</div>
+              <div class="bet-prob-bar" aria-label="Switzerland 52 percent, draw 27 percent, Cameroon 21 percent">
+                <span class="home" style="width:52%"></span>
+                <span class="draw" style="width:27%"></span>
+                <span class="away" style="width:21%"></span>
+              </div>
+              <span class="bet-confidence medium">Lean</span>
+            </div>
+          </article>
+
+          <article class="bet-rank-card">
+            <div class="bet-rank-number">3</div>
+            <div class="bet-match-main">
+              <span class="bet-kickoff">Tomorrow · 23:00 AEST · Group H</span>
+              <div class="bet-teams">
+                <span><span class="flag" data-flag="pt" data-code="POR"></span> Portugal</span>
+                <span class="bet-vs">vs</span>
+                <span>Ghana <span class="flag" data-flag="gh" data-code="GHA"></span></span>
+              </div>
+              <p>Portugal rate higher on ball control and shot creation, but Ghana's transition pace keeps the upset path alive.</p>
+            </div>
+            <div class="bet-prob-panel">
+              <div class="bet-pick">Portugal win</div>
+              <div class="bet-pct">48%</div>
+              <div class="bet-prob-bar" aria-label="Portugal 48 percent, draw 26 percent, Ghana 26 percent">
+                <span class="home" style="width:48%"></span>
+                <span class="draw" style="width:26%"></span>
+                <span class="away" style="width:26%"></span>
+              </div>
+              <span class="bet-confidence low">Narrow lean</span>
+            </div>
+          </article>
+        </section>
+
+        <section aria-labelledby="market-title">
+          <div class="bet-section-head">
+            <div>
+              <h2 id="market-title" class="section-title">Market options to compare</h2>
+              <p class="summary-deck">Model fair price is calculated from probability. TAB price must be checked on TAB before any bet.</p>
+            </div>
+            <span class="bet-data-badge">No live odds feed</span>
+          </div>
+
+          <div class="bet-market-grid">
+            <article class="bet-market-card recommended">
+              <header class="bet-market-head">
+                <span class="bet-market-label">Best ranked angle</span>
+                <span class="bet-market-tag">Match winner</span>
+              </header>
+              <h3>Brazil to win</h3>
+              <div class="bet-price-row">
+                <span><strong>64%</strong> model probability</span>
+                <span><strong>1.56</strong> fair price</span>
+              </div>
+              <p>Only interesting if the TAB price is clearly above the model fair price after margin and your own risk check.</p>
+              <a class="btn ghost" href="https://www.tab.com.au/sports/betting/Soccer" target="_blank" rel="noopener noreferrer">Open soccer markets</a>
+            </article>
+
+            <article class="bet-market-card">
+              <header class="bet-market-head">
+                <span class="bet-market-label">Lower variance</span>
+                <span class="bet-market-tag">Draw no bet</span>
+              </header>
+              <h3>Switzerland draw no bet</h3>
+              <div class="bet-price-row">
+                <span><strong>52%</strong> win lean</span>
+                <span><strong>27%</strong> draw protection</span>
+              </div>
+              <p>Better suited to a match where the favourite can still qualify with a draw and may avoid overcommitting late.</p>
+              <a class="btn ghost" href="https://www.tab.com.au/sports/betting/Soccer" target="_blank" rel="noopener noreferrer">Compare DNB</a>
+            </article>
+
+            <article class="bet-market-card">
+              <header class="bet-market-head">
+                <span class="bet-market-label">Game-state play</span>
+                <span class="bet-market-tag">Both teams to score</span>
+              </header>
+              <h3>Portugal vs Ghana · Yes lean</h3>
+              <div class="bet-price-row">
+                <span><strong>74%</strong> non-draw pressure</span>
+                <span><strong>2</strong> transition teams</span>
+              </div>
+              <p>Portugal's control and Ghana's counter threat make this more interesting than the straight winner market.</p>
+              <a class="btn ghost" href="https://www.tab.com.au/sports/betting/Soccer" target="_blank" rel="noopener noreferrer">Compare BTTS</a>
+            </article>
+          </div>
+        </section>
+
+        <section class="bet-analysis-grid" aria-label="Recommendation details">
+          <article class="bet-detail-panel">
+            <h2 class="section-title">Why the rank looks this way</h2>
+            <ul class="bet-signal-list">
+              <li><span>1</span><strong>Win probability first.</strong> Cards sort by highest non-draw outcome, not by fixture popularity.</li>
+              <li><span>2</span><strong>Draw risk stays visible.</strong> A 52% favourite with a 27% draw profile is handled differently from a 64% favourite.</li>
+              <li><span>3</span><strong>Market fit matters.</strong> The page recommends which TAB market to compare, not a blind bet.</li>
+            </ul>
+          </article>
+          <article class="bet-detail-panel caution">
+            <h2 class="section-title">Before betting</h2>
+            <p>Check team news, confirmed lineups, real TAB prices, market rules, and your own limit. If the real price is shorter than the model fair price, there is no model value.</p>
+            <p>Need help? Contact Gambling Help Online or your local support service.</p>
+          </article>
+        </section>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings. TAB markets linked for comparison only.</span>
+        <span>Betting insight is informational, not advice.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

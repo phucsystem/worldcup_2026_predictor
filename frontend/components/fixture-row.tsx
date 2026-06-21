@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { FixtureRow as Fixture } from "@/lib/api";
 import TeamFlag from "@/components/team-flag";
 import Countdown from "@/components/countdown";
@@ -69,6 +70,14 @@ export default function FixtureRow({ fixture, showCountdown = false, showScore =
         ) : (
           showCountdown && <Countdown kickoffUtc={fixture.kickoff_utc} className="text-xs" />
         )}
+        <Link
+          href={`/match/${fixture.fixture_id}`}
+          className="font-semibold whitespace-nowrap hover:underline focus-visible:rounded"
+          style={{ color: "#4D8BFF" }}
+          aria-label={`Match analysis: ${fixture.home_team ?? "TBD"} vs ${fixture.away_team ?? "TBD"}`}
+        >
+          Analysis →
+        </Link>
       </div>
     </div>
   );

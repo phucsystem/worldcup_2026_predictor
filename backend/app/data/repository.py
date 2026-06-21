@@ -147,38 +147,31 @@ def upsert_matches(session: Session, matches: list[Match]) -> None:
         return
     now = datetime.now(tz=timezone.utc)
     for m in matches:
+        values = dict(
+            fixture_id=m.fixture_id,
+            group_name=m.group_name,
+            home_team=m.home_team,
+            away_team=m.away_team,
+            home_score=m.home_score,
+            away_score=m.away_score,
+            status=m.status,
+            elapsed=m.elapsed,
+            kickoff_utc=m.kickoff_utc,
+            stage=m.stage,
+            updated_at=now,
+        )
+        set_ = dict(values)
+        set_.pop("fixture_id")
+        # Only write events_json when this payload actually carries events. The
+        # daily collect fetches fixtures without events, so writing m.events
+        # unconditionally would clobber events stored by the live poller/backfill.
+        if m.events:
+            values["events_json"] = m.events
+            set_["events_json"] = m.events
         stmt = (
             pg_insert(matches_table)
-            .values(
-                fixture_id=m.fixture_id,
-                group_name=m.group_name,
-                home_team=m.home_team,
-                away_team=m.away_team,
-                home_score=m.home_score,
-                away_score=m.away_score,
-                status=m.status,
-                elapsed=m.elapsed,
-                kickoff_utc=m.kickoff_utc,
-                events_json=m.events,
-                stage=m.stage,
-                updated_at=now,
-            )
-            .on_conflict_do_update(
-                index_elements=["fixture_id"],
-                set_={
-                    "group_name": m.group_name,
-                    "home_team": m.home_team,
-                    "away_team": m.away_team,
-                    "home_score": m.home_score,
-                    "away_score": m.away_score,
-                    "status": m.status,
-                    "elapsed": m.elapsed,
-                    "kickoff_utc": m.kickoff_utc,
-                    "events_json": m.events,
-                    "stage": m.stage,
-                    "updated_at": now,
-                },
-            )
+            .values(**values)
+            .on_conflict_do_update(index_elements=["fixture_id"], set_=set_)
         )
         session.execute(stmt)
     session.commit()

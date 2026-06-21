@@ -121,14 +121,21 @@ def run(target_date: date) -> int:
         except Exception as exc:
             log.warning("Top scorers enrichment skipped: %s", exc)
 
+    # One-time events backfill for finished matches still missing events. Bounded
+    # (only un-backfilled finished fixtures) and fully guarded so it never aborts.
+    try:
+        backfill_finished_events(session_factory, client, matches)
+    except Exception as exc:
+        log.warning("Events backfill skipped: %s", exc)
+
     log.info("Collection complete for %s", target_date)
     return 0
 
 
 def collect_live(session_factory, client: APIFootballClient) -> int:
     """Lightweight refresh of in-play matches: fetch ?live=all and upsert only
-    score/status/elapsed for fixtures we already track. No standings recompute,
-    no LLM, no prune. Returns the number of live matches upserted.
+    score/status/elapsed (+ events) for fixtures we already track. No standings
+    recompute, no LLM, no prune. Returns the number of live matches upserted.
 
     `?live=all` is league-agnostic, so results are intersected with stored
     fixture_ids to avoid persisting other competitions' live games.
@@ -139,10 +146,54 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
     with session_factory() as session:
         known = {fid for (fid,) in session.execute(select(matches_table.c.fixture_id)).all()}
         ours = [m for m in live if m.fixture_id in known]
+        # Attach the live event feed (incl. final events at FT) so the match page
+        # timeline updates on the poll. A failed events fetch must not abort the
+        # score/status upsert, so it is per-fixture guarded.
+        for m in ours:
+            try:
+                m.events = client.get_events(m.fixture_id) or None
+            except Exception as exc:
+                log.warning("Live events fetch failed for %s: %s", m.fixture_id, exc)
         if ours:
             upsert_matches(session, ours)
     log.info("Live refresh: %d in-play (%d ours) upserted", len(live), len(ours))
     return len(ours)
+
+
+def backfill_finished_events(session_factory, client: APIFootballClient, matches: list) -> int:
+    """Fetch + store events once for finished matches that have none yet. Guarded
+    so finished matches are never re-fetched on later runs. Returns the count
+    backfilled. Any failure is logged and skipped — never aborts the collect."""
+    from app.api.fixtures import select_fixtures_needing_events
+
+    with session_factory() as session:
+        existing = {
+            fid
+            for (fid, events) in session.execute(
+                select(matches_table.c.fixture_id, matches_table.c.events_json)
+            ).all()
+            if events
+        }
+    needing = set(select_fixtures_needing_events(matches, existing))
+    if not needing:
+        return 0
+    to_store = []
+    for m in matches:
+        if m.fixture_id not in needing:
+            continue
+        try:
+            events = client.get_events(m.fixture_id)
+        except Exception as exc:
+            log.warning("Backfill events fetch failed for %s: %s", m.fixture_id, exc)
+            continue
+        if events:
+            m.events = events
+            to_store.append(m)
+    if to_store:
+        with session_factory() as session:
+            upsert_matches(session, to_store)
+    log.info("Backfilled events for %d finished matches", len(to_store))
+    return len(to_store)
 
 
 def main() -> None:

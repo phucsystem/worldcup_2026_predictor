@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { KnockoutBracket as Bracket, FixtureRow } from "@/lib/api";
 import TeamFlag from "@/components/team-flag";
 import EmptyState from "@/components/empty-state";
@@ -27,6 +28,14 @@ function TieCard({ tie }: { tie: FixtureRow }) {
       <TieTeam team={tie.home_team} logo={tie.home_logo} score={tie.home_score} winner={homeWon} />
       <div style={{ borderTop: "1px solid #1E3157" }} />
       <TieTeam team={tie.away_team} logo={tie.away_logo} score={tie.away_score} winner={awayWon} />
+      <Link
+        href={`/match/${tie.fixture_id}`}
+        className="block mt-2 text-xs font-semibold hover:underline focus-visible:rounded"
+        style={{ color: "#4D8BFF" }}
+        aria-label={`Match analysis: ${tie.home_team ?? "TBD"} vs ${tie.away_team ?? "TBD"}`}
+      >
+        Match analysis →
+      </Link>
     </div>
   );
 }

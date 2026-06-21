@@ -1,0 +1,270 @@
+<!--
+  Screen: S-10 Completed Match Analysis (full-time / finished state)
+  CJX Stage: Read / Verify -> cjx-usage
+  Scope: one finished match — final score, the verdict, pre-match forecast, a
+         forecast-vs-result conclusion (the centerpiece of the finished state),
+         key moments, goalscorers, final stats, confirmed standings impact.
+         Sibling of S-07 (live/in-progress state); flow is forecast -> conclusion -> actual.
+  Source: brainstorm 2026-06-20 (add match analysis pages)
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brazil 3–1 Serbia · Full Time · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage" data-flag-bg-page data-home="br" data-away="rs">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <img class="brand-logo" src="logo.svg" alt="WC26 Intelligence">
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content reading analysis" data-cjx-entrance>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)">
+        <a class="back-link" href="s02-brief-detail.html">‹ Back to brief</a>
+        <span class="meta-label">Full Time · 19 Jun 2026</span>
+      </div>
+
+      <!-- Final hero — finished variant of the s07/s08 banner (.next-match.is-final) -->
+      <div class="next-match is-final" data-flag-bg data-home="br" data-away="rs" aria-label="Full time: Brazil 3, Serbia 1, Group G">
+        <span class="nm-eyebrow"><span class="dot"></span> Full Time · Group G</span>
+        <div class="nm-body">
+          <span class="nm-side"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil</span>
+          <span class="nm-score" aria-hidden="true"><span class="nm-sc">3</span><span class="nm-sc-sep">–</span><span class="nm-sc">1</span></span>
+          <span class="nm-side">Serbia <span class="flag" data-flag="rs" data-code="SRB"></span></span>
+        </div>
+        <div class="nm-scorers" aria-label="Goalscorers: Brazil — Vinícius Jr 51' and 78', Rodrygo 64'; Serbia — Mitrović 23'">
+          <div class="nm-sc-side home">
+            <span class="nm-sc-goal"><span class="nm-sc-ball" aria-hidden="true">⚽</span> Vinícius Jr <span class="nm-sc-t">51', 78'</span></span>
+            <span class="nm-sc-goal"><span class="nm-sc-ball" aria-hidden="true">⚽</span> Rodrygo <span class="nm-sc-t">64'</span></span>
+          </div>
+          <div class="nm-sc-side away">
+            <span class="nm-sc-goal"><span class="nm-sc-t">23'</span> Mitrović <span class="nm-sc-ball" aria-hidden="true">⚽</span></span>
+          </div>
+        </div>
+        <div class="nm-meta">Matchday 3 · SoFi Stadium, Inglewood</div>
+      </div>
+
+      <!-- One-line read of what happened -->
+      <div class="analysis-note" style="margin-bottom:var(--space-6)">
+        <span class="an-eyebrow">The verdict</span>
+        <p>Brazil overturned an early deficit with a dominant second half, scoring three unanswered goals to clinch top spot in Group G with a game to spare. Serbia's defeat leaves their qualification hanging on the final round.</p>
+      </div>
+
+      <!-- Pre-match forecast: EXPERIMENTAL, model-preview only (now settled) -->
+      <h2 class="section-title">Pre-match forecast</h2>
+      <section class="forecast-card" aria-label="Experimental pre-match win-probability forecast — model preview, illustrative only">
+        <div class="fc-head">
+          <h2 class="fc-title">Win probability · before kickoff</h2>
+          <span class="fc-tag">Model preview · experimental</span>
+        </div>
+        <div class="fc-bar" role="img" aria-label="Pre-match win probability: Brazil 64 percent, draw 22 percent, Serbia 14 percent">
+          <span class="fc-seg home lead" style="width:64%">64%</span>
+          <span class="fc-seg draw" style="width:22%">22%</span>
+          <span class="fc-seg away" style="width:14%">14%</span>
+        </div>
+        <div class="fc-legend">
+          <span class="lead"><i class="fc-key home"></i> Brazil 64% · most likely</span>
+          <span><i class="fc-key draw"></i> Draw 22%</span>
+          <span><i class="fc-key away"></i> Serbia 14%</span>
+        </div>
+
+        <p class="fc-subhead">What drove this forecast</p>
+        <p class="fc-intro">These are the signals the model would have weighed before kickoff. The lean shows which side each favoured and why.</p>
+        <ul class="fc-factors">
+          <li class="fc-factor">
+            <span class="ff-name">Recent form</span>
+            <span class="ff-lean home">Favours BRA</span>
+            <span class="ff-why">Brazil won 4 of their last 5; Serbia had lost 3 of 5 coming in.</span>
+          </li>
+          <li class="fc-factor">
+            <span class="ff-name">Attacking quality</span>
+            <span class="ff-lean home">Favours BRA</span>
+            <span class="ff-why">Vinícius Jr and Rodrygo give Brazil a clear edge in game-changing forwards.</span>
+          </li>
+          <li class="fc-factor">
+            <span class="ff-name">Head-to-head &amp; ranking</span>
+            <span class="ff-lean home">Favours BRA</span>
+            <span class="ff-why">Brazil rank well above Serbia and held the historical edge in prior meetings.</span>
+          </li>
+          <li class="fc-factor">
+            <span class="ff-name">What was at stake</span>
+            <span class="ff-lean away">Edge SRB</span>
+            <span class="ff-why">Serbia needed a result and were likely to press early — a route to an upset.</span>
+          </li>
+          <li class="fc-factor">
+            <span class="ff-name">Venue &amp; rest</span>
+            <span class="ff-lean even">Even</span>
+            <span class="ff-why">Neutral venue (SoFi Stadium); identical rest days since matchday 2.</span>
+          </li>
+        </ul>
+
+        <p class="fc-note">Illustrative figures only — <strong>not produced by any model yet</strong>. A data-driven prediction engine is on the project roadmap; until it ships, these pre-match percentages and factor weightings are placeholders shown to demonstrate the forecast layout.</p>
+      </section>
+
+      <!-- Conclusion: how the forecast held up against the actual result -->
+      <h2 class="section-title">Conclusion · forecast vs result</h2>
+      <div class="fc-outcome hit">
+        <div class="fc-outcome-head">
+          <h3 class="fc-outcome-title">The model called the winner</h3>
+          <span class="fc-outcome-badge">✓ Forecast hit</span>
+        </div>
+        <div class="fc-compare">
+          <div class="fc-compare-cell">
+            <div class="fc-compare-label">Forecast</div>
+            <div class="fc-compare-val"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil · 64% most likely</div>
+          </div>
+          <div class="fc-compare-cell">
+            <div class="fc-compare-label">Actual result</div>
+            <div class="fc-compare-val"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil won 3–1</div>
+          </div>
+        </div>
+        <p>Brazil were clear favourites and delivered. Serbia's 23rd-minute opener briefly cut against the lean — exactly the early press the "what was at stake" signal flagged — but Brazil's superior quality told after the break, and the 3–1 final even outran the projected margin.</p>
+        <p>The one signal that leaned Serbia did show up in the scoreline's first chapter; it just wasn't enough to overturn the gap in form and attacking quality the forecast leaned on.</p>
+      </div>
+
+      <!-- Key moments (full match) -->
+      <h2 class="section-title">Key moments</h2>
+      <ul class="mt-list">
+        <li class="mt-item goal">
+          <span class="mt-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#FF5A5A"/><circle cx="8" cy="8" r="6" fill="none" stroke="#06231A" stroke-width="0.5"/></svg></span>
+          <span class="mt-min">23'</span>
+          <span class="mt-text"><strong>Mitrović</strong> heads Serbia ahead from a corner. <span class="mt-type">Goal · SRB</span></span>
+          <span class="mt-score away">0–1</span>
+        </li>
+        <li class="mt-item">
+          <span class="mt-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><rect x="4.5" y="2.5" width="7" height="11" rx="1.2" fill="#F4B740"/></svg></span>
+          <span class="mt-min">39'</span>
+          <span class="mt-text"><strong>Guimarães</strong> booked for a late challenge. <span class="mt-type">Yellow · BRA</span></span>
+        </li>
+        <li class="mt-item goal">
+          <span class="mt-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#2BD37E"/><circle cx="8" cy="8" r="6" fill="none" stroke="#06231A" stroke-width="0.5"/></svg></span>
+          <span class="mt-min">51'</span>
+          <span class="mt-text"><strong>Vinícius Jr</strong> levels with a low finish. <span class="mt-type">Goal · BRA</span></span>
+          <span class="mt-score level">1–1</span>
+        </li>
+        <li class="mt-item goal">
+          <span class="mt-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#2BD37E"/><circle cx="8" cy="8" r="6" fill="none" stroke="#06231A" stroke-width="0.5"/></svg></span>
+          <span class="mt-min">64'</span>
+          <span class="mt-text"><strong>Rodrygo</strong> turns it around from the edge of the box. <span class="mt-type">Goal · BRA</span></span>
+          <span class="mt-score home">2–1</span>
+        </li>
+        <li class="mt-item goal">
+          <span class="mt-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#2BD37E"/><circle cx="8" cy="8" r="6" fill="none" stroke="#06231A" stroke-width="0.5"/></svg></span>
+          <span class="mt-min">78'</span>
+          <span class="mt-text"><strong>Vinícius Jr</strong> wraps up his brace to make it three. <span class="mt-type">Goal · BRA</span></span>
+          <span class="mt-score home">3–1</span>
+        </li>
+      </ul>
+
+      <!-- Goalscorers (final) -->
+      <h2 class="section-title">Goalscorers</h2>
+      <div class="scorers">
+        <div class="scorer-card">
+          <span class="kp-avatar" style="background:#1E9C5A">VJ</span>
+          <div class="scorer-info">
+            <div class="scorer-name"><span class="flag" data-flag="br" data-code="BRA"></span> Vinícius Jr</div>
+            <div class="scorer-role">Forward · Brazil · #7</div>
+            <div class="scorer-goals"><span class="scorer-goal">⚽ 51' · low finish</span><span class="scorer-goal">⚽ 78' · brace</span></div>
+            <p class="scorer-note">Man of the match. Levelled early in the second half, then sealed it late — a two-goal haul that took him to 3 at WC26.</p>
+          </div>
+        </div>
+        <div class="scorer-card">
+          <span class="kp-avatar" style="background:#1E9C5A">RO</span>
+          <div class="scorer-info">
+            <div class="scorer-name"><span class="flag" data-flag="br" data-code="BRA"></span> Rodrygo</div>
+            <div class="scorer-role">Forward · Brazil · #11</div>
+            <div class="scorer-goals"><span class="scorer-goal">⚽ 64' · edge of box</span></div>
+            <p class="scorer-note">Curled in the go-ahead goal to turn the game around — his 1st of the tournament.</p>
+          </div>
+        </div>
+        <div class="scorer-card opp">
+          <span class="kp-avatar" style="background:#C6363C">MI</span>
+          <div class="scorer-info">
+            <div class="scorer-name"><span class="flag" data-flag="rs" data-code="SRB"></span> Mitrović</div>
+            <div class="scorer-role">Forward · Serbia · Captain · #9</div>
+            <div class="scorer-goals"><span class="scorer-goal">⚽ 23' · header</span></div>
+            <p class="scorer-note">Headed Serbia in front from a corner against the run of play. 2 at WC26, but on the losing side.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Match stats (final) -->
+      <h2 class="section-title">Match stats</h2>
+      <div class="stat-bars">
+        <div class="sb-row">
+          <div class="sb-top"><span class="sb-val home lead">58%</span><span class="sb-label">Possession</span><span class="sb-val away">42%</span></div>
+          <div class="sb-track" role="img" aria-label="Possession: Brazil 58 percent, Serbia 42 percent"><span class="sb-fill home" style="width:58%"></span><span class="sb-fill away" style="width:42%"></span></div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-top"><span class="sb-val home lead">18</span><span class="sb-label">Shots</span><span class="sb-val away">10</span></div>
+          <div class="sb-track" role="img" aria-label="Shots: Brazil 18, Serbia 10"><span class="sb-fill home" style="width:64%"></span><span class="sb-fill away" style="width:36%"></span></div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-top"><span class="sb-val home lead">8</span><span class="sb-label">Shots on target</span><span class="sb-val away">3</span></div>
+          <div class="sb-track" role="img" aria-label="Shots on target: Brazil 8, Serbia 3"><span class="sb-fill home" style="width:73%"></span><span class="sb-fill away" style="width:27%"></span></div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-top"><span class="sb-val home lead">2.9</span><span class="sb-label">Expected goals (xG)</span><span class="sb-val away">1.2</span></div>
+          <div class="sb-track" role="img" aria-label="Expected goals: Brazil 2.9, Serbia 1.2"><span class="sb-fill home" style="width:71%"></span><span class="sb-fill away" style="width:29%"></span></div>
+        </div>
+        <div class="sb-row">
+          <div class="sb-top"><span class="sb-val home lead">8</span><span class="sb-label">Corners</span><span class="sb-val away">4</span></div>
+          <div class="sb-track" role="img" aria-label="Corners: Brazil 8, Serbia 4"><span class="sb-fill home" style="width:67%"></span><span class="sb-fill away" style="width:33%"></span></div>
+        </div>
+      </div>
+
+      <!-- Standings impact (confirmed) -->
+      <h2 class="section-title">What it means for the group</h2>
+      <article class="stake-card group-g">
+        <header class="sk-head">
+          <span class="sk-group">Group G · after Matchday 3</span>
+          <span class="sk-tag live">Brazil through</span>
+        </header>
+        <p class="sk-line">Brazil top the group on maximum points and are guaranteed first place. Switzerland and Serbia now contest the second qualifying spot in the final round.</p>
+        <ul class="sk-table">
+          <li><span class="sk-pos">1</span><span class="sk-team"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil</span><span class="sk-pts">9 pts</span><span class="sk-note qualified">Through · 1st</span></li>
+          <li><span class="sk-pos">2</span><span class="sk-team"><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span><span class="sk-pts">4 pts</span><span class="sk-note contention">In contention</span></li>
+          <li><span class="sk-pos">3</span><span class="sk-team"><span class="flag" data-flag="rs" data-code="SRB"></span> Serbia</span><span class="sk-pts">3 pts</span><span class="sk-note contention">Must win</span></li>
+          <li><span class="sk-pos">4</span><span class="sk-team"><span class="flag" data-flag="cm" data-code="CMR"></span> Cameroon</span><span class="sk-pts">1 pt</span><span class="sk-note out">Eliminated</span></li>
+        </ul>
+      </article>
+
+      <div style="margin-top:var(--space-6)">
+        <a class="btn ghost" href="s02-brief-detail.html">Read the full brief →</a>
+      </div>
+
+      <!-- Provenance footer (transparency) -->
+      <div class="provenance" style="margin-top:var(--space-8)">
+        <span>narrative: deepseek</span>
+        <span>·</span>
+        <span>stats &amp; standings computed in Python (not LLM)</span>
+        <span>·</span>
+        <span>source: FIFA official match data</span>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Auto-published daily, 7:00 AM Australia/Melbourne.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

@@ -69,8 +69,8 @@ export default function LiveMatchCard({ initial }: Props) {
   return (
     <Link
       className="next-match is-live"
-      href="/fixtures"
-      aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}. View all fixtures.`}
+      href={`/match/${fixture.fixture_id}`}
+      aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}. View match analysis.`}
     >
       <span className="nm-eyebrow">
         <span className="dot" /> Live now · {label}
@@ -94,7 +94,7 @@ export default function LiveMatchCard({ initial }: Props) {
       <div className="nm-live-clock-wrap">
         <span className="nm-live-clock" aria-hidden="true">{clock}</span>
       </div>
-      <span className="nm-cta">View match &amp; forecast →</span>
+      <span className="nm-cta">Match analysis →</span>
     </Link>
   );
 }

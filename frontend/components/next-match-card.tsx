@@ -7,17 +7,16 @@ import LocalTime from "@/components/local-time";
 interface Props {
   fixture: FixtureRow | null;
   stakeText?: string;
+  // When false (e.g. rendered on the match page itself), drop the wrapping link
+  // + CTA so the hero doesn't self-link.
+  linked?: boolean;
 }
 
-export default function NextMatchCard({ fixture, stakeText }: Props) {
+export default function NextMatchCard({ fixture, stakeText, linked = true }: Props) {
   if (!fixture) return null;
 
-  return (
-    <Link
-      className="next-match"
-      href="/fixtures"
-      aria-label={`Next match: ${fixture.home_team ?? "TBD"} vs ${fixture.away_team ?? "TBD"}. View all fixtures.`}
-    >
+  const body = (
+    <>
       <span className="nm-eyebrow">
         <span className="dot" /> Next kickoff
       </span>
@@ -41,6 +40,28 @@ export default function NextMatchCard({ fixture, stakeText }: Props) {
         <Countdown kickoffUtc={fixture.kickoff_utc} variant="tiles" />
       </div>
       {stakeText && <p className="nm-stake">{stakeText}</p>}
+      {linked && <span className="nm-cta">Match analysis →</span>}
+    </>
+  );
+
+  if (!linked) {
+    return (
+      <section
+        className="next-match"
+        aria-label={`Next match: ${fixture.home_team ?? "TBD"} vs ${fixture.away_team ?? "TBD"}.`}
+      >
+        {body}
+      </section>
+    );
+  }
+
+  return (
+    <Link
+      className="next-match"
+      href={`/match/${fixture.fixture_id}`}
+      aria-label={`Next match: ${fixture.home_team ?? "TBD"} vs ${fixture.away_team ?? "TBD"}. View match analysis.`}
+    >
+      {body}
     </Link>
   );
 }

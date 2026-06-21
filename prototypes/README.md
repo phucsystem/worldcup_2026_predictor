@@ -15,13 +15,22 @@ Open any `s0X-*.html` directly in a browser. All assets are local (no CDN).
 | S-04 Archive | `s04-archive.html` | `/archive` | Return | `cjx-retention` |
 | S-05 Fixtures (Upcoming + Knockout) | `s05-upcoming-knockout.html` | `/fixtures` | Verify / Anticipate | `cjx-usage` |
 | S-06 Changelog | `s06-changelog.html` | `/changelog` | Trust / Share | `cjx-retention` |
-| S-07 Match Analysis (completed) | `s07-match-analysis.html` | `/match/[id]` | Read / Verify | `cjx-usage` |
-| S-08 Match Preview (upcoming) | `s08-match-preview.html` | `/fixture/[id]` | Anticipate / Verify | `cjx-usage` |
+| S-07 Match Analysis (live / in-progress) | `s07-match-analysis.html` | `/match/[id]` | Read / Verify | `cjx-usage` |
+| S-08 Match Preview (upcoming, forecast-led) | `s08-match-preview.html` | `/fixture/[id]` | Anticipate / Verify | `cjx-usage` |
 | S-09 System Logs (info/error events) | `s09-logs.html` | `/logs` | Verify / Trust | `cjx-usage` |
+| S-10 Match Analysis (completed / full-time) | `s10-match-final.html` | `/match/[id]` | Read / Verify | `cjx-usage` |
+| S-11 Betting Recommendation | `s11-betting-recommendation.html` | `/betting` | Anticipate / Verify | `cjx-usage` |
 
-App Shell (top nav `Today` / `Standings` / `Fixtures` / `Archive` / `Changelog` + footer) is shared across all screens. S-07/S-08 are match-scoped detail pages (no top-nav entry): S-07 is reached from the brief (S-02), S-08 from the home "Up next" card (S-01) and fixture rows (S-05).
+> Design-review artifact (not a product screen): `s08-forecast-compare.html` — current vs proposed "ghosted placeholder" forecast card, so a fabricated number is never shown as a working result.
 
-**Match analysis pages (S-07 / S-08):** single-match deep dives, distinct from the editorial brief (S-02). S-07 (completed) shows final score, key moments, stat bars, recent form, and standings impact. S-08 (upcoming) shows countdown, form, head-to-head, qualification stakes, players to watch, and "what to watch". S-08 also includes a **forecast block that is deliberately quarantined and badged "experimental"** — the prediction engine is roadmap-only and the product does not present LLM-invented predictions as fact; the figures are illustrative placeholders. Some fields (xG, head-to-head) are illustrative and may not be available from the free-tier data source in production.
+App Shell (top nav `Today` / `Standings` / `Fixtures` / `Archive` / `Changelog`, plus `Betting` on S-11, and footer) is shared across screens. S-07/S-08/S-10 are match-scoped detail pages (no top-nav entry): the live (S-07) and completed (S-10) match pages are reached from the brief (S-02) and the home "Up next" / live card (S-01); the upcoming preview (S-08) from the home "Up next" card and fixture rows (S-05).
+
+**Match analysis pages — one file per match state:**
+- **S-07 (live / in-progress):** green in-progress banner with live score + match clock, **goalscorers in the hero** (name + minute), a "Watch live on SBS" link, pre-match forecast, key moments so far, live stats, and a live standings projection ("if the score holds").
+- **S-10 (completed / full-time):** final-score hero, the verdict, pre-match forecast, a **forecast-vs-result conclusion** (did the model call it — hit/miss), key moments, goalscorers, final stats, and confirmed standings impact. Flow is forecast → conclusion → actual.
+- **S-08 (upcoming):** leads with the **forecast as primary content** (win probability + projected verdict), then the factual evidence — team comparison (stat bars), head-to-head, qualification stakes, players to watch, strengths & weaknesses, and "what to watch".
+- The **forecast block is deliberately quarantined and badged "model preview · experimental"** across all three: the prediction engine is roadmap-only and the product does not present LLM-invented predictions as fact; percentages, factor weightings, and the verdict are illustrative placeholders. Some fields (xG, head-to-head) may not be available from the free-tier data source in production.
+- The dedicated **"Recent form" section was removed** from the match pages; recent form still appears as one labelled signal inside the forecast factors.
 
 ## FR / Requirement Mapping
 
@@ -42,8 +51,8 @@ App Shell (top nav `Today` / `Standings` / `Fixtures` / `Archive` / `Changelog` 
 | File | Purpose |
 |------|---------|
 | `styles.css` | Design tokens (UI_SPEC §2) + app-layout / top-nav shell + typography |
-| `components.css` | Reusable components (UI_SPEC §2.4): cards, ResultChip, LiveBadge, PositionDelta, QualificationTag, Sparkline, DateStamp, StandingsTable, EmptyState, SkeletonCard, FixtureRow, KnockoutBracket (CSS-only tree), Changelog timeline |
-| `interactions.js` | CJX entrance animations + segmented toggle (Standings groups/knockout, Fixtures upcoming/knockout) |
+| `components.css` | Reusable components (UI_SPEC §2.4): cards, ResultChip, LiveBadge, PositionDelta, QualificationTag, Sparkline, DateStamp, StandingsTable, EmptyState, SkeletonCard, FixtureRow, KnockoutBracket (CSS-only tree), Changelog timeline. Match-analysis: match/live hero (`.match-hero`, `.next-match.is-live`), stat bars, head-to-head, players, forecast card + factors + verdict, forecast-vs-result conclusion (`.fc-outcome`), strengths & weaknesses (`.sw-grid`), goalscorer cards (`.scorer-card`), flag backdrop (`.flag-bg` / `.page-flag-bg`) |
+| `interactions.js` | CJX entrance animations + segmented toggle (Standings groups/knockout, Fixtures upcoming/knockout); inline SVG flag injection (`FLAGS` map → `[data-flag]`, plus `[data-flag-bg]` / `[data-flag-bg-page]` backdrops); countdown / live-clock timers |
 
 ## Notes on spec adherence
 
@@ -59,4 +68,8 @@ App Shell (top nav `Today` / `Standings` / `Fixtures` / `Archive` / `Changelog` 
 - **Stars to watch** (S-01) shows player photos pulled from Wikimedia Commons URLs. These are *illustrative external assets* — each `<img>` has an `onerror` fallback to a team-colored initials avatar, so a failed/offline load never shows a broken image. For a real product, replace with licensed assets.
 - **Motion:** staggered entrance for cards/rows, sparkline line-draw, and press/hover feedback — all gated by `prefers-reduced-motion` (entrance + draw animations disabled when requested).
 - **Countdown clocks** for upcoming matches (`[data-countdown]` in `interactions.js`): a segmented H/M/S clock on the home "Up next" featured card and compact inline `in 3h 57m` counters on fixture rows. Targets derive from `data-offset-min` at load, so the prototype always ticks realistically regardless of when opened; rolls to a **LIVE** badge at zero. For production, swap to an absolute `data-kickoff` ISO timestamp. Marked `aria-hidden` (the static kickoff label carries the accessible time) to avoid per-second screen-reader spam.
+- **Two-team flag backdrop.** Match heroes and the whole page can render a faded home/away flag layer — `data-flag-bg` on a hero container, `data-flag-bg-page` on `<body>`, both reading `data-home` / `data-away` (FIFA codes) — reusing the same `FLAGS` map. Home flag fills the left, away the right, under a dark tint for readability; flag-backed heroes drop the decorative football.
+- **Goalscorers & live scorers.** Scorer cards (`.scorer-card`) list each goal with player, minute, and type. The live page (S-07) also shows a compact scorers strip inside the hero (name + minute, grouped by team).
+- **Forecast-vs-result conclusion.** On the completed page (S-10), `.fc-outcome` renders a hit/miss comparison of the pre-match forecast against the final result.
+- **Betting recommendation prototype.** S-11 ranks upcoming fixtures by strongest model win lean, separates model fair price from TAB odds, and links to TAB for real market comparison. It is informational only and includes 18+ / responsible betting copy.
 - The `FLAGS` map and `data-*` values are author-controlled constants in static files (no user input), so the `innerHTML` injection carries no XSS exposure here; sanitize if this ever renders dynamic data.

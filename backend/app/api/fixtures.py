@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -38,6 +38,10 @@ _KNOCKOUT_ORDER_INDEX = {name.lower(): i for i, name in enumerate(KNOCKOUT_ROUND
 # finished/postponed state). Drives the /live endpoint and the live poller.
 LIVE_STATUSES = {"1H", "HT", "2H", "ET", "BT", "P", "LIVE"}
 
+# Finished short status codes — drive the once-only events backfill on the daily
+# collect path.
+FINISHED_STATUSES = {"FT", "AET", "PEN"}
+
 
 def _get_session():
     global _engine
@@ -65,6 +69,21 @@ class FixtureRow(BaseModel):
     group_name: Optional[str] = None
     kickoff_utc: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
+
+class MatchEvent(BaseModel):
+    minute: int
+    extra: Optional[int] = None
+    type: Optional[str] = None
+    detail: Optional[str] = None
+    player: Optional[str] = None
+    assist: Optional[str] = None
+    team: Optional[str] = None
+    side: Optional[str] = None  # "home" | "away" | None
+
+
+class FixtureDetail(FixtureRow):
+    events: list[MatchEvent] = []
 
 
 class FixtureDay(BaseModel):
@@ -104,6 +123,52 @@ def is_knockout_stage(stage: Optional[str]) -> bool:
 
 def is_live_status(status: Optional[str]) -> bool:
     return bool(status) and status.strip().upper() in LIVE_STATUSES
+
+
+def normalize_events(
+    raw: Optional[list[dict]], home_team: Optional[str], away_team: Optional[str]
+) -> list[MatchEvent]:
+    """Map raw API-Football /fixtures/events entries to a stable, frontend-
+    friendly shape. `side` is resolved by matching the event team name to the
+    home/away team; the running timeline score is NOT computed here (the frontend
+    derives it from goal events in Phase 2)."""
+    if not raw:
+        return []
+    events: list[MatchEvent] = []
+    for e in raw:
+        time = e.get("time") or {}
+        team = (e.get("team") or {}).get("name")
+        if team and team == home_team:
+            side = "home"
+        elif team and team == away_team:
+            side = "away"
+        else:
+            side = None
+        events.append(
+            MatchEvent(
+                minute=time.get("elapsed") or 0,
+                extra=time.get("extra"),
+                type=e.get("type"),
+                detail=e.get("detail"),
+                player=(e.get("player") or {}).get("name"),
+                assist=(e.get("assist") or {}).get("name"),
+                team=team,
+                side=side,
+            )
+        )
+    return events
+
+
+def select_fixtures_needing_events(matches, existing: set[int]) -> list[int]:
+    """Fixture ids that are finished but have no stored events yet — the daily
+    backfill set. Live matches are handled by the live poller, not here, so they
+    are skipped. `existing` is the set of fixture ids that already have events."""
+    return [
+        m.fixture_id
+        for m in matches
+        if (m.status or "").strip().upper() in FINISHED_STATUSES
+        and m.fixture_id not in existing
+    ]
 
 
 def _enrich(row: dict, logos: dict[str, str]) -> FixtureRow:
@@ -267,6 +332,27 @@ def get_knockout():
     finally:
         session.close()
     return shape_knockout([_row_to_dict(r) for r in rows], logos)
+
+
+# Registered last so the literal routes (/upcoming, /live, /knockout) win over
+# this int path param.
+@router.get("/{fixture_id}", response_model=FixtureDetail)
+def get_fixture(fixture_id: int):
+    session = _get_session()
+    try:
+        row = session.execute(
+            select(matches_table).where(matches_table.c.fixture_id == fixture_id)
+        ).first()
+        if row is None:
+            raise HTTPException(status_code=404, detail="fixture not found")
+        logos = _logo_map(session)
+        events_json = row.events_json
+        home_team, away_team = row.home_team, row.away_team
+    finally:
+        session.close()
+    base = _enrich(_row_to_dict(row), logos)
+    events = normalize_events(events_json, home_team, away_team)
+    return FixtureDetail(**base.model_dump(), events=events)
 
 
 # `/api/stars` lives logically with fixtures enrichment; exposed via its own

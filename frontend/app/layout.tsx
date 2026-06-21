@@ -5,6 +5,7 @@ import "./globals.css";
 import NavLinks from "@/components/nav-links";
 import BrandLogo from "@/components/brand-logo";
 import SiteBackground from "@/components/site-background";
+import CoffeeButton from "@/components/coffee-button";
 
 export const metadata: Metadata = {
   title: "WC26 Intelligence",
@@ -42,22 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <div className="nav-actions">
                 <NavLinks />
-                <span className="coffee-button" aria-label="Support WC26 Intelligence on Buy Me a Coffee">
-                  <Script
-                    id="buy-me-a-coffee-button"
-                    src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-                    strategy="afterInteractive"
-                    data-name="bmc-button"
-                    data-slug="phucsystem"
-                    data-color="#FFDD00"
-                    data-emoji="☕"
-                    data-font="Cookie"
-                    data-text="Buy me a coffee"
-                    data-outline-color="#000000"
-                    data-font-color="#000000"
-                    data-coffee-color="#ffffff"
-                  />
-                </span>
+                <CoffeeButton />
               </div>
             </nav>
           </header>
