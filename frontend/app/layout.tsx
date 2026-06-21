@@ -18,6 +18,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className="min-h-full flex flex-col relative isolate"
         style={{ backgroundColor: "#060E22", color: "#FFFFFF" }}
       >
+        {/* Google tag (gtag.js) */}
+        <Script
+          id="ga-gtag-src"
+          src="https://www.googletagmanager.com/gtag/js?id=G-TEJF56N0MN"
+          strategy="afterInteractive"
+        />
+        <Script id="ga-gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-TEJF56N0MN');
+          `}
+        </Script>
+
         <SiteBackground />
         <div className="relative z-10 flex min-h-full flex-col">
           <header className="app-header">
