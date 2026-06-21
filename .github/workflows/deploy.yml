@@ -140,7 +140,9 @@ jobs:
     name: Deploy to VM
     runs-on: ubuntu-latest
     needs: build-push
-    if: github.event_name != 'pull_request'
+    # Skips until the VM exists. Enable once provisioned + SSH/Azure secrets are set:
+    #   gh variable set DEPLOY_ENABLED --body true
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
     steps:
       - name: Azure login
         uses: azure/login@v2

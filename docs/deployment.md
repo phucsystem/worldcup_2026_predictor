@@ -90,6 +90,13 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 Push to `main` → CI runs tests → builds & pushes `ghcr.io/phucsystem/wc2026-{backend,frontend}`
 → SSHes to the VM and runs `git pull` + `compose pull` + `up -d`. PRs run tests only.
 
+> The `deploy` job is **gated off by default** so `main` stays green before the VM exists.
+> Once the VM is provisioned and the `SSH_*` + `AZURE_*` secrets are set, enable it:
+> ```
+> gh variable set DEPLOY_ENABLED --body true
+> ```
+> Until then only `test` + `build-push` run (images still publish).
+
 > The deploy does `git pull --ff-only`, so **don't edit tracked files on the VM** — any
 > local override goes in `.env` (git-ignored). A diverged working tree fails the deploy.
 
