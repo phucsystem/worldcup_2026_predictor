@@ -28,6 +28,24 @@ env:
   IMAGE_FRONTEND: ghcr.io/phucsystem/wc2026-frontend
 
 jobs:
+  changelog:
+    name: Require changelog update
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check changelog touched
+        run: |
+          changed_files="$(git diff --name-only "origin/${GITHUB_BASE_REF}"...HEAD)"
+          echo "$changed_files"
+          if ! echo "$changed_files" | grep -qx "frontend/public/CHANGELOG.md"; then
+            echo "Every PR merged to main must update frontend/public/CHANGELOG.md."
+            exit 1
+          fi
+
   test:
     name: Validate app
     runs-on: ubuntu-latest
