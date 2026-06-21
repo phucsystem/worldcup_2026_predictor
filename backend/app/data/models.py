@@ -15,6 +15,13 @@ class Match(BaseModel):
     elapsed: Optional[int] = None
     kickoff_utc: Optional[datetime]
     events: Optional[list[dict]] = None
+    # Raw API-Football /fixtures/statistics response (per-team stat arrays).
+    # Populated once on the daily backfill for finished matches; None otherwise.
+    statistics: Optional[list[dict]] = None
+    # DeepSeek-narrated one-line verdict + the model that produced it. Populated
+    # by the verdict pipeline on the daily backfill; None until then.
+    verdict_text: Optional[str] = None
+    verdict_model: Optional[str] = None
     # Raw competition round, e.g. "Group Stage - 1" or "Round of 16". Used to
     # distinguish group-stage matches (which count toward group tables) from
     # knockout matches, and persisted so the knockout bracket can group by round.

@@ -224,3 +224,10 @@ class APIFootballClient(DataSource):
     def get_events(self, fixture_id: int) -> list[dict]:
         data = self._get("/fixtures/events", {"fixture": fixture_id})
         return data.get("response", [])
+
+    def get_fixture_statistics(self, fixture_id: int) -> list[dict]:
+        """Per-team match statistics (possession, shots, xG, corners, …). Returns
+        the raw response list (one entry per team); interpretation/shaping happens
+        in the API layer (app.api.fixtures.normalize_statistics)."""
+        data = self._get("/fixtures/statistics", {"fixture": fixture_id})
+        return data.get("response", [])

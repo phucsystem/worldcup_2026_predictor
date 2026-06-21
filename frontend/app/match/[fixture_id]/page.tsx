@@ -6,6 +6,7 @@ import NextMatchCard from "@/components/next-match-card";
 import MatchHeroFinal from "@/components/match-hero-final";
 import MatchTimeline from "@/components/match-timeline";
 import Goalscorers from "@/components/goalscorers";
+import MatchStats from "@/components/match-stats";
 import FormCompare from "@/components/form-compare";
 import QualificationStakes from "@/components/qualification-stakes";
 import ForecastCard from "@/components/forecast-card";
@@ -67,6 +68,12 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
         ) : state === "finished" ? (
           <>
             <MatchHeroFinal fixture={fixture} />
+            {fixture.verdict ? (
+              <div className="analysis-note">
+                <span className="an-eyebrow">The verdict</span>
+                <p>{fixture.verdict}</p>
+              </div>
+            ) : null}
             {forecastCard}
             <ForecastOutcome
               forecast={forecast}
@@ -91,6 +98,12 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
                 />
               </>
             ) : null}
+            {fixture.statistics.length > 0 ? (
+              <>
+                <h2 className="section-title">Match stats</h2>
+                <MatchStats stats={fixture.statistics} homeTeam={fixture.home_team} awayTeam={fixture.away_team} />
+              </>
+            ) : null}
             {stakes}
           </>
         ) : (
@@ -112,6 +125,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
           </Link>
           <p className="provenance">
             <span>Data: API-Football</span>
+            {fixture.verdict_model ? <span>· verdict: {fixture.verdict_model}</span> : null}
             {updatedAt ? <span>· Updated {updatedAt} AEST</span> : null}
           </p>
         </footer>

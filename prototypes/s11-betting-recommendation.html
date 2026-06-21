@@ -1,16 +1,17 @@
 <!--
-  Screen: S-11 Betting Recommendation (ranked betting-insights prototype)
+  Screen: S-11 Private Betting Board (ranked betting-insights prototype)
   CJX Stage: Anticipate / Verify -> cjx-usage
   Scope: upcoming match analysis, ranked win probabilities, and TAB-style market
-         comparison options. This page does not display live TAB odds; it shows
-         model fair prices and sends users to tab.com.au to compare real markets.
+         comparison options for personal review. This page does not display live
+         TAB odds; it shows model fair prices and sends the user to tab.com.au
+         to compare real markets before making a private choice.
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Betting Recommendations · WC26 Intelligence</title>
+  <title>Private Betting Board · WC26 Intelligence</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="components.css">
 </head>
@@ -36,13 +37,13 @@
       <div class="bet-shell">
         <section class="bet-hero" aria-labelledby="bet-title">
           <div class="bet-hero-copy">
-            <span class="section-eyebrow">Upcoming matches · model ranking</span>
-            <h1 id="bet-title" class="display-headline">Betting recommendations by win possibility</h1>
-            <p class="summary-deck">Rank the next fixtures by strongest model lean, then compare common TAB market options before making any decision.</p>
+            <span class="section-eyebrow">Private page · upcoming matches</span>
+            <h1 id="bet-title" class="display-headline">My betting board</h1>
+            <p class="summary-deck">Review each match, compare TAB options, and mark a private choice: back it, watch price, or skip.</p>
           </div>
-          <aside class="bet-responsible" aria-label="Responsible betting note">
-            <span class="br-kicker">18+ only</span>
-            <p>Informational only. Not betting advice. No live TAB odds shown here. Compare real markets on TAB, set limits, and do not bet because of this page alone.</p>
+          <aside class="bet-responsible" aria-label="Private page note">
+            <span class="br-kicker">Personal use</span>
+            <p>This is a private decision sheet. It separates model lean, market fit, and your final choice. TAB prices are checked manually.</p>
           </aside>
         </section>
 
@@ -50,16 +51,16 @@
           <div class="bet-control-group">
             <span class="bet-control-label">Sort</span>
             <div class="toggle-group" role="group" aria-label="Sort recommendations">
-              <button class="toggle-btn active" type="button">Highest win lean</button>
+              <button class="toggle-btn active" type="button">Best value check</button>
               <button class="toggle-btn" type="button">Kickoff time</button>
             </div>
           </div>
           <div class="bet-control-group">
-            <span class="bet-control-label">Market</span>
+            <span class="bet-control-label">Decision</span>
             <div class="toggle-group" role="group" aria-label="Market focus">
-              <button class="toggle-btn active" type="button">Match winner</button>
-              <button class="toggle-btn" type="button">Safer angles</button>
-              <button class="toggle-btn" type="button">Goals</button>
+              <button class="toggle-btn active" type="button">All</button>
+              <button class="toggle-btn" type="button">Watch</button>
+              <button class="toggle-btn" type="button">Skip</button>
             </div>
           </div>
           <a class="btn bet-tab-link" href="https://www.tab.com.au/" target="_blank" rel="noopener noreferrer">Compare on TAB</a>
@@ -87,6 +88,19 @@
               </div>
               <span class="bet-confidence high">Strong lean</span>
             </div>
+            <div class="bet-choice-panel">
+              <span class="bet-choice-title">My choice</span>
+              <div class="bet-choice-options" role="group" aria-label="Choose action for Brazil vs Serbia">
+                <button class="bet-choice-btn" type="button">Back</button>
+                <button class="bet-choice-btn active" type="button">Watch price</button>
+                <button class="bet-choice-btn" type="button">Skip</button>
+              </div>
+              <dl class="bet-checklist">
+                <div><dt>Compare if TAB</dt><dd>2.00+</dd></div>
+                <div><dt>My max stake</dt><dd>$25</dd></div>
+                <div><dt>Risk note</dt><dd>Serbia set pieces</dd></div>
+              </dl>
+            </div>
           </article>
 
           <article class="bet-rank-card">
@@ -109,6 +123,19 @@
                 <span class="away" style="width:21%"></span>
               </div>
               <span class="bet-confidence medium">Lean</span>
+            </div>
+            <div class="bet-choice-panel">
+              <span class="bet-choice-title">My choice</span>
+              <div class="bet-choice-options" role="group" aria-label="Choose action for Switzerland vs Cameroon">
+                <button class="bet-choice-btn" type="button">Back</button>
+                <button class="bet-choice-btn active" type="button">Watch price</button>
+                <button class="bet-choice-btn" type="button">Skip</button>
+              </div>
+              <dl class="bet-checklist">
+                <div><dt>Compare if TAB</dt><dd>DNB 1.70+</dd></div>
+                <div><dt>My max stake</dt><dd>$15</dd></div>
+                <div><dt>Risk note</dt><dd>Draw path</dd></div>
+              </dl>
             </div>
           </article>
 
@@ -133,14 +160,27 @@
               </div>
               <span class="bet-confidence low">Narrow lean</span>
             </div>
+            <div class="bet-choice-panel">
+              <span class="bet-choice-title">My choice</span>
+              <div class="bet-choice-options" role="group" aria-label="Choose action for Portugal vs Ghana">
+                <button class="bet-choice-btn" type="button">Back</button>
+                <button class="bet-choice-btn" type="button">Watch price</button>
+                <button class="bet-choice-btn active danger" type="button">Skip</button>
+              </div>
+              <dl class="bet-checklist">
+                <div><dt>Compare if TAB</dt><dd>BTTS 1.95+</dd></div>
+                <div><dt>My max stake</dt><dd>$10</dd></div>
+                <div><dt>Risk note</dt><dd>Volatile market</dd></div>
+              </dl>
+            </div>
           </article>
         </section>
 
         <section aria-labelledby="market-title">
           <div class="bet-section-head">
             <div>
-              <h2 id="market-title" class="section-title">Market options to compare</h2>
-              <p class="summary-deck">Model fair price is calculated from probability. TAB price must be checked on TAB before any bet.</p>
+              <h2 id="market-title" class="section-title">Bet details</h2>
+              <p class="summary-deck">Each detail card shows the market to inspect, the model fair price, and the personal trigger price before making a choice.</p>
             </div>
             <span class="bet-data-badge">No live odds feed</span>
           </div>
@@ -156,7 +196,8 @@
                 <span><strong>64%</strong> model probability</span>
                 <span><strong>1.56</strong> fair price</span>
               </div>
-              <p>Only interesting if the TAB price is clearly above the model fair price after margin and your own risk check.</p>
+              <p>Personal trigger: only consider if TAB is 2.00 or better. If shorter, mark as skip and move on.</p>
+              <div class="bet-note-line"><span>Choice</span><strong>Watch price</strong></div>
               <a class="btn ghost" href="https://www.tab.com.au/sports/betting/Soccer" target="_blank" rel="noopener noreferrer">Open soccer markets</a>
             </article>
 
@@ -170,7 +211,8 @@
                 <span><strong>52%</strong> win lean</span>
                 <span><strong>27%</strong> draw protection</span>
               </div>
-              <p>Better suited to a match where the favourite can still qualify with a draw and may avoid overcommitting late.</p>
+              <p>Personal trigger: compare draw-no-bet first. Match winner has too much draw risk for the straight price.</p>
+              <div class="bet-note-line"><span>Choice</span><strong>Watch price</strong></div>
               <a class="btn ghost" href="https://www.tab.com.au/sports/betting/Soccer" target="_blank" rel="noopener noreferrer">Compare DNB</a>
             </article>
 
@@ -184,7 +226,8 @@
                 <span><strong>74%</strong> non-draw pressure</span>
                 <span><strong>2</strong> transition teams</span>
               </div>
-              <p>Portugal's control and Ghana's counter threat make this more interesting than the straight winner market.</p>
+              <p>Personal trigger: skip unless lineups show both first-choice attacks. Too many assumptions before teams are confirmed.</p>
+              <div class="bet-note-line danger"><span>Choice</span><strong>Skip now</strong></div>
               <a class="btn ghost" href="https://www.tab.com.au/sports/betting/Soccer" target="_blank" rel="noopener noreferrer">Compare BTTS</a>
             </article>
           </div>
@@ -196,12 +239,12 @@
             <ul class="bet-signal-list">
               <li><span>1</span><strong>Win probability first.</strong> Cards sort by highest non-draw outcome, not by fixture popularity.</li>
               <li><span>2</span><strong>Draw risk stays visible.</strong> A 52% favourite with a 27% draw profile is handled differently from a 64% favourite.</li>
-              <li><span>3</span><strong>Market fit matters.</strong> The page recommends which TAB market to compare, not a blind bet.</li>
+              <li><span>3</span><strong>Market fit matters.</strong> The page helps choose which TAB market to inspect, then records your decision.</li>
             </ul>
           </article>
           <article class="bet-detail-panel caution">
-            <h2 class="section-title">Before betting</h2>
-            <p>Check team news, confirmed lineups, real TAB prices, market rules, and your own limit. If the real price is shorter than the model fair price, there is no model value.</p>
+            <h2 class="section-title">Private rule</h2>
+            <p>Check team news, confirmed lineups, real TAB prices, market rules, and your own limit. If the real price is shorter than your trigger price, mark skip.</p>
             <p>Need help? Contact Gambling Help Online or your local support service.</p>
           </article>
         </section>
@@ -210,8 +253,8 @@
 
     <footer class="app-footer">
       <div class="footer-inner">
-        <span>Data sources: FIFA official fixtures &amp; standings. TAB markets linked for comparison only.</span>
-        <span>Betting insight is informational, not advice.</span>
+        <span>Private page. Data sources: FIFA official fixtures &amp; standings. TAB markets linked for manual comparison.</span>
+        <span>Choices shown here are placeholders for prototype review.</span>
       </div>
     </footer>
   </div>

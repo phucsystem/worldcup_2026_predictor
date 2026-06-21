@@ -128,6 +128,20 @@ def run(target_date: date) -> int:
     except Exception as exc:
         log.warning("Events backfill skipped: %s", exc)
 
+    # One-time statistics backfill (possession/shots/xG/corners), same once-only
+    # guard. Independent of events so one failing never blocks the other.
+    try:
+        backfill_finished_statistics(session_factory, client, matches)
+    except Exception as exc:
+        log.warning("Statistics backfill skipped: %s", exc)
+
+    # One-time per-match verdict generation (DeepSeek narrates the score/scorers/
+    # standings facts). Runs after events are backfilled so scorers are available.
+    try:
+        backfill_finished_verdicts(session_factory, matches, group_tables)
+    except Exception as exc:
+        log.warning("Verdict backfill skipped: %s", exc)
+
     log.info("Collection complete for %s", target_date)
     return 0
 
@@ -193,6 +207,94 @@ def backfill_finished_events(session_factory, client: APIFootballClient, matches
         with session_factory() as session:
             upsert_matches(session, to_store)
     log.info("Backfilled events for %d finished matches", len(to_store))
+    return len(to_store)
+
+
+def backfill_finished_statistics(session_factory, client: APIFootballClient, matches: list) -> int:
+    """Fetch + store match statistics once for finished matches that have none yet.
+    Guarded so finished matches are never re-fetched on later runs. Returns the
+    count backfilled. Any failure is logged and skipped — never aborts the collect."""
+    from app.api.fixtures import select_fixtures_needing_statistics
+
+    with session_factory() as session:
+        existing = {
+            fid
+            for (fid, stats) in session.execute(
+                select(matches_table.c.fixture_id, matches_table.c.statistics_json)
+            ).all()
+            if stats
+        }
+    needing = set(select_fixtures_needing_statistics(matches, existing))
+    if not needing:
+        return 0
+    to_store = []
+    for m in matches:
+        if m.fixture_id not in needing:
+            continue
+        try:
+            stats = client.get_fixture_statistics(m.fixture_id)
+        except Exception as exc:
+            log.warning("Backfill statistics fetch failed for %s: %s", m.fixture_id, exc)
+            continue
+        if stats:
+            m.statistics = stats
+            to_store.append(m)
+    if to_store:
+        with session_factory() as session:
+            upsert_matches(session, to_store)
+    log.info("Backfilled statistics for %d finished matches", len(to_store))
+    return len(to_store)
+
+
+def backfill_finished_verdicts(session_factory, matches: list, group_tables: dict) -> int:
+    """Generate + store a one-line verdict once for finished matches that have none
+    yet. Keep-last-good: a failed/empty generation never overwrites a stored
+    verdict. Any failure is logged and skipped — never aborts the collect. Skipped
+    entirely when no DEEPSEEK_API_KEY is configured. Returns the count stored."""
+    if not settings.DEEPSEEK_API_KEY:
+        return 0
+    from app.api.fixtures import normalize_events, select_fixtures_needing_verdict
+    from app.pipeline.verdict import build_match_verdict_facts, generate_match_verdict
+
+    with session_factory() as session:
+        rows = session.execute(
+            select(
+                matches_table.c.fixture_id,
+                matches_table.c.verdict_text,
+                matches_table.c.events_json,
+            )
+        ).all()
+    existing = {fid for (fid, verdict, _ev) in rows if verdict}
+    events_by_id = {fid: ev for (fid, _v, ev) in rows}
+    needing = set(select_fixtures_needing_verdict(matches, existing))
+    if not needing:
+        return 0
+    to_store = []
+    for m in matches:
+        if m.fixture_id not in needing:
+            continue
+        events = normalize_events(events_by_id.get(m.fixture_id), m.home_team, m.away_team)
+        facts = build_match_verdict_facts(
+            home_team=m.home_team,
+            away_team=m.away_team,
+            home_score=m.home_score,
+            away_score=m.away_score,
+            events=events,
+            group_name=m.group_name,
+            group_rows=group_tables.get(m.group_name or "", []),
+        )
+        try:
+            result = generate_match_verdict(facts)
+        except Exception as exc:
+            log.warning("Verdict generation failed for %s: %s", m.fixture_id, exc)
+            continue
+        if result:
+            m.verdict_text, m.verdict_model = result
+            to_store.append(m)
+    if to_store:
+        with session_factory() as session:
+            upsert_matches(session, to_store)
+    log.info("Backfilled verdicts for %d finished matches", len(to_store))
     return len(to_store)
 
 

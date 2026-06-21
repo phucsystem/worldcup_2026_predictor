@@ -82,8 +82,21 @@ class MatchEvent(BaseModel):
     side: Optional[str] = None  # "home" | "away" | None
 
 
+class MatchStat(BaseModel):
+    label: str
+    # Display strings preserve API formatting ("58%", "2.90", "18").
+    home: str
+    away: str
+    # Bar widths 0-100 (sum to 100 unless both values are 0). Computed in Python.
+    home_pct: float
+    away_pct: float
+
+
 class FixtureDetail(FixtureRow):
     events: list[MatchEvent] = []
+    statistics: list[MatchStat] = []
+    verdict: Optional[str] = None
+    verdict_model: Optional[str] = None
 
 
 class FixtureDay(BaseModel):
@@ -159,16 +172,109 @@ def normalize_events(
     return events
 
 
-def select_fixtures_needing_events(matches, existing: set[int]) -> list[int]:
-    """Fixture ids that are finished but have no stored events yet — the daily
-    backfill set. Live matches are handled by the live poller, not here, so they
-    are skipped. `existing` is the set of fixture ids that already have events."""
+def _finished_fixtures_missing(matches, existing: set[int]) -> list[int]:
+    """Finished fixture ids absent from `existing` — the once-only daily-backfill
+    set shared by the events and statistics backfills. Live matches are handled by
+    the live poller, not here, so they are skipped."""
     return [
         m.fixture_id
         for m in matches
         if (m.status or "").strip().upper() in FINISHED_STATUSES
         and m.fixture_id not in existing
     ]
+
+
+# API-Football stat `type` → prototype S-10 label, in display order. A type absent
+# from the payload is simply skipped (no zero-fill).
+_STAT_LABELS: list[tuple[str, str]] = [
+    ("Ball Possession", "Possession"),
+    ("Total Shots", "Shots"),
+    ("Shots on Goal", "Shots on target"),
+    ("expected_goals", "Expected goals (xG)"),
+    ("Corner Kicks", "Corners"),
+]
+
+
+def _stat_number(value) -> float:
+    """Numeric magnitude of a stat value for bar widths. Strips '%', tolerates
+    None/blank/non-numeric → 0.0."""
+    if value is None:
+        return 0.0
+    try:
+        return float(str(value).strip().rstrip("%"))
+    except ValueError:
+        return 0.0
+
+
+def _stat_display(value) -> str:
+    return "0" if value is None else str(value)
+
+
+def normalize_statistics(
+    raw: Optional[list[dict]], home_team: Optional[str], away_team: Optional[str]
+) -> list[MatchStat]:
+    """Map the raw /fixtures/statistics response (one entry per team) to ordered
+    MatchStat bars. Teams are matched by name (falling back to payload order);
+    stat types absent from the payload are omitted; bar percentages are computed
+    here (deterministic) — never fabricated."""
+    if not raw:
+        return []
+
+    def stats_of(entry: dict) -> dict:
+        return {s.get("type"): s.get("value") for s in (entry.get("statistics") or [])}
+
+    by_team = {(e.get("team") or {}).get("name"): stats_of(e) for e in raw}
+    home_stats = by_team.get(home_team)
+    away_stats = by_team.get(away_team)
+    # Fall back to payload order if EITHER side failed to match by name — a
+    # one-sided match would otherwise zero-fill the unmatched team's bars (a
+    # fabricated-looking "0" for a team that actually had data).
+    if (home_stats is None or away_stats is None) and len(raw) >= 2:
+        home_stats, away_stats = stats_of(raw[0]), stats_of(raw[1])
+    home_stats = home_stats or {}
+    away_stats = away_stats or {}
+
+    out: list[MatchStat] = []
+    for api_type, label in _STAT_LABELS:
+        hv = home_stats.get(api_type)
+        av = away_stats.get(api_type)
+        if hv is None and av is None:
+            continue
+        hn, an = _stat_number(hv), _stat_number(av)
+        total = hn + an
+        if total > 0:
+            home_pct = round(hn / total * 100, 1)
+            away_pct = round(100 - home_pct, 1)
+        else:
+            home_pct = away_pct = 0.0
+        out.append(
+            MatchStat(
+                label=label,
+                home=_stat_display(hv),
+                away=_stat_display(av),
+                home_pct=home_pct,
+                away_pct=away_pct,
+            )
+        )
+    return out
+
+
+def select_fixtures_needing_events(matches, existing: set[int]) -> list[int]:
+    """Fixture ids that are finished but have no stored events yet. `existing` is
+    the set of fixture ids that already have events."""
+    return _finished_fixtures_missing(matches, existing)
+
+
+def select_fixtures_needing_statistics(matches, existing: set[int]) -> list[int]:
+    """Fixture ids that are finished but have no stored statistics yet. `existing`
+    is the set of fixture ids that already have statistics."""
+    return _finished_fixtures_missing(matches, existing)
+
+
+def select_fixtures_needing_verdict(matches, existing: set[int]) -> list[int]:
+    """Fixture ids that are finished but have no stored verdict yet. `existing` is
+    the set of fixture ids that already have a verdict."""
+    return _finished_fixtures_missing(matches, existing)
 
 
 def _enrich(row: dict, logos: dict[str, str]) -> FixtureRow:
@@ -347,12 +453,22 @@ def get_fixture(fixture_id: int):
             raise HTTPException(status_code=404, detail="fixture not found")
         logos = _logo_map(session)
         events_json = row.events_json
+        statistics_json = row.statistics_json
+        verdict_text = row.verdict_text
+        verdict_model = row.verdict_model
         home_team, away_team = row.home_team, row.away_team
     finally:
         session.close()
     base = _enrich(_row_to_dict(row), logos)
     events = normalize_events(events_json, home_team, away_team)
-    return FixtureDetail(**base.model_dump(), events=events)
+    statistics = normalize_statistics(statistics_json, home_team, away_team)
+    return FixtureDetail(
+        **base.model_dump(),
+        events=events,
+        statistics=statistics,
+        verdict=verdict_text,
+        verdict_model=verdict_model,
+    )
 
 
 # `/api/stars` lives logically with fixtures enrichment; exposed via its own

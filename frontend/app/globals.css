@@ -1783,3 +1783,34 @@ tr.log-detail-row > td {
   .mh-team { font-size: 15px; gap: var(--space-2); }
   .mh-score { font-size: 30px; }
 }
+
+/* Match stats (S-10 stat bars) + the verdict note — ported from
+   prototypes/components.css. Bar fills/lead colour use the enhanced styling; the
+   prototype's barGrow entrance animation is omitted (no keyframe in this sheet). */
+.stat-bars { display: flex; flex-direction: column; gap: var(--space-4); }
+.sb-row { display: flex; flex-direction: column; gap: 6px; }
+.sb-top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.sb-val { font-size: 15px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.sb-val.away { text-align: right; }
+.sb-val.lead { color: var(--accent-bright); }
+.sb-label { text-align: center; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-muted); }
+.sb-track { display: flex; height: 10px; border-radius: var(--radius-pill); overflow: hidden; background: var(--surface-elevated); }
+.sb-fill { height: 100%; }
+.sb-fill.home { background: linear-gradient(90deg, var(--primary), var(--accent-bright)); border-radius: var(--radius-pill) 0 0 var(--radius-pill); }
+.sb-fill.away { background: var(--text-muted); border-radius: 0 var(--radius-pill) var(--radius-pill) 0; }
+
+.analysis-note {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent-bright);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-6);
+}
+.an-eyebrow { display: block; margin-bottom: var(--space-2); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent-bright); }
+.analysis-note p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--text-secondary); }
+.analysis-note p + p { margin-top: var(--space-3); }

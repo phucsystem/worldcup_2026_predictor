@@ -26,6 +26,9 @@ matches_table = sa.Table(
     sa.Column("elapsed", sa.Integer),
     sa.Column("kickoff_utc", sa.DateTime(timezone=True)),
     sa.Column("events_json", sa.JSON),
+    sa.Column("statistics_json", sa.JSON),
+    sa.Column("verdict_text", sa.Text),
+    sa.Column("verdict_model", sa.String),
     sa.Column("stage", sa.String),
     sa.Column("updated_at", sa.DateTime(timezone=True)),
 )
@@ -168,6 +171,16 @@ def upsert_matches(session: Session, matches: list[Match]) -> None:
         if m.events:
             values["events_json"] = m.events
             set_["events_json"] = m.events
+        # Same clobber-guard for the once-only backfilled statistics + verdict:
+        # only persist when this payload carries them (keep-last-good).
+        if m.statistics:
+            values["statistics_json"] = m.statistics
+            set_["statistics_json"] = m.statistics
+        if m.verdict_text:
+            values["verdict_text"] = m.verdict_text
+            set_["verdict_text"] = m.verdict_text
+            values["verdict_model"] = m.verdict_model
+            set_["verdict_model"] = m.verdict_model
         stmt = (
             pg_insert(matches_table)
             .values(**values)

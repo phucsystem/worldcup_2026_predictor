@@ -111,8 +111,20 @@ export interface MatchEvent {
   side: "home" | "away" | null;
 }
 
+// Mirrors backend app.api.fixtures.MatchStat (normalize_statistics output).
+export interface MatchStat {
+  label: string;
+  home: string;
+  away: string;
+  home_pct: number;
+  away_pct: number;
+}
+
 export interface FixtureDetail extends FixtureRow {
   events: MatchEvent[];
+  statistics: MatchStat[];
+  verdict: string | null;
+  verdict_model: string | null;
 }
 
 export interface FixtureDay {

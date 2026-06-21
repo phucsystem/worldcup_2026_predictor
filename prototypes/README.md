@@ -19,7 +19,7 @@ Open any `s0X-*.html` directly in a browser. All assets are local (no CDN).
 | S-08 Match Preview (upcoming, forecast-led) | `s08-match-preview.html` | `/fixture/[id]` | Anticipate / Verify | `cjx-usage` |
 | S-09 System Logs (info/error events) | `s09-logs.html` | `/logs` | Verify / Trust | `cjx-usage` |
 | S-10 Match Analysis (completed / full-time) | `s10-match-final.html` | `/match/[id]` | Read / Verify | `cjx-usage` |
-| S-11 Betting Recommendation | `s11-betting-recommendation.html` | `/betting` | Anticipate / Verify | `cjx-usage` |
+| S-11 Private Betting Board | `s11-betting-recommendation.html` | `/betting` | Anticipate / Verify | `cjx-usage` |
 
 > Design-review artifact (not a product screen): `s08-forecast-compare.html` — current vs proposed "ghosted placeholder" forecast card, so a fabricated number is never shown as a working result.
 
@@ -29,7 +29,7 @@ App Shell (top nav `Today` / `Standings` / `Fixtures` / `Archive` / `Changelog`,
 - **S-07 (live / in-progress):** green in-progress banner with live score + match clock, **goalscorers in the hero** (name + minute), a "Watch live on SBS" link, pre-match forecast, key moments so far, live stats, and a live standings projection ("if the score holds").
 - **S-10 (completed / full-time):** final-score hero, the verdict, pre-match forecast, a **forecast-vs-result conclusion** (did the model call it — hit/miss), key moments, goalscorers, final stats, and confirmed standings impact. Flow is forecast → conclusion → actual.
 - **S-08 (upcoming):** leads with the **forecast as primary content** (win probability + projected verdict), then the factual evidence — team comparison (stat bars), head-to-head, qualification stakes, players to watch, strengths & weaknesses, and "what to watch".
-- The **forecast block is deliberately quarantined and badged "model preview · experimental"** across all three: the prediction engine is roadmap-only and the product does not present LLM-invented predictions as fact; percentages, factor weightings, and the verdict are illustrative placeholders. Some fields (xG, head-to-head) may not be available from the free-tier data source in production.
+- The **forecast block is deliberately quarantined and badged "model preview · experimental"** across all three: the prediction engine is roadmap-only and the product does not present LLM-invented predictions as fact; percentages, factor weightings, and the verdict are illustrative placeholders. Match statistics (xG, shots, possession) and head-to-head come from the paid API-Football plan used in production.
 - The dedicated **"Recent form" section was removed** from the match pages; recent form still appears as one labelled signal inside the forecast factors.
 
 ## FR / Requirement Mapping
@@ -71,5 +71,5 @@ App Shell (top nav `Today` / `Standings` / `Fixtures` / `Archive` / `Changelog`,
 - **Two-team flag backdrop.** Match heroes and the whole page can render a faded home/away flag layer — `data-flag-bg` on a hero container, `data-flag-bg-page` on `<body>`, both reading `data-home` / `data-away` (FIFA codes) — reusing the same `FLAGS` map. Home flag fills the left, away the right, under a dark tint for readability; flag-backed heroes drop the decorative football.
 - **Goalscorers & live scorers.** Scorer cards (`.scorer-card`) list each goal with player, minute, and type. The live page (S-07) also shows a compact scorers strip inside the hero (name + minute, grouped by team).
 - **Forecast-vs-result conclusion.** On the completed page (S-10), `.fc-outcome` renders a hit/miss comparison of the pre-match forecast against the final result.
-- **Betting recommendation prototype.** S-11 ranks upcoming fixtures by strongest model win lean, separates model fair price from TAB odds, and links to TAB for real market comparison. It is informational only and includes 18+ / responsible betting copy.
+- **Private betting board prototype.** S-11 ranks upcoming fixtures by strongest model win lean, separates model fair price from TAB odds, and provides personal choice states: back, watch price, or skip. It is a private decision page, not a public recommendation page.
 - The `FLAGS` map and `data-*` values are author-controlled constants in static files (no user input), so the `innerHTML` injection carries no XSS exposure here; sanitize if this ever renders dynamic data.

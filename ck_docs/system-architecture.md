@@ -62,12 +62,13 @@
 
 External APIs:
 ├─ API-Football (v3.football.api-sports.io)
-│  └─ GET /fixtures?league=1&season=2026 (or 2022 for demo)
-│  └─ GET /standings?league=1&season=2026
-│  └─ GET /fixtures?live=all (live score updates)
+│  ├─ GET /fixtures?league=1&season=2026 (or 2022 for demo)
+│  ├─ GET /standings?league=1&season=2026
+│  ├─ GET /fixtures?live=all (live score updates)
+│  └─ GET /fixtures/statistics?fixture={id} (per-team match stats: possession, shots, xG, corners)
 │
 ├─ DeepSeek API (api.deepseek.com)
-│  └─ POST /chat/completions (LLM brief generation)
+│  └─ POST /chat/completions (LLM brief generation + match verdicts)
 │
 └─ Azure / GitHub
    └─ Container Registry (ghcr.io/phucsystem/wc2026-*)
@@ -98,7 +99,7 @@ GET /api/briefs/{date}                   # Specific date
 GET /api/fixtures/upcoming               # Upcoming matches
 GET /api/fixtures/live                   # Live match updates
 GET /api/fixtures/knockout               # Knockout-stage preview
-GET /api/fixtures/{fixture_id}           # Match detail + quotes
+GET /api/fixtures/{fixture_id}           # Match detail + events, statistics, verdict
 GET /api/standings?date={YYYY-MM-DD}     # Group standings on a date
 GET /api/standings/trend?team=&window=   # Position deltas over window
 GET /api/tournament/summary               # Qualification & bracket state
@@ -196,6 +197,12 @@ error: str | None                # Error message if failed
 
 **Persistence:** On success, insert into `articles` table (upsert on brief_date); also persist to `agent_runs` (timing, tokens, cost).
 
+**Per-Match Verdicts:** As a separate operation (not part of the daily brief pipeline), the daily collect also:
+- Fetches API-Football statistics (possession, shots, xG, corners) once per finished match (guarded to avoid re-fetching)
+- Generates a 1-2 sentence per-match verdict via `backend/app/pipeline/verdict.py` using DeepSeek (skipped if no DEEPSEEK_API_KEY)
+- Stores both in `matches.statistics_json` and `matches.verdict_text` / `matches.verdict_model` (keep-last-good strategy: failed generations never overwrite)
+- Frontend renders these on `/match/[fixture_id]` when present
+
 ---
 
 ### 2.4 Data Collection (Backend)
@@ -206,11 +213,12 @@ error: str | None                # Error message if failed
 
 | Module | File | Purpose |
 |--------|------|---------|
-| `api_football.py` | data/ | APIFootballClient + pure parsers; handles aggregate-block quirk |
+| `api_football.py` | data/ | APIFootballClient + pure parsers; includes `/fixtures/statistics` call |
 | `standings_math.py` | data/ | Pure functions: group tables, H2H, best-thirds, qualification |
-| `collect.py` | data/ | CLI: fetch → assign → compute → upsert DB |
+| `collect.py` | data/ | CLI: fetch → assign → compute → upsert DB; includes `backfill_finished_statistics` and `backfill_finished_verdicts` |
 | `repository.py` | data/ | SQLAlchemy Core upserts (matches, standings, teams) |
 | `deepseek.py` | data/ | ChatOpenAI wrapper, cost/token tracking |
+| `verdict.py` | pipeline/ | Per-match verdict generation: builds fact bundle (score, scorers, standings) + LLM call (DeepSeek) |
 
 **Standings Math (Pure Functions):**
 - `compute_group_table(matches: list[Match]) -> list[TeamRow]` — 3/1/0 pts, GD, GF
@@ -264,7 +272,7 @@ error: str | None                # Error message if failed
 
 | Table | Columns | Purpose |
 |-------|---------|---------|
-| `matches` | id, fixture_id, league, season, date, home_team_id, away_team_id, home_goals, away_goals, status, elapsed, timezone | Raw fixture data (upserted nightly) |
+| `matches` | id, fixture_id, league, season, date, home_team_id, away_team_id, home_goals, away_goals, status, elapsed, timezone, events_json, statistics_json, verdict_text, verdict_model | Raw fixture data + enrichments (upserted nightly) |
 | `standings` | id, brief_date, group_name, position, team_id, played, wins, draws, losses, points, goal_diff, goals_for | Snapshot standings per date (upserted) |
 | `articles` | id, brief_date (unique), intelligence (JSONB), article (JSONB), created_at | Generated briefs (upserted) |
 | `teams` | id, team_id, name, country_code, flag_url | Dim table (seeded) |
@@ -272,7 +280,7 @@ error: str | None                # Error message if failed
 | `agent_runs` | id, run_id (UUID), brief_date, node_timings (JSONB), tokens_in, tokens_out, cost_usd, status, error, created_at | Pipeline execution metadata |
 | `app_logs` | id, ts (desc index), level, source, message, context (JSONB), run_id, created_at | Application logs (INFO+, 14-day retention) |
 
-**Migrations:** Alembic (0001–0006) manage schema; `migrate` container runs on first boot.
+**Migrations:** Alembic (0001–0007) manage schema; `migrate` container runs on first boot.
 
 **Indexes:** Desc index on `app_logs.ts`; unique on `articles.brief_date`.
 

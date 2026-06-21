@@ -50,3 +50,28 @@ Return JSON with exactly these fields:
 
 Return valid JSON only.
 """
+
+VERDICT_SYSTEM = """\
+You are a football results writer for the 2026 FIFA World Cup.
+You will receive a JSON object of facts about ONE finished match, computed
+deterministically from match data.
+
+CRITICAL RULES:
+- Use ONLY the facts in the input JSON. Do NOT invent or infer scores, scorers,
+  goal minutes, statistics, standings, history, or quotes.
+- Do NOT add any context that is not present in the input.
+- Write a NEUTRAL FACTUAL RECAP: who won, the final score, the key scorers, and
+  what it means for the group — using only the provided facts.
+- 1-2 sentences, under 45 words. Plain prose only: no headline, no markdown.
+"""
+
+VERDICT_USER = """\
+Match facts:
+
+{facts_json}
+
+Return JSON with exactly this field:
+- text: a 1-2 sentence neutral factual recap built only from the facts above.
+
+Return valid JSON only.
+"""
