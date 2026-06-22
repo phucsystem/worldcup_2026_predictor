@@ -7,8 +7,8 @@ import {
   eventKey,
   freshEventKeys,
   forecastOutcome,
-  placeholderForecast,
 } from "./match";
+import type { Forecast } from "./match";
 import type { MatchEvent } from "./api";
 
 function ev(partial: Partial<MatchEvent>): MatchEvent {
@@ -191,7 +191,7 @@ describe("eventKey / freshEventKeys", () => {
 });
 
 describe("forecastOutcome", () => {
-  const fc = placeholderForecast("Brazil", "Serbia"); // home favourite
+  const fc: Forecast = { home_pct: 64, draw_pct: 22, away_pct: 14, factors: [] }; // home favourite
 
   it("home favourite + home win → hit", () => {
     const out = forecastOutcome(fc, 3, 1);
@@ -203,18 +203,14 @@ describe("forecastOutcome", () => {
     expect(out).toEqual({ hit: false, predictedSide: "home", actualSide: "draw" });
   });
 
+  it("away favourite + away win → hit", () => {
+    const away: Forecast = { home_pct: 18, draw_pct: 24, away_pct: 58, factors: [] };
+    const out = forecastOutcome(away, 0, 2);
+    expect(out).toEqual({ hit: true, predictedSide: "away", actualSide: "away" });
+  });
+
   it("returns null when scores are absent", () => {
     expect(forecastOutcome(fc, null, 1)).toBeNull();
     expect(forecastOutcome(fc, 2, null)).toBeNull();
-  });
-});
-
-describe("placeholderForecast", () => {
-  it("percentages sum to 100 and home is the most likely", () => {
-    const fc = placeholderForecast("Brazil", "Serbia");
-    expect(fc.homePct + fc.drawPct + fc.awayPct).toBe(100);
-    expect(fc.homePct).toBeGreaterThan(fc.awayPct);
-    expect(fc.factors.length).toBeGreaterThan(0);
-    expect(fc.note).toMatch(/not produced by any model/i);
   });
 });

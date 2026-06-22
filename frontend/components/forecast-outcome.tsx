@@ -32,7 +32,7 @@ export default function ForecastOutcome({
   const outcome = forecastOutcome(forecast, homeScore, awayScore);
   if (!outcome) return null;
 
-  const pct = Math.max(forecast.homePct, forecast.drawPct, forecast.awayPct);
+  const pct = Math.max(forecast.home_pct, forecast.draw_pct, forecast.away_pct);
   const predName = sideName(outcome.predictedSide, homeTeam, awayTeam);
   const predLogo =
     outcome.predictedSide === "home" ? homeLogo : outcome.predictedSide === "away" ? awayLogo : null;

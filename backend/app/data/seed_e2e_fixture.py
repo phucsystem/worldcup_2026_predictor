@@ -111,6 +111,17 @@ def seed() -> int:
                 f"score three unanswered second-half goals."
             ),
             verdict_model="seeded",
+            forecast_json={
+                "home_pct": 58,
+                "draw_pct": 24,
+                "away_pct": 18,
+                "factors": [
+                    {"name": "League position", "lean": "home", "why": f"{home} sits above {away} in the group table."},
+                    {"name": "Points", "lean": "home", "why": f"{home} carries more points into the match."},
+                    {"name": "Goal difference", "lean": "even", "why": "A narrow goal-difference gap separates the two."},
+                ],
+            },
+            forecast_model="seeded",
         )
         upsert_matches(session, [match])
     log.info("Seeded e2e fixture %s (%s 3-1 %s)", E2E_FIXTURE_ID, home, away)

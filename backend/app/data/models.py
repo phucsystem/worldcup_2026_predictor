@@ -22,6 +22,10 @@ class Match(BaseModel):
     # by the verdict pipeline on the daily backfill; None until then.
     verdict_text: Optional[str] = None
     verdict_model: Optional[str] = None
+    # DeepSeek pre-kickoff forecast (win/draw/win split + driving factors) and the
+    # model that produced it. Populated by the forecast backfill; None until then.
+    forecast_json: Optional[dict] = None
+    forecast_model: Optional[str] = None
     # Raw competition round, e.g. "Group Stage - 1" or "Round of 16". Used to
     # distinguish group-stage matches (which count toward group tables) from
     # knockout matches, and persisted so the knockout bracket can group by round.

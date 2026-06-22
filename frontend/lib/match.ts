@@ -142,53 +142,15 @@ export interface ForecastFactor {
   why: string;
 }
 
+// Mirrors backend app.api.fixtures.MatchForecast — a model-generated pre-kickoff
+// win/draw/win split (sums to 100) plus the factors driving it. `model` names the
+// producing model. Populated by the forecast pipeline; absent until it has run.
 export interface Forecast {
-  homePct: number;
-  drawPct: number;
-  awayPct: number;
+  home_pct: number;
+  draw_pct: number;
+  away_pct: number;
   factors: ForecastFactor[];
-  note: string;
-}
-
-// The SINGLE source of the illustrative, non-data-driven forecast shown on the
-// match page. Percentages and factor weightings are fixed placeholders to
-// demonstrate the layout — never derived from data. The factor `why` copy is
-// generic on purpose: inventing team-specific form/quality claims would be
-// fabricated data, which the plan explicitly forbids.
-export function placeholderForecast(home: string, away: string): Forecast {
-  return {
-    homePct: 64,
-    drawPct: 22,
-    awayPct: 14,
-    factors: [
-      {
-        name: "Recent form",
-        lean: "home",
-        why: `Whichever of ${home} or ${away} enters on the stronger recent run is favoured to carry that momentum in.`,
-      },
-      {
-        name: "Attacking quality",
-        lean: "home",
-        why: "Depth of game-changing forwards tilts the expected-goals edge toward the favourite.",
-      },
-      {
-        name: "Head-to-head & ranking",
-        lean: "even",
-        why: `Historical meetings between ${home} and ${away} and the current ranking gap set the baseline expectation.`,
-      },
-      {
-        name: "What's at stake",
-        lean: "away",
-        why: "A side that needs a result is likelier to press early — a route to an upset.",
-      },
-      {
-        name: "Venue & rest",
-        lean: "even",
-        why: "A neutral venue and equal rest days leave little to separate the two.",
-      },
-    ],
-    note: "Illustrative figures only — not produced by any model yet. A data-driven prediction engine is on the project roadmap; until it ships, these percentages and factor weightings are placeholders shown to demonstrate the forecast layout.",
-  };
+  model?: string | null;
 }
 
 export type Side = "home" | "away" | "draw";
@@ -206,9 +168,9 @@ export function forecastOutcome(
 ): ForecastOutcome | null {
   if (homeScore == null || awayScore == null) return null;
   const predictedSide: Side =
-    forecast.homePct >= forecast.drawPct && forecast.homePct >= forecast.awayPct
+    forecast.home_pct >= forecast.draw_pct && forecast.home_pct >= forecast.away_pct
       ? "home"
-      : forecast.awayPct >= forecast.drawPct
+      : forecast.away_pct >= forecast.draw_pct
         ? "away"
         : "draw";
   const actualSide: Side =

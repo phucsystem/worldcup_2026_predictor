@@ -6,16 +6,16 @@ interface Props {
   awayTeam: string;
 }
 
-// Static, illustrative win-probability forecast — the ONLY placeholder on the
-// page. Content comes entirely from placeholderForecast (lib/match.ts); this
+// Pre-kickoff win-probability forecast. All content — the split and the factor
+// leans/reasoning — is model-generated (lib/api FixtureDetail.forecast); this
 // component is presentational and adds no data of its own.
 export default function ForecastCard({ forecast, homeTeam, awayTeam }: Props) {
-  const { homePct, drawPct, awayPct, factors, note } = forecast;
+  const { home_pct: homePct, draw_pct: drawPct, away_pct: awayPct, factors } = forecast;
   const leadHome = homePct >= awayPct;
   return (
     <section
       className="forecast-card"
-      aria-label="Experimental pre-match win-probability forecast — model preview, illustrative only"
+      aria-label="Experimental pre-match win-probability forecast — model preview"
     >
       <div className="fc-head">
         <h2 className="fc-title">Win probability · before kickoff</h2>
@@ -49,10 +49,6 @@ export default function ForecastCard({ forecast, homeTeam, awayTeam }: Props) {
       </div>
 
       <p className="fc-subhead">What drives this forecast</p>
-      <p className="fc-intro">
-        These are the signals a model would weigh before kickoff. The lean shows which side each
-        would favour and why.
-      </p>
       <ul className="fc-factors">
         {factors.map((f) => (
           <li className="fc-factor" key={f.name}>
@@ -64,8 +60,6 @@ export default function ForecastCard({ forecast, homeTeam, awayTeam }: Props) {
           </li>
         ))}
       </ul>
-
-      <p className="fc-note">{note}</p>
     </section>
   );
 }

@@ -29,6 +29,8 @@ matches_table = sa.Table(
     sa.Column("statistics_json", sa.JSON),
     sa.Column("verdict_text", sa.Text),
     sa.Column("verdict_model", sa.String),
+    sa.Column("forecast_json", sa.JSON),
+    sa.Column("forecast_model", sa.String),
     sa.Column("stage", sa.String),
     sa.Column("updated_at", sa.DateTime(timezone=True)),
 )
@@ -181,6 +183,11 @@ def upsert_matches(session: Session, matches: list[Match]) -> None:
             set_["verdict_text"] = m.verdict_text
             values["verdict_model"] = m.verdict_model
             set_["verdict_model"] = m.verdict_model
+        if m.forecast_json:
+            values["forecast_json"] = m.forecast_json
+            set_["forecast_json"] = m.forecast_json
+            values["forecast_model"] = m.forecast_model
+            set_["forecast_model"] = m.forecast_model
         stmt = (
             pg_insert(matches_table)
             .values(**values)

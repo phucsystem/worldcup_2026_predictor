@@ -1,3 +1,5 @@
+import type { Forecast } from "./match";
+
 const API_BASE = process.env.API_BASE ?? "http://localhost:8000";
 
 export interface BriefSummary {
@@ -126,6 +128,7 @@ export interface FixtureDetail extends FixtureRow {
   statistics: MatchStat[];
   verdict: string | null;
   verdict_model: string | null;
+  forecast: Forecast | null;
 }
 
 export interface FixtureDay {

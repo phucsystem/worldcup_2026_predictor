@@ -142,6 +142,13 @@ def run(target_date: date) -> int:
     except Exception as exc:
         log.warning("Verdict backfill skipped: %s", exc)
 
+    # One-time per-match pre-kickoff forecast (DeepSeek estimates a win/draw/win
+    # split + driving factors from each group-stage match's standings facts).
+    try:
+        backfill_forecasts(session_factory, matches, group_tables)
+    except Exception as exc:
+        log.warning("Forecast backfill skipped: %s", exc)
+
     log.info("Collection complete for %s", target_date)
     return 0
 
@@ -302,6 +309,59 @@ def backfill_finished_verdicts(session_factory, matches: list, group_tables: dic
         with session_factory() as session:
             upsert_matches(session, to_store)
     log.info("Backfilled verdicts for %d finished matches", len(to_store))
+    return len(to_store)
+
+
+def backfill_forecasts(session_factory, matches: list, group_tables: dict) -> int:
+    """Generate + store a pre-kickoff forecast once for each group-stage match that
+    has none yet. Keep-last-good: a failed/empty generation never overwrites a
+    stored forecast. Any failure is logged and skipped — never aborts the collect.
+    Skipped entirely when no DEEPSEEK_API_KEY is configured. Returns the count
+    stored."""
+    if not settings.DEEPSEEK_API_KEY:
+        return 0
+    from app.api.fixtures import select_fixtures_needing_forecast
+    from app.pipeline.forecast import build_match_forecast_facts, generate_match_forecast
+
+    with session_factory() as session:
+        existing = {
+            fid
+            for (fid, forecast) in session.execute(
+                select(matches_table.c.fixture_id, matches_table.c.forecast_json)
+            ).all()
+            if forecast
+        }
+    needing = set(select_fixtures_needing_forecast(matches, existing))
+    if not needing:
+        return 0
+    to_store = []
+    for m in matches:
+        if m.fixture_id not in needing:
+            continue
+        rows = group_tables.get(m.group_name or "", [])
+        home_row = next((r for r in rows if r.team == m.home_team), None)
+        away_row = next((r for r in rows if r.team == m.away_team), None)
+        facts = build_match_forecast_facts(
+            home_team=m.home_team,
+            away_team=m.away_team,
+            home_row=home_row,
+            away_row=away_row,
+            group_name=m.group_name,
+        )
+        if facts is None:
+            continue
+        try:
+            result = generate_match_forecast(facts)
+        except Exception as exc:
+            log.warning("Forecast generation failed for %s: %s", m.fixture_id, exc)
+            continue
+        if result:
+            m.forecast_json, m.forecast_model = result
+            to_store.append(m)
+    if to_store:
+        with session_factory() as session:
+            upsert_matches(session, to_store)
+    log.info("Backfilled forecasts for %d matches", len(to_store))
     return len(to_store)
 
 

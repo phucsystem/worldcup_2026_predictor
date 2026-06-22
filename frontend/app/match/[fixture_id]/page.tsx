@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getFixture, getStandings } from "@/lib/api";
-import { matchState, placeholderForecast } from "@/lib/match";
+import { matchState } from "@/lib/match";
 import NextMatchCard from "@/components/next-match-card";
 import MatchHeroFinal from "@/components/match-hero-final";
 import MatchTimeline from "@/components/match-timeline";
@@ -26,7 +26,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
   const state = matchState(fixture.status);
   const homeTeam = fixture.home_team ?? "Home";
   const awayTeam = fixture.away_team ?? "Away";
-  const forecast = placeholderForecast(homeTeam, awayTeam);
+  const forecast = fixture.forecast;
 
   const group = standings?.groups.find((g) => g.group_name === fixture.group_name) ?? null;
   const groupRows = group?.rows ?? [];
@@ -41,7 +41,9 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
       })
     : null;
 
-  const forecastCard = <ForecastCard forecast={forecast} homeTeam={homeTeam} awayTeam={awayTeam} />;
+  const forecastCard = forecast ? (
+    <ForecastCard forecast={forecast} homeTeam={homeTeam} awayTeam={awayTeam} />
+  ) : null;
   const formCompare = (
     <FormCompare
       home={{ team: fixture.home_team, logo: homeRow?.logo ?? fixture.home_logo, results: homeRow?.recent_results ?? [] }}
@@ -75,15 +77,17 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
               </div>
             ) : null}
             {forecastCard}
-            <ForecastOutcome
-              forecast={forecast}
-              homeTeam={fixture.home_team}
-              awayTeam={fixture.away_team}
-              homeLogo={fixture.home_logo}
-              awayLogo={fixture.away_logo}
-              homeScore={fixture.home_score}
-              awayScore={fixture.away_score}
-            />
+            {forecast ? (
+              <ForecastOutcome
+                forecast={forecast}
+                homeTeam={fixture.home_team}
+                awayTeam={fixture.away_team}
+                homeLogo={fixture.home_logo}
+                awayLogo={fixture.away_logo}
+                homeScore={fixture.home_score}
+                awayScore={fixture.away_score}
+              />
+            ) : null}
             {fixture.events.length > 0 ? (
               <>
                 <h2 className="section-title">Key moments</h2>
@@ -126,6 +130,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
           <p className="provenance">
             <span>Data: API-Football</span>
             {fixture.verdict_model ? <span>· verdict: {fixture.verdict_model}</span> : null}
+            {forecast?.model ? <span>· forecast: {forecast.model}</span> : null}
             {updatedAt ? <span>· Updated {updatedAt} AEST</span> : null}
           </p>
         </footer>

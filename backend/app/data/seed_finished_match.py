@@ -93,6 +93,8 @@ def seed(fixture_id: int | None, clear: bool) -> int:
                 "statistics_json": None,
                 "verdict_text": None,
                 "verdict_model": None,
+                "forecast_json": None,
+                "forecast_model": None,
                 "updated_at": now,
             }
         else:
@@ -108,6 +110,17 @@ def seed(fixture_id: int | None, clear: bool) -> int:
                     f"score three unanswered second-half goals."
                 ),
                 "verdict_model": "seeded",
+                "forecast_json": {
+                    "home_pct": 58,
+                    "draw_pct": 24,
+                    "away_pct": 18,
+                    "factors": [
+                        {"name": "League position", "lean": "home", "why": f"{home} sits above {away} in the group table."},
+                        {"name": "Points", "lean": "home", "why": f"{home} carries more points into the match."},
+                        {"name": "Goal difference", "lean": "even", "why": "A narrow goal-difference gap separates the two."},
+                    ],
+                },
+                "forecast_model": "seeded",
                 "updated_at": now,
             }
         result = session.execute(

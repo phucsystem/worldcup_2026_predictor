@@ -92,11 +92,29 @@ class MatchStat(BaseModel):
     away_pct: float
 
 
+class ForecastFactor(BaseModel):
+    name: str
+    lean: str  # "home" | "away" | "even"
+    why: str
+
+
+class MatchForecast(BaseModel):
+    # Integer win/draw/win split (sums to 100) + the factors driving it. Produced
+    # by the forecast pipeline (app.pipeline.forecast); None on a fixture until
+    # the backfill has run for it. `model` names the producing model.
+    home_pct: int
+    draw_pct: int
+    away_pct: int
+    factors: list[ForecastFactor] = []
+    model: Optional[str] = None
+
+
 class FixtureDetail(FixtureRow):
     events: list[MatchEvent] = []
     statistics: list[MatchStat] = []
     verdict: Optional[str] = None
     verdict_model: Optional[str] = None
+    forecast: Optional[MatchForecast] = None
 
 
 class FixtureDay(BaseModel):
@@ -275,6 +293,17 @@ def select_fixtures_needing_verdict(matches, existing: set[int]) -> list[int]:
     """Fixture ids that are finished but have no stored verdict yet. `existing` is
     the set of fixture ids that already have a verdict."""
     return _finished_fixtures_missing(matches, existing)
+
+
+def select_fixtures_needing_forecast(matches, existing: set[int]) -> list[int]:
+    """Fixture ids for group-stage matches with no stored forecast yet. `existing`
+    is the set of fixture ids that already have one. Knockout matches are skipped
+    — a forecast is grounded in group standings, which they lack."""
+    return [
+        m.fixture_id
+        for m in matches
+        if m.fixture_id not in existing and m.group_name
+    ]
 
 
 def _enrich(row: dict, logos: dict[str, str]) -> FixtureRow:
@@ -456,18 +485,22 @@ def get_fixture(fixture_id: int):
         statistics_json = row.statistics_json
         verdict_text = row.verdict_text
         verdict_model = row.verdict_model
+        forecast_json = row.forecast_json
+        forecast_model = row.forecast_model
         home_team, away_team = row.home_team, row.away_team
     finally:
         session.close()
     base = _enrich(_row_to_dict(row), logos)
     events = normalize_events(events_json, home_team, away_team)
     statistics = normalize_statistics(statistics_json, home_team, away_team)
+    forecast = MatchForecast(**forecast_json, model=forecast_model) if forecast_json else None
     return FixtureDetail(
         **base.model_dump(),
         events=events,
         statistics=statistics,
         verdict=verdict_text,
         verdict_model=verdict_model,
+        forecast=forecast,
     )
 
 
