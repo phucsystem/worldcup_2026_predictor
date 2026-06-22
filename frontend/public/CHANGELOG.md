@@ -2,6 +2,13 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.9.0 — 22 Jun 2026
+
+- **Added** — Live match pages now show live statistics (possession, shots, shots on target, xG, corners) that refresh while the match is in play.
+- **Added** — A newly arrived goal, card, substitution, or VAR decision briefly highlights on the live timeline so you can spot what just happened.
+- **Improved** — The Key moments timeline now shows the assister on goals, both players on substitutions (on ↔ off), and a dedicated row for VAR decisions.
+- **Improved** — The live scoreline strip now marks penalties and own goals instead of showing every goal the same.
+
 ## v0.8.1 — 22 Jun 2026
 
 - **Internal** — Added a Robot Framework end-to-end suite (finished match page, results navigation, page regression), run on every PR in CI.

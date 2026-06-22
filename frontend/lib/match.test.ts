@@ -3,6 +3,9 @@ import {
   matchState,
   buildTimeline,
   goalscorers,
+  subOnOff,
+  eventKey,
+  freshEventKeys,
   forecastOutcome,
   placeholderForecast,
 } from "./match";
@@ -75,6 +78,15 @@ describe("buildTimeline", () => {
     expect(rows[0].score).toEqual({ home: 1, away: 0 });
   });
 
+  it("carries the assister on goal rows", () => {
+    const rows = buildTimeline([
+      ev({ minute: 51, side: "home", player: "Vinícius", assist: "Rodrygo" }),
+      ev({ minute: 64, type: "Card", detail: "Yellow Card", side: "away", player: "X", assist: null }),
+    ]);
+    expect(rows[0].assist).toBe("Rodrygo");
+    expect(rows[1].assist).toBeNull();
+  });
+
   it("orders by minute then extra", () => {
     const events = [
       ev({ minute: 90, extra: 3, side: "home", player: "Late" }),
@@ -126,6 +138,55 @@ describe("goalscorers", () => {
       goals: [{ minute: 64, detail: "Normal Goal", assist: null }],
     });
     expect(out).toHaveLength(2);
+  });
+});
+
+describe("subOnOff", () => {
+  it("maps player to on and assist to off (API-Football subst convention)", () => {
+    const e = ev({ type: "subst", detail: "Substitution 1", side: "home", player: "Sub In", assist: "Sub Out" });
+    expect(subOnOff(e)).toEqual({ on: "Sub In", off: "Sub Out" });
+  });
+
+  it("tolerates a missing player-off", () => {
+    expect(subOnOff(ev({ type: "subst", player: "Sub In", assist: null }))).toEqual({
+      on: "Sub In",
+      off: null,
+    });
+  });
+});
+
+describe("eventKey / freshEventKeys", () => {
+  it("eventKey is stable for identical events and distinct across minute/type/player/side", () => {
+    const a = ev({ minute: 23, type: "Goal", player: "Mbappé", side: "home" });
+    expect(eventKey(a)).toBe(eventKey(ev({ minute: 23, type: "Goal", player: "Mbappé", side: "home" })));
+    expect(eventKey(ev({ minute: 24, type: "Goal", player: "Mbappé", side: "home" }))).not.toBe(eventKey(a));
+    expect(eventKey(ev({ minute: 23, type: "Card", player: "Mbappé", side: "home" }))).not.toBe(eventKey(a));
+    expect(eventKey(ev({ minute: 23, type: "Goal", player: "Other", side: "home" }))).not.toBe(eventKey(a));
+    expect(eventKey(ev({ minute: 23, type: "Goal", player: "Mbappé", side: "away" }))).not.toBe(eventKey(a));
+  });
+
+  it("distinguishes same-minute events by extra time", () => {
+    const base = ev({ minute: 90, player: "A", side: "home" });
+    expect(eventKey({ ...base, extra: 3 })).not.toBe(eventKey(base));
+  });
+
+  it("distinguishes player-less events at the same minute by detail", () => {
+    // two VAR rulings in the same minute, no player — must not collide
+    const a = ev({ minute: 55, type: "Var", detail: "Goal cancelled", player: null, side: "home" });
+    const b = ev({ minute: 55, type: "Var", detail: "Penalty confirmed", player: null, side: "home" });
+    expect(eventKey(a)).not.toBe(eventKey(b));
+  });
+
+  it("freshEventKeys returns only keys absent from prev", () => {
+    const g1 = ev({ minute: 23, player: "A", side: "home" });
+    const g2 = ev({ minute: 51, player: "B", side: "away" });
+    expect(freshEventKeys(new Set([eventKey(g1)]), [g1, g2])).toEqual([eventKey(g2)]);
+  });
+
+  it("returns [] when nothing is new or input is empty", () => {
+    const g1 = ev({ minute: 10, player: "A", side: "home" });
+    expect(freshEventKeys(new Set([eventKey(g1)]), [g1])).toEqual([]);
+    expect(freshEventKeys(new Set(), [])).toEqual([]);
   });
 });
 

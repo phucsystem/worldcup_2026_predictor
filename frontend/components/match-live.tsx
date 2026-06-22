@@ -6,8 +6,10 @@ import TeamFlag from "@/components/team-flag";
 import MatchTimeline from "@/components/match-timeline";
 import Goalscorers from "@/components/goalscorers";
 import MatchScorersStrip from "@/components/match-scorers-strip";
+import MatchStats from "@/components/match-stats";
 import FlagBackdrop from "@/components/flag-backdrop";
 import { liveMinute } from "@/lib/live";
+import { eventKey, freshEventKeys } from "@/lib/match";
 
 interface Props {
   initial: FixtureDetail;
@@ -26,7 +28,11 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
     const t = initial.updated_at ? Date.parse(initial.updated_at) : NaN;
     return Number.isNaN(t) ? 0 : t;
   });
+  const [freshKeys, setFreshKeys] = useState<Set<string>>(() => new Set());
   const inFlight = useRef(false);
+  // Seeded from the initial SSR payload so the first paint highlights nothing —
+  // only events that appear on a later poll are "fresh".
+  const seenKeys = useRef<Set<string>>(new Set(initial.events.map(eventKey)));
 
   useEffect(() => {
     const tick = setInterval(() => setNowMs(Date.now()), TICK_MS);
@@ -40,7 +46,11 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
       try {
         const res = await fetch(`/api/fixtures/${initial.fixture_id}`, { cache: "no-store" });
         if (!res.ok) return;
-        setFixture(await res.json());
+        const next: FixtureDetail = await res.json();
+        const fresh = freshEventKeys(seenKeys.current, next.events);
+        next.events.forEach((e) => seenKeys.current.add(eventKey(e)));
+        setFixture(next);
+        if (fresh.length > 0) setFreshKeys(new Set(fresh));
       } catch {
         // keep the last good state on a transient failure
       } finally {
@@ -111,7 +121,7 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
       {fixture.events.length > 0 ? (
         <>
           <h2 className="section-title">Key moments</h2>
-          <MatchTimeline events={fixture.events} homeTeam={fixture.home_team} awayTeam={fixture.away_team} />
+          <MatchTimeline events={fixture.events} homeTeam={fixture.home_team} awayTeam={fixture.away_team} freshKeys={freshKeys} />
           <h2 className="section-title">Goalscorers</h2>
           <Goalscorers
             events={fixture.events}
@@ -120,6 +130,13 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
             homeLogo={fixture.home_logo}
             awayLogo={fixture.away_logo}
           />
+        </>
+      ) : null}
+
+      {fixture.statistics.length > 0 ? (
+        <>
+          <h2 className="section-title">Match stats</h2>
+          <MatchStats stats={fixture.statistics} homeTeam={fixture.home_team} awayTeam={fixture.away_team} />
         </>
       ) : null}
 
