@@ -9,6 +9,11 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.config import settings
 from app.data.models import Match, StandingRow, Team, TopScorer
 
+# Finished short status codes (mirror of FINISHED_STATUSES in api/fixtures.py and
+# _FINISHED in api/standings.py — single tournament feed, duplication accepted over
+# a shared import that would couple the data layer to the API layer).
+_FINISHED_STATUSES = {"FT", "AET", "PEN"}
+
 # Mirror migration 0001 schema — lightweight Core Table objects
 _metadata = sa.MetaData()
 
@@ -145,6 +150,42 @@ def prune_matches_not_in(session: Session, keep_fixture_ids: list[int]) -> int:
     )
     session.commit()
     return result.rowcount or 0
+
+
+def finished_group_matches_for_team(session: Session, team: str) -> list[dict]:
+    """Finished group-stage matches involving `team`, oldest kickoff first, with
+    raw card events carried through (the events the availability replay consumes).
+
+    Pure data plumbing — no business logic. Unlike `fixtures._row_to_dict` this
+    deliberately includes `events_json`, which suspension computation needs.
+
+    Gated on a strictly-finished status: a live match also carries a score and a
+    partial event feed, so a score-only filter would feed mid-match cards into the
+    suspension replay and flag them as settled bans."""
+    rows = session.execute(
+        sa.select(matches_table)
+        .where(
+            sa.or_(
+                matches_table.c.home_team == team,
+                matches_table.c.away_team == team,
+            )
+        )
+        .where(matches_table.c.group_name.isnot(None))
+        .where(matches_table.c.status.in_(_FINISHED_STATUSES))
+        .order_by(matches_table.c.kickoff_utc)
+    ).fetchall()
+    return [
+        {
+            "fixture_id": r.fixture_id,
+            "home_team": r.home_team,
+            "away_team": r.away_team,
+            "home_score": r.home_score,
+            "away_score": r.away_score,
+            "kickoff_utc": r.kickoff_utc,
+            "events_json": r.events_json,
+        }
+        for r in rows
+    ]
 
 
 def upsert_matches(session: Session, matches: list[Match]) -> None:

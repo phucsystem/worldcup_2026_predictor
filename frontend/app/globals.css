@@ -1941,6 +1941,41 @@ tr.log-detail-row > td {
 .fs-pip.d { background: var(--status-draw); color: #2A1E00; }
 .fs-pip.l { background: var(--status-loss); color: #fff; }
 
+/* ---- Team status (objective + availability) — reuses .sk-note status pills ---- */
+.team-status { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.ts-side {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+.ts-team { display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-weight: 800; }
+.ts-group { width: 100%; }
+.ts-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-2);
+}
+.ts-players { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tps-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.tps-player.key { font-weight: 800; color: var(--text-primary); }
+.tps-star { color: var(--status-draw); font-size: 12px; }
+
 /* ---- Forecast (experimental — quarantined, dashed, model-preview only) ---- */
 .forecast-card {
   background:
@@ -2004,7 +2039,7 @@ tr.log-detail-row > td {
 .fc-compare-val { display: flex; align-items: center; gap: var(--space-2); font-size: 15px; font-weight: 800; color: var(--text-primary); }
 
 @media (max-width: 639px) {
-  .form-compare, .fc-compare { grid-template-columns: 1fr; }
+  .form-compare, .fc-compare, .team-status { grid-template-columns: 1fr; }
   .fc-factor { grid-template-columns: 1fr auto; gap: var(--space-2); }
   .ff-why { grid-column: 1 / -1; }
   .mh-body { gap: var(--space-2); }

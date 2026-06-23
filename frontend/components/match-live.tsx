@@ -16,13 +16,14 @@ interface Props {
   forecastSlot: ReactNode;
   formSlot: ReactNode;
   stakesSlot: ReactNode;
+  teamStatusSlot: ReactNode;
 }
 
 const POLL_MS = 30_000;
 const TICK_MS = 1_000;
 const SHORT_FROZEN: Record<string, string> = { HT: "HT", BT: "BREAK", P: "PENS" };
 
-export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot }: Props) {
+export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot, teamStatusSlot }: Props) {
   const [fixture, setFixture] = useState<FixtureDetail>(initial);
   const [nowMs, setNowMs] = useState<number>(() => {
     const t = initial.updated_at ? Date.parse(initial.updated_at) : NaN;
@@ -149,6 +150,7 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot 
       ) : null}
 
       {formSlot}
+      {teamStatusSlot}
       {stakesSlot}
     </>
   );

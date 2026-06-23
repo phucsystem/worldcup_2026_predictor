@@ -39,6 +39,7 @@ worldcup_2026_predictor/
 │   │       ├── api_football.py       # APIFootballClient + pure parsers
 │   │       ├── collect.py            # CLI: fetch → assign groups → compute → upsert
 │   │       ├── standings_math.py     # Pure functions (group tables, qualification)
+│   │       ├── availability.py       # Pure functions (match objective, suspensions)
 │   │       ├── repository.py         # SQLAlchemy Core upserts
 │   │       ├── models.py             # Pydantic models (Match, Standing, Team, etc.)
 │   │       └── deepseek.py           # ChatOpenAI wrapper, cost/token tracking

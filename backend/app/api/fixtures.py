@@ -11,13 +11,17 @@ from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.config import settings
+from app.data.availability import build_team_status, last_match_contributors
+from app.data.models import Match, StandingRow, TeamStatus
 from app.data.repository import (
+    finished_group_matches_for_team,
     make_engine,
     make_session_factory,
     matches_table,
     teams_table,
     top_scorers_table,
 )
+from app.data.standings_math import compute_group_table
 
 router = APIRouter(prefix="/api/fixtures", tags=["fixtures"])
 
@@ -115,6 +119,11 @@ class FixtureDetail(FixtureRow):
     verdict: Optional[str] = None
     verdict_model: Optional[str] = None
     forecast: Optional[MatchForecast] = None
+    # Per-team objective + availability, populated only for non-finished
+    # fixtures (preview/live); None on finished fixtures and when a side has
+    # nothing to show.
+    home_status: Optional[TeamStatus] = None
+    away_status: Optional[TeamStatus] = None
 
 
 class FixtureDay(BaseModel):
@@ -396,6 +405,64 @@ def _logo_map(session) -> dict[str, str]:
     return {r.name: r.logo_url for r in rows if r.logo_url}
 
 
+def _all_group_tables(session) -> dict[str, list[StandingRow]]:
+    """Group-stage standings tables for every group, computed live from stored
+    matches (mirrors tournament.py). Needed in full so qualification status can
+    account for WC 2026 best-third advancement."""
+    rows = session.execute(
+        select(matches_table).where(matches_table.c.group_name.isnot(None))
+    ).mappings().all()
+    by_group: dict[str, list[Match]] = {}
+    for r in rows:
+        by_group.setdefault(r["group_name"], []).append(
+            Match(
+                fixture_id=r["fixture_id"],
+                group_name=r["group_name"],
+                home_team=r["home_team"],
+                away_team=r["away_team"],
+                home_score=r["home_score"],
+                away_score=r["away_score"],
+                status=r["status"],
+                kickoff_utc=r["kickoff_utc"],
+                stage=r["stage"],
+            )
+        )
+    return {g: compute_group_table(ms) for g, ms in by_group.items()}
+
+
+def _key_names_by_team(session) -> dict[str, set[str]]:
+    """Tournament top-scorer names grouped by team — one half of the key-player
+    set (the other half, last-match scorers/assisters, is per-fixture)."""
+    rows = session.execute(
+        select(top_scorers_table.c.name, top_scorers_table.c.team)
+        .where(top_scorers_table.c.season == settings.API_FOOTBALL_SEASON)
+    ).fetchall()
+    by_team: dict[str, set[str]] = {}
+    for r in rows:
+        if r.name and r.team:
+            by_team.setdefault(r.team, set()).add(r.name)
+    return by_team
+
+
+def _team_statuses(
+    session, home_team: Optional[str], away_team: Optional[str]
+) -> tuple[Optional[TeamStatus], Optional[TeamStatus]]:
+    """Build (home_status, away_status) for a non-finished fixture. Each side
+    gets its objective (from live group tables) and availability (replayed from
+    its prior group matches), with key players emphasised."""
+    group_tables = _all_group_tables(session)
+    top_scorers = _key_names_by_team(session)
+
+    def side(team: Optional[str]) -> Optional[TeamStatus]:
+        if not team:
+            return None
+        prior = finished_group_matches_for_team(session, team)
+        key_names = top_scorers.get(team, set()) | last_match_contributors(prior, team)
+        return build_team_status(group_tables, team, prior, key_names=key_names)
+
+    return side(home_team), side(away_team)
+
+
 def _row_to_dict(r) -> dict:
     return {
         "fixture_id": r.fixture_id,
@@ -488,6 +555,12 @@ def get_fixture(fixture_id: int):
         forecast_json = row.forecast_json
         forecast_model = row.forecast_model
         home_team, away_team = row.home_team, row.away_team
+        # Objective + availability are a pre-match aid: compute them for
+        # preview/live fixtures only, never for a finished result.
+        is_finished = (row.status or "").strip().upper() in FINISHED_STATUSES
+        home_status, away_status = (
+            (None, None) if is_finished else _team_statuses(session, home_team, away_team)
+        )
     finally:
         session.close()
     base = _enrich(_row_to_dict(row), logos)
@@ -501,6 +574,8 @@ def get_fixture(fixture_id: int):
         verdict=verdict_text,
         verdict_model=verdict_model,
         forecast=forecast,
+        home_status=home_status,
+        away_status=away_status,
     )
 
 

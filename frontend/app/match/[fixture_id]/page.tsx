@@ -9,6 +9,7 @@ import Goalscorers from "@/components/goalscorers";
 import MatchStats from "@/components/match-stats";
 import FormCompare from "@/components/form-compare";
 import QualificationStakes from "@/components/qualification-stakes";
+import TeamStatusSection from "@/components/team-status";
 import ForecastCard from "@/components/forecast-card";
 import ForecastOutcome from "@/components/forecast-outcome";
 import MatchLive from "@/components/match-live";
@@ -51,6 +52,12 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
     />
   );
   const stakes = <QualificationStakes groupName={fixture.group_name} rows={groupRows} state={state} />;
+  const teamStatus = (
+    <TeamStatusSection
+      home={{ team: fixture.home_team, logo: homeRow?.logo ?? fixture.home_logo, status: fixture.home_status }}
+      away={{ team: fixture.away_team, logo: awayRow?.logo ?? fixture.away_logo, status: fixture.away_status }}
+    />
+  );
 
   return (
     <div className="px-6 py-8" style={{ maxWidth: "960px", margin: "0 auto" }}>
@@ -66,7 +73,13 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
 
       <div className="flex flex-col" style={{ gap: "var(--space-6)" }}>
         {state === "live" ? (
-          <MatchLive initial={fixture} forecastSlot={forecastCard} formSlot={formCompare} stakesSlot={stakes} />
+          <MatchLive
+            initial={fixture}
+            forecastSlot={forecastCard}
+            formSlot={formCompare}
+            stakesSlot={stakes}
+            teamStatusSlot={teamStatus}
+          />
         ) : state === "finished" ? (
           <>
             <MatchHeroFinal fixture={fixture} />
@@ -115,6 +128,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
             <NextMatchCard fixture={fixture} linked={false} />
             {forecastCard}
             {formCompare}
+            {teamStatus}
             {stakes}
           </>
         )}

@@ -2,6 +2,11 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.13.0 — 24 Jun 2026
+
+- **Added** — Upcoming and live match pages now show a "Team status" section: what each team needs from the game (must win, win or draw to stay top, already through, or eliminated).
+- **Added** — Team status also lists players suspended for the match or one booking away from a ban, worked out from real card history, with key players starred.
+
 ## v0.12.0 — 24 Jun 2026
 
 - **Added** — Each date in "Latest Results" now shows how well the model's pre-match forecasts did that day (e.g. 3/4 · 75%), colored by accuracy.

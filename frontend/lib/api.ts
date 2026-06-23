@@ -126,12 +126,29 @@ export interface MatchStat {
   away_pct: number;
 }
 
+// Mirrors backend app.data.models.PlayerStatus / TeamStatus.
+export interface PlayerStatus {
+  player: string;
+  reason: string; // "red-card" | "yellow-accumulation" | "one-yellow"
+  status: "suspended" | "at_risk";
+  key_player: boolean;
+}
+
+export interface TeamStatus {
+  objective: string;
+  objective_css: string; // "qualified" | "out" | "contention"
+  unavailable: PlayerStatus[];
+  at_risk: PlayerStatus[];
+}
+
 export interface FixtureDetail extends FixtureRow {
   events: MatchEvent[];
   statistics: MatchStat[];
   verdict: string | null;
   verdict_model: string | null;
   forecast: Forecast | null;
+  home_status: TeamStatus | null;
+  away_status: TeamStatus | null;
 }
 
 export interface FixtureDay {

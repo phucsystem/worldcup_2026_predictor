@@ -74,3 +74,22 @@ class TopScorer(BaseModel):
     photo_url: Optional[str] = None
     team: Optional[str] = None
     goals: int = 0
+
+
+class PlayerStatus(BaseModel):
+    """A player flagged for the next match: suspended (serving a ban) or at_risk
+    (one booking away). `reason` distinguishes the cause; `key_player` marks a
+    tournament top scorer or last-match scorer/assister for emphasis."""
+    player: str
+    reason: str          # "red-card" | "yellow-accumulation" | "one-yellow"
+    status: str          # "suspended" | "at_risk"
+    key_player: bool = False
+
+
+class TeamStatus(BaseModel):
+    """Per-team, fact-based status for an upcoming/live fixture: one objective
+    line (reusing the standings scenario vocabulary) plus availability lists."""
+    objective: str
+    objective_css: str           # "qualified" | "out" | "contention"
+    unavailable: list[PlayerStatus] = []
+    at_risk: list[PlayerStatus] = []
