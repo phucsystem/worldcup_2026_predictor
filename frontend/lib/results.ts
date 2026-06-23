@@ -38,6 +38,7 @@ export interface ResultWidgetRow {
   homeScore: number;
   awayScore: number;
   winner: "home" | "away" | "draw";
+  forecastCorrect: boolean | null; // null when the match carried no forecast
 }
 
 /**
@@ -77,6 +78,7 @@ export function groupedResultRows(
           homeScore: hs,
           awayScore: as,
           winner: hs > as ? "home" : hs < as ? "away" : "draw",
+          forecastCorrect: r.forecast_correct ?? null,
         });
       }
     }

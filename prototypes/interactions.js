@@ -275,11 +275,113 @@ document.addEventListener('DOMContentLoaded', function () {
     return getDateRank(secondDate) - getDateRank(firstDate);
   });
 
+  function accuracyTier(pct) {
+    if (pct >= 67) return 'high';
+    if (pct >= 34) return 'mid';
+    return 'low';
+  }
+
+  function matchSummary(row) {
+    const names = row.querySelectorAll('.mr-name');
+    const scores = row.querySelectorAll('.mr-score');
+    return {
+      home: names[0] ? names[0].textContent : '',
+      away: names[1] ? names[1].textContent : '',
+      homeScore: scores[0] ? scores[0].textContent : '',
+      awayScore: scores[1] ? scores[1].textContent : '',
+      hit: row.dataset.forecast === 'hit',
+    };
+  }
+
   const dateHeaders = dates.map(function (dateLabel) {
     const dateHeader = document.createElement('div');
     dateHeader.className = 'rw-date-header';
     dateHeader.dataset.date = dateLabel;
-    dateHeader.textContent = dateLabel;
+
+    const label = document.createElement('span');
+    label.className = 'rw-dh-label';
+    label.textContent = dateLabel;
+    dateHeader.appendChild(label);
+
+    // Forecast accuracy = correct forecasts / matches that carried a forecast.
+    const forecasted = rows.filter(function (row) {
+      return row.dataset.date === dateLabel && row.dataset.forecast;
+    });
+    if (!forecasted.length) {
+      list.appendChild(dateHeader);
+      return dateHeader;
+    }
+
+    const hits = forecasted.filter(function (row) {
+      return row.dataset.forecast === 'hit';
+    }).length;
+    const pct = Math.round((hits / forecasted.length) * 100);
+    const tier = accuracyTier(pct);
+
+    const wrap = document.createElement('span');
+    wrap.className = 'rw-dh-acc-wrap';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'rw-dh-acc acc-' + tier;
+    btn.setAttribute('aria-expanded', 'false');
+    btn.setAttribute(
+      'aria-label',
+      'Model forecast ' + hits + ' of ' + forecasted.length +
+        ' results correctly on ' + dateLabel + '. Show breakdown.'
+    );
+    btn.innerHTML =
+      '<span class="rw-dh-acc-icon" aria-hidden="true">◎</span>' +
+      '<span class="rw-dh-acc-frac">' + hits + '/' + forecasted.length + '</span>' +
+      '<span class="rw-dh-acc-pct">' + pct + '%</span>';
+    wrap.appendChild(btn);
+
+    const pop = document.createElement('div');
+    pop.className = 'rw-dh-pop';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Forecast summary for ' + dateLabel);
+    pop.hidden = true;
+    let itemsHtml = '';
+    forecasted.forEach(function (row) {
+      const m = matchSummary(row);
+      itemsHtml +=
+        '<li class="rw-dh-pop-item ' + (m.hit ? 'hit' : 'miss') + '">' +
+        '<span class="rw-dh-pop-mark" aria-hidden="true">' + (m.hit ? '✓' : '✗') + '</span>' +
+        '<span class="rw-dh-pop-match">' + m.home + ' ' + m.homeScore + '–' + m.awayScore + ' ' + m.away + '</span>' +
+        '<span class="rw-dh-pop-verdict">' + (m.hit ? 'Called' : 'Missed') + '</span>' +
+        '</li>';
+    });
+    pop.innerHTML =
+      '<div class="rw-dh-pop-head">' +
+      '<span class="rw-dh-pop-title">Forecast · ' + dateLabel + '</span>' +
+      '<span class="rw-dh-pop-rate acc-' + tier + '">' + hits + '/' + forecasted.length + ' correct · ' + pct + '%</span>' +
+      '</div>' +
+      '<ul class="rw-dh-pop-list">' + itemsHtml + '</ul>';
+    wrap.appendChild(pop);
+
+    let pinned = false;
+    function setOpen(open) {
+      pop.hidden = !open;
+      btn.classList.toggle('open', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    btn.addEventListener('mouseenter', function () { if (!pinned) setOpen(true); });
+    btn.addEventListener('mouseleave', function () { if (!pinned) setOpen(false); });
+    btn.addEventListener('focus', function () { if (!pinned) setOpen(true); });
+    btn.addEventListener('blur', function () { if (!pinned) setOpen(false); });
+    btn.addEventListener('click', function (event) {
+      event.preventDefault();
+      pinned = !pinned;
+      setOpen(pinned);
+    });
+    document.addEventListener('click', function (event) {
+      if (pinned && !wrap.contains(event.target)) { pinned = false; setOpen(false); }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && pinned) { pinned = false; setOpen(false); }
+    });
+
+    dateHeader.appendChild(wrap);
     list.appendChild(dateHeader);
     return dateHeader;
   });

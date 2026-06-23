@@ -2,6 +2,11 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.12.0 — 24 Jun 2026
+
+- **Added** — Each date in "Latest Results" now shows how well the model's pre-match forecasts did that day (e.g. 3/4 · 75%), colored by accuracy.
+- **Added** — Hover or tap a date's forecast rate to see the per-match breakdown — which results the model called and which it missed.
+
 ## v0.11.0 — 23 Jun 2026
 
 - **Fixed** — A missed penalty no longer counts as a goal, so the scoreline and goalscorers stay consistent (e.g. a 2–0 match no longer shows a hat-trick).

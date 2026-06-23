@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { ResultWidgetRow } from "@/lib/results";
 import TeamFlag from "@/components/team-flag";
+
+function accuracyTier(pct: number): "high" | "mid" | "low" {
+  if (pct >= 67) return "high";
+  if (pct >= 34) return "mid";
+  return "low";
+}
 
 /**
  * Latest Results — ABC-style center-anchored list with a "Display in Groups"
@@ -12,6 +18,33 @@ import TeamFlag from "@/components/team-flag";
  */
 export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
   const [grouped, setGrouped] = useState(false);
+  // Which date's forecast summary is open. Hover opens transiently; a click
+  // pins it open (and toggles closed) so touch users get the same summary.
+  const [openDate, setOpenDate] = useState<string | null>(null);
+  const [pinnedDate, setPinnedDate] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pinnedDate) return;
+    function onDocClick(event: MouseEvent) {
+      if (!listRef.current?.contains(event.target as Node)) {
+        setPinnedDate(null);
+        setOpenDate(null);
+      }
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setPinnedDate(null);
+        setOpenDate(null);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [pinnedDate]);
 
   const groups = useMemo(() => {
     const groupNames: string[] = [];
@@ -28,10 +61,33 @@ export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
   }, [rows]);
 
   const dates = useMemo(() => {
-    const dateRows: Array<{ briefDate: string; dateLabel: string }> = [];
+    // Per-date forecast accuracy = correct forecasts / matches that carried one.
+    // `forecasts` backs the hover/click summary popover.
+    type ForecastEntry = { row: ResultWidgetRow; correct: boolean };
+    type DateRow = {
+      briefDate: string;
+      dateLabel: string;
+      forecastHits: number;
+      forecastTotal: number;
+      forecasts: ForecastEntry[];
+    };
+    const dateRows: DateRow[] = [];
     for (const row of rows) {
-      if (!dateRows.some((dateRow) => dateRow.briefDate === row.briefDate)) {
-        dateRows.push({ briefDate: row.briefDate, dateLabel: row.dateLabel });
+      let dateRow = dateRows.find((entry) => entry.briefDate === row.briefDate);
+      if (!dateRow) {
+        dateRow = {
+          briefDate: row.briefDate,
+          dateLabel: row.dateLabel,
+          forecastHits: 0,
+          forecastTotal: 0,
+          forecasts: [],
+        };
+        dateRows.push(dateRow);
+      }
+      if (row.forecastCorrect !== null) {
+        dateRow.forecastTotal += 1;
+        if (row.forecastCorrect) dateRow.forecastHits += 1;
+        dateRow.forecasts.push({ row, correct: row.forecastCorrect });
       }
     }
     return dateRows.sort((firstDate, secondDate) => secondDate.briefDate.localeCompare(firstDate.briefDate));
@@ -88,7 +144,7 @@ export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
         <span className="rw-tg-state">{grouped ? "On" : "Off"}</span>
       </label>
 
-      <div className="rw-list">
+      <div className="rw-list" ref={listRef}>
         {rows.map((row) => {
           const winHome = row.winner === "home";
           const winAway = row.winner === "away";
@@ -125,15 +181,75 @@ export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
           </div>
         ))}
 
-        {dates.map((dateRow, dateIndex) => (
-          <div
-            key={dateRow.briefDate}
-            className={`rw-date-header${dateIndex === 0 ? " first" : ""}`}
-            style={{ order: dateIndex * 100 }}
-          >
-            {dateRow.dateLabel}
-          </div>
-        ))}
+        {dates.map((dateRow, dateIndex) => {
+          const pct =
+            dateRow.forecastTotal > 0
+              ? Math.round((dateRow.forecastHits / dateRow.forecastTotal) * 100)
+              : null;
+          const summaryOpen = openDate === dateRow.briefDate || pinnedDate === dateRow.briefDate;
+          return (
+            <div
+              key={dateRow.briefDate}
+              className={`rw-date-header${dateIndex === 0 ? " first" : ""}`}
+              style={{ order: dateIndex * 100 }}
+            >
+              <span className="rw-dh-label">{dateRow.dateLabel}</span>
+              {pct !== null && (
+                <span className="rw-dh-acc-wrap">
+                <button
+                  type="button"
+                  className={`rw-dh-acc acc-${accuracyTier(pct)}${summaryOpen ? " open" : ""}`}
+                  aria-expanded={summaryOpen}
+                  aria-label={`Model forecast ${dateRow.forecastHits} of ${dateRow.forecastTotal} results correctly on ${dateRow.dateLabel}. Show breakdown.`}
+                  onMouseEnter={() => setOpenDate(dateRow.briefDate)}
+                  onMouseLeave={() => setOpenDate(null)}
+                  onFocus={() => setOpenDate(dateRow.briefDate)}
+                  onBlur={() => setOpenDate(null)}
+                  onClick={() =>
+                    setPinnedDate((current) =>
+                      current === dateRow.briefDate ? null : dateRow.briefDate,
+                    )
+                  }
+                >
+                  <span className="rw-dh-acc-icon" aria-hidden="true">◎</span>
+                  <span className="rw-dh-acc-frac">
+                    {dateRow.forecastHits}/{dateRow.forecastTotal}
+                  </span>
+                  <span className="rw-dh-acc-pct">{pct}%</span>
+                </button>
+                {summaryOpen && (
+                  <div className="rw-dh-pop" role="dialog" aria-label={`Forecast summary for ${dateRow.dateLabel}`}>
+                    <div className="rw-dh-pop-head">
+                      <span className="rw-dh-pop-title">Forecast · {dateRow.dateLabel}</span>
+                      <span className={`rw-dh-pop-rate acc-${accuracyTier(pct)}`}>
+                        {dateRow.forecastHits}/{dateRow.forecastTotal} correct · {pct}%
+                      </span>
+                    </div>
+                    <ul className="rw-dh-pop-list">
+                      {dateRow.forecasts.map((entry) => (
+                        <li
+                          key={entry.row.key}
+                          className={`rw-dh-pop-item${entry.correct ? " hit" : " miss"}`}
+                        >
+                          <span className="rw-dh-pop-mark" aria-hidden="true">
+                            {entry.correct ? "✓" : "✗"}
+                          </span>
+                          <span className="rw-dh-pop-match">
+                            {entry.row.home} {entry.row.homeScore}–{entry.row.awayScore} {entry.row.away}
+                          </span>
+                          <span className="rw-dh-pop-verdict">
+                            {entry.correct ? "Called" : "Missed"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </section>
   );

@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { resultsToChips } from "@/lib/results";
-import type { RecentResult } from "@/lib/api";
+import { groupedResultRows, resultsToChips } from "@/lib/results";
+import type { GroupStandings, RecentResult } from "@/lib/api";
 
 function r(partial: Partial<RecentResult>): RecentResult {
   return {
     outcome: "W",
+    fixture_id: null,
     home_team: "Brazil",
     away_team: "Serbia",
     home_score: 3,
@@ -47,5 +48,39 @@ describe("resultsToChips", () => {
       r({ kickoff_utc: "2026-06-15T18:00:00Z" }),
     ]);
     expect(new Set(out.map((c) => c.key)).size).toBe(2);
+  });
+});
+
+function group(recent: Partial<RecentResult>[]): GroupStandings {
+  return {
+    group_name: "Group A",
+    rows: [{ team: "Brazil", recent_results: recent.map(r) }],
+  } as unknown as GroupStandings;
+}
+
+describe("groupedResultRows", () => {
+  it("carries forecastCorrect through from the recent result", () => {
+    const rows = groupedResultRows([
+      group([
+        { fixture_id: 1, kickoff_utc: "2026-06-12T18:00:00Z", forecast_correct: true },
+        {
+          fixture_id: 2,
+          kickoff_utc: "2026-06-13T18:00:00Z",
+          home_team: "France",
+          away_team: "Poland",
+          forecast_correct: false,
+        },
+      ]),
+    ]);
+    const byFixture = Object.fromEntries(rows.map((row) => [row.fixtureId, row.forecastCorrect]));
+    expect(byFixture[1]).toBe(true);
+    expect(byFixture[2]).toBe(false);
+  });
+
+  it("defaults forecastCorrect to null when the field is absent", () => {
+    const [row] = groupedResultRows([
+      group([{ fixture_id: 9, kickoff_utc: "2026-06-12T18:00:00Z" }]),
+    ]);
+    expect(row.forecastCorrect).toBeNull();
   });
 });

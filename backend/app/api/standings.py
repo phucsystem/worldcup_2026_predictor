@@ -40,6 +40,9 @@ class RecentResult(BaseModel):
     home_score: int | None
     away_score: int | None
     kickoff_utc: datetime | None
+    # Whether the pre-match forecast called the right side; None when the match
+    # carried no forecast (forecast scope is group-stage only).
+    forecast_correct: bool | None = None
 
 
 class TrendPoint(BaseModel):
@@ -91,6 +94,27 @@ def match_outcome(team: str, match: dict) -> str:
     return "L"
 
 
+def forecast_correct(forecast: dict | None, home_score, away_score) -> bool | None:
+    """Did the forecast call the right side? The forecast's most-probable side
+    (argmax of home/draw/away pct) is compared with the actual result. Returns
+    None when no forecast exists or scores are missing — never fabricated."""
+    if not forecast or home_score is None or away_score is None:
+        return None
+    home_pct = forecast.get("home_pct")
+    draw_pct = forecast.get("draw_pct")
+    away_pct = forecast.get("away_pct")
+    if home_pct is None or draw_pct is None or away_pct is None:
+        return None
+    if home_pct >= draw_pct and home_pct >= away_pct:
+        predicted = "home"
+    elif away_pct >= draw_pct:
+        predicted = "away"
+    else:
+        predicted = "draw"
+    actual = "home" if home_score > away_score else "away" if home_score < away_score else "draw"
+    return predicted == actual
+
+
 def recent_results_by_team(
     matches: list[dict], limit: int = _RECENT_LIMIT
 ) -> dict[str, list[RecentResult]]:
@@ -126,6 +150,11 @@ def recent_results_by_team(
                     home_score=m.get("home_score"),
                     away_score=m.get("away_score"),
                     kickoff_utc=m.get("kickoff_utc"),
+                    forecast_correct=forecast_correct(
+                        m.get("forecast_json"),
+                        m.get("home_score"),
+                        m.get("away_score"),
+                    ),
                 )
             )
     return out
@@ -175,6 +204,7 @@ def get_standings(date: Optional[date] = None):
                 matches_table.c.away_score,
                 matches_table.c.status,
                 matches_table.c.kickoff_utc,
+                matches_table.c.forecast_json,
             ).where(matches_table.c.status.in_(_FINISHED))
         ).fetchall()
     finally:
@@ -190,6 +220,7 @@ def get_standings(date: Optional[date] = None):
                 "away_score": m.away_score,
                 "status": m.status,
                 "kickoff_utc": m.kickoff_utc,
+                "forecast_json": m.forecast_json,
             }
             for m in finished_rows
         ]

@@ -6,14 +6,18 @@ filter, most-recent ordering, per-team cap, graceful degrade).
 
 from datetime import datetime, timezone
 
-from app.api.standings import match_outcome, recent_results_by_team
+from app.api.standings import (
+    forecast_correct,
+    match_outcome,
+    recent_results_by_team,
+)
 
 
 def _dt(y, m, d, h=12):
     return datetime(y, m, d, h, 0, tzinfo=timezone.utc)
 
 
-def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None):
+def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None, forecast=None):
     return {
         "fixture_id": fixture_id,
         "home_team": home,
@@ -22,7 +26,12 @@ def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None):
         "away_score": as_,
         "status": status,
         "kickoff_utc": kickoff,
+        "forecast_json": forecast,
     }
+
+
+def _fc(home_pct, draw_pct, away_pct):
+    return {"home_pct": home_pct, "draw_pct": draw_pct, "away_pct": away_pct}
 
 
 # ---------------------------------------------------------------------------
@@ -131,3 +140,48 @@ class TestRecentResultsByTeam:
         }]
         out = recent_results_by_team(matches)
         assert out["Brazil"][0].fixture_id is None
+
+    def test_forecast_correct_carried_for_both_teams(self):
+        # home favoured, home won → correct from both team perspectives
+        matches = [
+            _match("Brazil", "Serbia", 3, 1, kickoff=_dt(2026, 6, 12), forecast=_fc(60, 25, 15)),
+        ]
+        out = recent_results_by_team(matches)
+        assert out["Brazil"][0].forecast_correct is True
+        assert out["Serbia"][0].forecast_correct is True
+
+    def test_forecast_correct_none_without_forecast(self):
+        matches = [_match("Brazil", "Serbia", 3, 1, kickoff=_dt(2026, 6, 12))]
+        out = recent_results_by_team(matches)
+        assert out["Brazil"][0].forecast_correct is None
+
+
+# ---------------------------------------------------------------------------
+# forecast_correct (pure)
+# ---------------------------------------------------------------------------
+
+class TestForecastCorrect:
+    def test_home_favoured_and_home_won(self):
+        assert forecast_correct(_fc(60, 25, 15), 2, 0) is True
+
+    def test_home_favoured_but_draw(self):
+        assert forecast_correct(_fc(60, 25, 15), 1, 1) is False
+
+    def test_away_favoured_and_away_won(self):
+        assert forecast_correct(_fc(20, 30, 50), 0, 2) is True
+
+    def test_draw_favoured_and_draw(self):
+        assert forecast_correct(_fc(25, 50, 25), 1, 1) is True
+
+    def test_none_when_no_forecast(self):
+        assert forecast_correct(None, 2, 0) is None
+
+    def test_none_when_scores_missing(self):
+        assert forecast_correct(_fc(60, 25, 15), None, None) is None
+
+    def test_none_when_pct_missing(self):
+        assert forecast_correct({"home_pct": 60}, 2, 0) is None
+
+    def test_tie_in_pct_prefers_home_then_away(self):
+        # home_pct ties draw/away at the top → predicts home
+        assert forecast_correct(_fc(40, 40, 20), 2, 0) is True

@@ -67,6 +67,9 @@ export interface RecentResult {
   home_score: number | null;
   away_score: number | null;
   kickoff_utc: string | null;
+  // Whether the pre-match forecast called the right side; null when the match
+  // carried no forecast (forecast scope is group-stage only).
+  forecast_correct?: boolean | null;
 }
 
 export interface StandingRow {
