@@ -1,0 +1,51 @@
+<!--
+  Screen: S-13 Admin Login
+  Single-administrator gate. Password verified server-side against an ENV secret
+  (never in source); a signed HttpOnly session cookie is remembered on the device.
+  Route: /admin/login
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html"><img class="brand-logo" src="logo.svg" alt="WC26 Intelligence"></a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">← Back to site</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="admin-login-wrap" data-cjx-entrance>
+      <form class="admin-login" action="s14-admin-feedback.html">
+        <span class="mascot-av lg idle" data-mascot="eagle"></span>
+        <h1>Admin access</h1>
+        <p>Restricted area · single administrator</p>
+
+        <div class="admin-field">
+          <label for="admin-pw">Password</label>
+          <input id="admin-pw" class="admin-input" type="password" value="ABCDEFGHIJ" autocomplete="current-password" aria-label="Admin password">
+        </div>
+
+        <button class="btn" type="submit">Sign in</button>
+        <div class="admin-note">🔒 Your session is remembered on this device after login.</div>
+      </form>
+    </div>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Restricted area — administrator only.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

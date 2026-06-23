@@ -20,6 +20,9 @@ Open any `s0X-*.html` directly in a browser. All assets are local (no CDN).
 | S-09 System Logs (info/error events) | `s09-logs.html` | `/logs` | Verify / Trust | `cjx-usage` |
 | S-10 Match Analysis (completed / full-time) | `s10-match-final.html` | `/match/[id]` | Read / Verify | `cjx-usage` |
 | S-11 Private Betting Board | `s11-betting-recommendation.html` | `/betting` | Anticipate / Verify | `cjx-usage` |
+| S-12 Supporter Feedback Bot (overlay) | `s12-supporter-feedback.html` | global overlay | Engage / Retain | `cjx-usage` |
+| S-13 Admin Login | `s13-admin-login.html` | `/admin/login` | Verify / Trust | `cjx-usage` |
+| S-14 Admin — Feedback &amp; Logs | `s14-admin-feedback.html` | `/admin` | Verify / Trust | `cjx-usage` |
 
 > Design-review artifact (not a product screen): `s08-forecast-compare.html` — current vs proposed "ghosted placeholder" forecast card, so a fabricated number is never shown as a working result.
 

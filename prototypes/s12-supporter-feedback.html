@@ -1,0 +1,92 @@
+<!--
+  Screen: S-12 Supporter Feedback Bot (overlay widget)
+  Scripted chat (NO LLM). Three ORIGINAL host-nation supporter characters
+  (moose / jaguar / eagle) — NOT the trademarked FIFA 2026 mascots.
+  Route: global overlay (mounts on every page); collects message + page context.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supporter Feedback · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html"><img class="brand-logo" src="logo.svg" alt="WC26 Intelligence"></a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content reading" data-cjx-entrance>
+      <span class="section-eyebrow">Feedback</span>
+      <h1 class="display-headline">Help the supporters improve the platform</h1>
+      <p class="summary-deck">Three supporters from the host nations — a moose, a jaguar, and an eagle — collect what you think in a quick chat. No account, no forms to fill, just tap and tell them.</p>
+
+      <div class="card" style="margin-top:var(--space-8)">
+        <p style="margin:0;color:var(--text-secondary)">The <strong>Feedback</strong> launcher sits in the bottom-right of every page. Tap it, pick a topic, and send. Your message is delivered with the page you're on so the team has context — nothing else is collected.</p>
+      </div>
+    </main>
+
+    <!-- Launcher (FAB) -->
+    <button class="fb-fab" data-fb-fab aria-haspopup="dialog" aria-expanded="true">
+      <span class="mascot-av" data-mascot="moose"></span>
+      <span>Feedback</span>
+      <span class="fab-ping" aria-hidden="true"></span>
+    </button>
+
+    <!-- Chat panel (shown open for the prototype; starts hidden in production) -->
+    <section class="fb-panel" data-fb-panel role="dialog" aria-label="Supporter feedback">
+      <header class="fb-head">
+        <span class="fb-head-trio">
+          <span class="mascot-av" data-mascot="moose"></span>
+          <span class="mascot-av" data-mascot="jaguar"></span>
+          <span class="mascot-av" data-mascot="eagle"></span>
+        </span>
+        <div class="fb-head-titles">
+          <div class="fb-head-title">Host Supporters</div>
+          <div class="fb-head-sub"><span class="dot"></span> here to help · replies instantly</div>
+        </div>
+        <button class="fb-close" data-fb-close aria-label="Close feedback">&times;</button>
+      </header>
+
+      <div class="fb-body" data-fb-body>
+        <div class="fb-msg bot">
+          <span class="mascot-av idle" data-mascot="moose"></span>
+          <div class="fb-bubble">Hey, supporter! 🍁 What's on your mind about the platform?</div>
+        </div>
+        <div class="fb-prompts" data-fb-prompts>
+          <button class="fb-prompt" data-fb-prompt="bug">🐞 Report a bug</button>
+          <button class="fb-prompt" data-fb-prompt="feature">💡 Suggest a feature</button>
+          <button class="fb-prompt" data-fb-prompt="other">💬 Something else</button>
+        </div>
+      </div>
+
+      <div class="fb-composer" data-fb-composer hidden>
+        <textarea class="fb-input" rows="1" placeholder="Type your feedback…"></textarea>
+        <button class="fb-send" aria-label="Send feedback">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg>
+        </button>
+      </div>
+      <div class="fb-context">🔒 We attach the page you're on. No account needed.</div>
+    </section>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Data sources: FIFA official fixtures &amp; standings.</span>
+        <span>Auto-published daily, 7:00 AM Australia/Melbourne.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>
