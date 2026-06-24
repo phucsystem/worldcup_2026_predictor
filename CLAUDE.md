@@ -194,7 +194,7 @@ YAGNI | KISS | DRY
 
 When opening a PR to `main`:
 
-- **Update `frontend/public/CHANGELOG.md`** — CI's "Require changelog update" job fails any PR that doesn't touch it (newest version first, user-facing wording).
+- **Update `frontend/public/CHANGELOG.md`** — CI's "Require changelog update" job fails any PR that doesn't touch it. Entries are grouped by release date (a `## DD Mon YYYY` heading), newest date first, in user-facing wording — not by version number. Add your bullet(s) under today's date heading, creating it at the top if the date isn't there yet.
 - **Confirm the pipeline is all green before reporting the PR done** — run `gh pr checks <num> --watch`. If any check fails, fix the cause and push until every check passes (or is an intentional, non-required skip). A red pipeline means the PR is not done.
 
 ---

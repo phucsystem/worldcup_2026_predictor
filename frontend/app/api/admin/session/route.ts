@@ -8,8 +8,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// POST = login. Validates the password against the env secret; on success sets
-// a signed HttpOnly session cookie. Fails closed (401) when the env is unset.
+// POST = login. Validates the password against ADMIN_PASSWORD; on success sets
+// an HttpOnly session cookie. Fails closed (401) when ADMIN_PASSWORD is unset.
 export async function POST(request: Request) {
   let password = "";
   try {
@@ -19,12 +19,13 @@ export async function POST(request: Request) {
     password = "";
   }
 
-  if (!verifyPassword(password)) {
+  const token = verifyPassword(password) ? createSessionToken(Date.now()) : undefined;
+  if (!token) {
     return Response.json({ error: "Invalid password" }, { status: 401 });
   }
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, createSessionToken(Date.now()), sessionCookieOptions());
+  store.set(SESSION_COOKIE, token, sessionCookieOptions());
   return new Response(null, { status: 204 });
 }
 

@@ -11,9 +11,6 @@ const MAX_AGE_SECONDS = 60 * 60 * 24 * 21;
 function adminPassword(): string | undefined {
   return process.env.ADMIN_PASSWORD || undefined;
 }
-function sessionSecret(): string | undefined {
-  return process.env.SESSION_SECRET || undefined;
-}
 
 function constantTimeEqual(a: string, b: string): boolean {
   const ab = Buffer.from(a);
@@ -29,25 +26,31 @@ export function verifyPassword(input: string): boolean {
   return constantTimeEqual(input, expected);
 }
 
-function sign(payload: string): string {
-  return crypto.createHmac("sha256", sessionSecret()!).update(payload).digest("base64url");
+function sign(payload: string, key: string): string {
+  return crypto.createHmac("sha256", key).update(payload).digest("base64url");
 }
 
-/** Create a signed `admin.<issuedAtMs>.<hmac>` token. Throws if SESSION_SECRET unset. */
-export function createSessionToken(nowMs: number): string {
-  if (!sessionSecret()) throw new Error("SESSION_SECRET not set");
+/**
+ * Stateless session token `admin.<issuedAtMs>.<hmac>`, HMAC-keyed by the current
+ * ADMIN_PASSWORD — the only credential, no separate signing secret. Rotating
+ * ADMIN_PASSWORD invalidates existing sessions for free. Undefined when unset.
+ */
+export function createSessionToken(nowMs: number): string | undefined {
+  const key = adminPassword();
+  if (!key) return undefined;
   const payload = `admin.${nowMs}`;
-  return `${payload}.${sign(payload)}`;
+  return `${payload}.${sign(payload, key)}`;
 }
 
-/** Fail-closed token verification: valid signature, not expired, role=admin. */
+/** Fail-closed: valid signature (keyed by current password), role=admin, not expired. */
 export function verifySessionToken(token: string | undefined | null, nowMs: number): boolean {
-  if (!token || !sessionSecret()) return false;
+  const key = adminPassword();
+  if (!token || !key) return false;
   const parts = token.split(".");
   if (parts.length !== 3) return false;
   const [role, issuedAt, sig] = parts;
   if (role !== "admin") return false;
-  if (!constantTimeEqual(sig, sign(`${role}.${issuedAt}`))) return false;
+  if (!constantTimeEqual(sig, sign(`${role}.${issuedAt}`, key))) return false;
   const ageSeconds = (nowMs - Number(issuedAt)) / 1000;
   if (!Number.isFinite(ageSeconds) || ageSeconds < 0 || ageSeconds > MAX_AGE_SECONDS) return false;
   return true;
