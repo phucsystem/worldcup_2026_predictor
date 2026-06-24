@@ -2,6 +2,10 @@
 #   PRs            -> test only
 #   push to main   -> test -> build & push images to GHCR -> SSH deploy to the VM
 #
+# Skip the build+deploy on a main push by putting [skip deploy] in the commit
+# message (use it in the merge/squash commit title when merging a PR that needs
+# no release, e.g. docs or repo hygiene). Tests still run.
+#
 # Required repo secrets (Settings -> Secrets -> Actions):
 #   SSH_HOST         — VM public IP or DNS name
 #   SSH_USER         — deploy user on the VM
@@ -205,7 +209,7 @@ jobs:
     name: Build & push images
     runs-on: ubuntu-latest
     needs: [test, e2e]
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && !contains(github.event.head_commit.message, '[skip deploy]')
     permissions:
       contents: read
       packages: write
@@ -258,7 +262,7 @@ jobs:
     needs: build-push
     # Skips until the VM exists. Enable once provisioned + SSH/Azure secrets are set:
     #   gh variable set DEPLOY_ENABLED --body true
-    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    if: github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true' && !contains(github.event.head_commit.message, '[skip deploy]')
     steps:
       - name: Azure login
         uses: azure/login@v2
