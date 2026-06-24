@@ -208,3 +208,10 @@ When opening a PR to `main`:
 When a doc graduates from working notes to something the public/contributors should see, move it from `ck_docs/` into `docs/`.
 
 <!-- IPA-TEMPLATE-END -->
+
+---
+
+## PRODUCTION
+
+- **Live (public domain):** https://wc2026.phucsystemlabs.com — single Azure VM, `docker-compose` behind Caddy (auto TLS via Let's Encrypt).
+- Deploy is automatic: push to `main` → CI builds/pushes images to GHCR → SSH deploy to the VM (`docker compose pull && up -d`). Verify a change is live with `curl -s https://wc2026.phucsystemlabs.com/CHANGELOG.md | head -5`.

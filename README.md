@@ -2,6 +2,8 @@
 
 Hourly AI-generated FIFA WC 2026 intelligence pipeline.
 
+**Live:** https://wc2026.phucsystemlabs.com
+
 ## Screenshots
 
 **Today** — AI-generated daily brief, live match, latest results, and what's at stake:
