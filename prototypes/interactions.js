@@ -1,6 +1,6 @@
 /*
   CJX entrance animations + light interactivity
-  Source: ck_docs/UI_SPEC.md §1 CJX, §3 Standings (view toggle)
+  Source: docs/UI_SPEC.md §1 CJX, §3 Standings (view toggle)
 */
 
 /* CJX entrance animations injected per body class (respects reduced-motion via CSS) */

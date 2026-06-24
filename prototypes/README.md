@@ -1,6 +1,6 @@
 # World Cup 2026 Intelligence — UI Prototypes
 
-Production-ready HTML/CSS/JS prototypes implementing `ck_docs/UI_SPEC.md`.
+Production-ready HTML/CSS/JS prototypes implementing `docs/UI_SPEC.md`.
 Visual direction: dark sports dashboard (FIFA navy + electric royal blue).
 
 Open any `s0X-*.html` directly in a browser. All assets are local (no CDN).

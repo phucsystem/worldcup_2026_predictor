@@ -186,9 +186,9 @@ An **automated, deterministic daily intelligence service** for FIFA World Cup 20
 
 ## 8. References
 
-- **Architecture diagram:** `ck_docs/diagrams/architecture.svg` (editable: `architecture.drawio`)
-- **UI specification:** `ck_docs/UI_SPEC.md` (design system, screen specs, user flows)
+- **Architecture diagram:** `docs/diagrams/architecture.svg` (editable: `architecture.drawio`)
+- **UI specification:** `docs/UI_SPEC.md` (design system, screen specs, user flows)
 - **Deployment runbook:** `docs/deployment.md` (prod VM setup, CI/CD, secrets)
-- **Code standards:** `ck_docs/code-standards.md` (Python, TypeScript, SQL, testing)
-- **System architecture:** `ck_docs/system-architecture.md` (components, APIs, data flow)
+- **Code standards:** `docs/code-standards.md` (Python, TypeScript, SQL, testing)
+- **System architecture:** `docs/system-architecture.md` (components, APIs, data flow)
 - **Project journals:** `ck_docs/journal/` (phase notes, decisions, learnings)

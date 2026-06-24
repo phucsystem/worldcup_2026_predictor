@@ -189,10 +189,10 @@ Oct 2026 (Post-Tournament)
 
 ## 10. References
 
-- **Project overview:** `ck_docs/project-overview-pdr.md` (product decisions, principles)
-- **System architecture:** `ck_docs/system-architecture.md` (deployment topology, APIs)
-- **UI specification:** `ck_docs/UI_SPEC.md` (user personas, screen specs)
-- **Code standards:** `ck_docs/code-standards.md` (implementation guidelines)
+- **Project overview:** `docs/project-overview-pdr.md` (product decisions, principles)
+- **System architecture:** `docs/system-architecture.md` (deployment topology, APIs)
+- **UI specification:** `docs/UI_SPEC.md` (user personas, screen specs)
+- **Code standards:** `docs/code-standards.md` (implementation guidelines)
 - **Deployment:** `docs/deployment.md` (prod setup runbook)
 - **Previous learnings:** `ck_docs/journal/` (phase completion notes, blockers)
 

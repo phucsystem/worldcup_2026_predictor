@@ -2,7 +2,7 @@
 
 **Project:** World Cup 2026 Intelligence  
 **Scope:** High-level component diagram, data flow, and API surface  
-**Reference:** `ck_docs/diagrams/architecture.svg` (see also: `architecture.drawio` for edits)
+**Reference:** `docs/diagrams/architecture.svg` (see also: `architecture.drawio` for edits)
 
 ---
 
@@ -375,6 +375,6 @@ flowchart TB
 ## 8. References
 
 - **Deployment:** `docs/deployment.md` (full runbook)
-- **Code standards:** `ck_docs/code-standards.md` (Python/TypeScript conventions)
-- **UI specification:** `ck_docs/UI_SPEC.md` (design system, screens)
-- **Project overview:** `ck_docs/project-overview-pdr.md` (product decisions)
+- **Code standards:** `docs/code-standards.md` (Python/TypeScript conventions)
+- **UI specification:** `docs/UI_SPEC.md` (design system, screens)
+- **Project overview:** `docs/project-overview-pdr.md` (product decisions)

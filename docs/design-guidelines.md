@@ -2,7 +2,7 @@
 
 **Project:** World Cup 2026 Intelligence  
 **Scope:** Design system tokens, UI conventions, accessibility  
-**Reference:** `ck_docs/UI_SPEC.md` (canonical design specification)  
+**Reference:** `docs/UI_SPEC.md` (canonical design specification)  
 **Last Updated:** 2026-06-21
 
 ---
@@ -566,10 +566,10 @@ className="hidden md:block"
 
 ## 13. Cross-Reference
 
-- **Full UI specification:** `ck_docs/UI_SPEC.md` (design system, screens, user flows)
+- **Full UI specification:** `docs/UI_SPEC.md` (design system, screens, user flows)
 - **Component showcase:** Prototypes in `prototypes/` (static mockups)
 - **Code implementation:** `frontend/app/globals.css` (design tokens)
-- **System architecture:** `ck_docs/system-architecture.md` (frontend stack)
+- **System architecture:** `docs/system-architecture.md` (frontend stack)
 
 ---
 

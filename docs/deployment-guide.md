@@ -12,8 +12,8 @@
 |---------|----------|---------|
 | Full setup + troubleshooting | `docs/deployment.md` (canonical) | VM provisioning, CI/CD, secrets, rollback |
 | Architectural decisions | `ck_plans/260621-azure-vm-deploy/plan.md` | Why single VM, cost, scaling trade-offs |
-| Operational monitoring | `ck_docs/system-architecture.md` § 6 | Logs, metrics, health checks |
-| Code standards | `ck_docs/code-standards.md` | Deployment-relevant patterns (secrets, env vars) |
+| Operational monitoring | `docs/system-architecture.md` § 6 | Logs, metrics, health checks |
+| Code standards | `docs/code-standards.md` | Deployment-relevant patterns (secrets, env vars) |
 
 **Start here:** If you're deploying for the first time, read `docs/deployment.md` end-to-end.
 
@@ -466,6 +466,6 @@ az vm resize --resource-group rg-wc2026-prod --name vm-wc2026 --size Standard_B4
 ## 14. References
 
 - **Full runbook:** `docs/deployment.md` (definitive guide)
-- **Architecture:** `ck_docs/system-architecture.md` (components, data flow)
+- **Architecture:** `docs/system-architecture.md` (components, data flow)
 - **Decisions:** `ck_plans/260621-azure-vm-deploy/plan.md` (why this approach)
-- **Code standards:** `ck_docs/code-standards.md` (deployment-relevant patterns)
+- **Code standards:** `docs/code-standards.md` (deployment-relevant patterns)

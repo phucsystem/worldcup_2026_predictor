@@ -197,4 +197,14 @@ When opening a PR to `main`:
 - **Update `frontend/public/CHANGELOG.md`** — CI's "Require changelog update" job fails any PR that doesn't touch it (newest version first, user-facing wording).
 - **Confirm the pipeline is all green before reporting the PR done** — run `gh pr checks <num> --watch`. If any check fails, fix the cause and push until every check passes (or is an intentional, non-required skip). A red pipeline means the PR is not done.
 
+---
+
+## DOCS & PLANS LAYOUT
+
+- **`docs/`** — public engineering/development docs, committed to the repo (architecture, code standards, deployment guide, roadmap, design guidelines, UI spec, diagrams, screenshots). The README links into here. IPA `/ipa:*` outputs land here.
+- **`ck_docs/`** — local-only working docs (codebase summary, journals). Gitignored; never committed.
+- **`ck_plans/`** — local-only planning workspace. Gitignored; never committed.
+
+When a doc graduates from working notes to something the public/contributors should see, move it from `ck_docs/` into `docs/`.
+
 <!-- IPA-TEMPLATE-END -->

@@ -417,4 +417,4 @@ Non-negotiables: page body never scrolls horizontally; wide tables scroll inside
 2. **Brief↔Standings linkage** — does each daily brief reference a specific `snapshot_date` of standings to embed (S-02), or always "latest"? Affects S-02 data binding.
 3. **Knockout bracket** — in V1 scope as a visual, or list-only until knockouts begin (~late June/July)? Brainstorm lists bracket in data scope but not explicitly in V1 UI output.
 4. **Light theme** — dark-only for V1 assumed. Confirm no light variant needed.
-5. **Path convention** — written to `ck_docs/` (CK workspace) though `.ipa-ck.json` declares `docs/`. Confirm canonical docs dir so downstream `/ipa:*` and `/plan` resolve consistently.
+5. **Path convention** — written to `docs/` (CK workspace) though `.ipa-ck.json` declares `docs/`. Confirm canonical docs dir so downstream `/ipa:*` and `/plan` resolve consistently.

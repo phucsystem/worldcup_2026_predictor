@@ -50,6 +50,9 @@ Thumbs.db
 
 
 # --- Agents ---
+# ck_docs / ck_plans are local-only working dirs. Public docs live in docs/.
+ck_docs/
+ck_plans/
 .ck_docs
 .ck_plans
 
