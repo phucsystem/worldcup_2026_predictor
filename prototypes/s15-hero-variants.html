@@ -1,0 +1,139 @@
+<!--
+  Screen: S-15 Hero Banner Variants (design reference / gallery)
+  Scope: shows the single shared match hero (.next-match) in all three states —
+         upcoming (preview + forecast rate), live (.is-live), finished (.is-final) —
+         each with its action row (Watch / Share). One component, three variants.
+  Source: design reference for the unified MatchBanner.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero banner variants · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html">
+          <img class="brand-logo" src="logo.svg" alt="WC26 Intelligence">
+        </a>
+        <div class="nav-links">
+          <a class="nav-link" href="s01-brief-list.html">Today</a>
+          <a class="nav-link" href="s03-standings.html">Standings</a>
+          <a class="nav-link" href="s05-upcoming-knockout.html">Fixtures</a>
+          <a class="nav-link" href="s04-archive.html">Archive</a>
+          <a class="nav-link" href="s06-changelog.html">Changelog</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content reading" data-cjx-entrance>
+      <h1 class="page-title" style="margin-bottom:var(--space-2)">Match hero banners</h1>
+      <p class="summary-deck" style="font-size:15px;margin:0 0 var(--space-6)">
+        One shared banner, three states. Each is copyable as an image via its
+        <strong style="color:var(--text-primary)">Share</strong> action.
+      </p>
+
+      <!-- Upcoming (preview + forecast rate) -->
+      <h2 class="section-title">Upcoming</h2>
+      <p class="summary-deck" style="font-size:14px;margin:0 0 var(--space-3)">Preview banner — matchup, kickoff, a glanceable win-probability rate, and a Share forecast action. The <strong style="color:var(--text-primary)">View match analysis →</strong> nav shows only on the home page (not on the analysis page itself).</p>
+      <div class="next-match" data-flag-bg data-home="ch" data-away="cm" aria-label="Upcoming: Switzerland vs Cameroon, kicks off today 20:00 AEST, Group G">
+        <span class="nm-eyebrow"><span class="dot"></span> Up next · Group G decider</span>
+        <div class="nm-body">
+          <span class="nm-side"><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span>
+          <span class="nm-vs">VS</span>
+          <span class="nm-side">Cameroon <span class="flag" data-flag="cm" data-code="CMR"></span></span>
+        </div>
+        <div class="nm-meta">Today · 20:00 AEST · NRG Stadium, Houston</div>
+        <div class="nm-countdown-wrap">
+          <span class="nm-cd-label">Kicks off in</span>
+          <div class="countdown" data-countdown data-offset-min="237" aria-label="Time until kickoff"></div>
+        </div>
+        <div class="nm-forecast" aria-label="Win probability forecast (experimental): Switzerland 52 percent, draw 27 percent, Cameroon 21 percent">
+          <span class="nm-fc-label">Win probability · experimental</span>
+          <div class="nm-fc-bar">
+            <span class="nm-fc-seg home" style="width:52%">52%</span>
+            <span class="nm-fc-seg draw" style="width:27%">27%</span>
+            <span class="nm-fc-seg away" style="width:21%">21%</span>
+          </div>
+        </div>
+        <div class="nm-actions">
+          <a class="nm-cta" href="s08-match-preview.html" aria-label="View Switzerland v Cameroon match analysis (home page only)">View match analysis →</a>
+          <span class="share-result">
+            <button class="share-result-btn" type="button" aria-label="Share match forecast"><span class="share-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> Share forecast</button>
+          </span>
+        </div>
+      </div>
+
+      <!-- Live (.is-live) -->
+      <h2 class="section-title" style="margin-top:var(--space-8)">Live</h2>
+      <p class="summary-deck" style="font-size:14px;margin:0 0 var(--space-3)">In-progress banner — live score, goalscorers, the ticking match clock, and a Share live score action. The <strong style="color:var(--text-primary)">View match analysis →</strong> nav shows only on the home page.</p>
+      <div class="next-match is-live" data-flag-bg data-home="br" data-away="rs" aria-label="Live now: Brazil 2, Serbia 1, second half, 64 minutes played, Group G">
+        <span class="nm-eyebrow"><span class="dot"></span> Live now · 2nd half</span>
+        <div class="nm-body">
+          <span class="nm-side win"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil</span>
+          <span class="nm-score" aria-hidden="true"><span class="nm-sc win">2</span><span class="nm-sc-sep">–</span><span class="nm-sc lose">1</span></span>
+          <span class="nm-side lose">Serbia <span class="flag" data-flag="rs" data-code="SRB"></span></span>
+        </div>
+        <div class="nm-scorers" aria-label="Goalscorers: Brazil — Vinícius Jr 51', Rodrygo 64'; Serbia — Mitrović 23'">
+          <div class="nm-sc-side home">
+            <span class="nm-sc-goal"><span class="nm-sc-ball" aria-hidden="true">⚽</span> Vinícius Jr <span class="nm-sc-t">51'</span></span>
+            <span class="nm-sc-goal"><span class="nm-sc-ball" aria-hidden="true">⚽</span> Rodrygo <span class="nm-sc-t">64'</span></span>
+          </div>
+          <div class="nm-sc-side away">
+            <span class="nm-sc-goal"><span class="nm-sc-t">23'</span> Mitrović <span class="nm-sc-ball" aria-hidden="true">⚽</span></span>
+          </div>
+        </div>
+        <div class="nm-meta">Group G · Matchday 3 · SoFi Stadium, Inglewood</div>
+        <div class="nm-live-clock-wrap">
+          <span class="nm-live-clock" data-live-min="64" aria-hidden="true"><span class="lc-min">64</span><span class="lc-tick">'</span></span>
+        </div>
+        <div class="nm-actions">
+          <a class="nm-cta" href="s07-match-analysis.html" aria-label="View Brazil v Serbia live match analysis (home page only)">View match analysis →</a>
+          <a class="nm-watch" href="https://www.sbs.com.au/sport/football" target="_blank" rel="noopener noreferrer" aria-label="Watch this match live on the SBS website (opens in a new tab)">
+            <span class="nw-dot" aria-hidden="true"></span> Watch live on SBS
+          </a>
+          <span class="share-result">
+            <button class="share-result-btn" type="button" aria-label="Share live score"><span class="share-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> Share live score</button>
+          </span>
+        </div>
+      </div>
+
+      <!-- Finished (.is-final) -->
+      <h2 class="section-title" style="margin-top:var(--space-8)">Finished</h2>
+      <p class="summary-deck" style="font-size:14px;margin:0 0 var(--space-3)">Full-time banner — final score with win/loss emphasis, goalscorers, and a Share result action.</p>
+      <div class="next-match is-final" data-flag-bg data-home="br" data-away="rs" aria-label="Full time: Brazil 3, Serbia 1, Group G">
+        <span class="nm-eyebrow"><span class="dot"></span> Full Time · Group G</span>
+        <div class="nm-body">
+          <span class="nm-side"><span class="flag" data-flag="br" data-code="BRA"></span> Brazil <span class="nm-wl-tag win">W</span></span>
+          <span class="nm-score" aria-hidden="true"><span class="nm-sc win">3</span><span class="nm-sc-sep">–</span><span class="nm-sc lose">1</span></span>
+          <span class="nm-side lose"><span class="nm-wl-tag lose">L</span> Serbia <span class="flag" data-flag="rs" data-code="SRB"></span></span>
+        </div>
+        <div class="nm-scorers" aria-label="Goalscorers: Brazil — Vinícius Jr 51' and 78', Rodrygo 64'; Serbia — Mitrović 23'">
+          <div class="nm-sc-side home">
+            <span class="nm-sc-goal"><span class="nm-sc-ball" aria-hidden="true">⚽</span> Vinícius Jr <span class="nm-sc-t">51', 78'</span></span>
+            <span class="nm-sc-goal"><span class="nm-sc-ball" aria-hidden="true">⚽</span> Rodrygo <span class="nm-sc-t">64'</span></span>
+          </div>
+          <div class="nm-sc-side away">
+            <span class="nm-sc-goal"><span class="nm-sc-t">23'</span> Mitrović <span class="nm-sc-ball" aria-hidden="true">⚽</span></span>
+          </div>
+        </div>
+        <div class="nm-meta">Matchday 3 · SoFi Stadium, Inglewood</div>
+        <div class="nm-actions">
+          <a class="nm-watch" href="https://www.sbs.com.au/sport/football" target="_blank" rel="noopener noreferrer" aria-label="Find Brazil v Serbia highlights on SBS On Demand (opens in a new tab)">
+            <span aria-hidden="true">▶</span> Watch highlights on SBS
+          </a>
+          <span class="share-result">
+            <button class="share-result-btn" type="button" aria-label="Share result"><span class="share-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> Share result</button>
+          </span>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>

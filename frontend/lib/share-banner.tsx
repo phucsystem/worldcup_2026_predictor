@@ -1,9 +1,11 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { ReactNode } from "react";
 import type { FixtureDetail } from "@/lib/api";
 import { flagSvg } from "@/lib/flags";
 import { goalscorers } from "@/lib/match";
 import { matchState } from "@/lib/match";
+import { forecastSegments } from "@/lib/banner";
 import { SITE } from "@/lib/site";
 
 // Shared render for the share/OG image. Satori (next/og) only supports flexbox
@@ -206,17 +208,54 @@ function teamSide(team: string | null, logo: string | null, outcome: SideOutcome
   );
 }
 
-export function renderShareBanner(fixture: FixtureDetail) {
-  const hs = fixture.home_score ?? 0;
-  const as = fixture.away_score ?? 0;
-  const homeOutcome: SideOutcome = hs > as ? "win" : as > hs ? "lose" : "draw";
-  const awayOutcome: SideOutcome = as > hs ? "win" : hs > as ? "lose" : "draw";
-  const context = fixture.group_name ?? fixture.stage ?? "";
-  const homeFlag = flagDataUri(fixture.home_team);
-  const awayFlag = flagDataUri(fixture.away_team);
-  const scorers = scorerLines(fixture);
-  const live = isLiveFixture(fixture);
+// Faded dual-flag backdrop shared by every share-image variant.
+function shareBackdrop(homeFlag: string | null, awayFlag: string | null) {
+  return (
+    <div style={{ display: "flex", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+      {homeFlag ? (
+        <img
+          src={homeFlag}
+          alt=""
+          width={620}
+          height={630}
+          style={{ position: "absolute", left: 0, top: 0, width: 620, height: 630, objectFit: "cover", opacity: 0.16 }}
+        />
+      ) : null}
+      {awayFlag ? (
+        <img
+          src={awayFlag}
+          alt=""
+          width={620}
+          height={630}
+          style={{ position: "absolute", right: 0, top: 0, width: 620, height: 630, objectFit: "cover", opacity: 0.16 }}
+        />
+      ) : null}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: "linear-gradient(180deg, rgba(8,18,42,0.45) 0%, rgba(8,18,42,0.78) 100%)",
+        }}
+      />
+    </div>
+  );
+}
 
+// Brand + domain footer shared by every share-image variant.
+function shareFooter() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 48px 40px" }}>
+      {brandLockup("sm")}
+      <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: MUTED }}>{SITE.domain}</div>
+    </div>
+  );
+}
+
+// Outer 1200×630 frame: gradient base + flag backdrop + center content + footer.
+function shareFrame(homeFlag: string | null, awayFlag: string | null, children: ReactNode) {
   return (
     <div
       style={{
@@ -231,112 +270,145 @@ export function renderShareBanner(fixture: FixtureDetail) {
         backgroundImage: "linear-gradient(135deg, #0a1430 0%, #122a52 100%)",
       }}
     >
-      {/* Faded flag backdrop */}
-      <div style={{ display: "flex", position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-        {homeFlag ? (
-          <img
-            src={homeFlag}
-            alt=""
-            width={620}
-            height={630}
-            style={{ position: "absolute", left: 0, top: 0, width: 620, height: 630, objectFit: "cover", opacity: 0.16 }}
-          />
-        ) : null}
-        {awayFlag ? (
-          <img
-            src={awayFlag}
-            alt=""
-            width={620}
-            height={630}
-            style={{ position: "absolute", right: 0, top: 0, width: 620, height: 630, objectFit: "cover", opacity: 0.16 }}
-          />
-        ) : null}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundImage: "linear-gradient(180deg, rgba(8,18,42,0.45) 0%, rgba(8,18,42,0.78) 100%)",
-          }}
-        />
+      {shareBackdrop(homeFlag, awayFlag)}
+      {children}
+      {shareFooter()}
+    </div>
+  );
+}
+
+function statusPill(label: string, live: boolean) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        fontSize: 24,
+        fontWeight: 700,
+        letterSpacing: 1,
+        textTransform: "uppercase",
+        color: live ? GREEN : MUTED,
+        backgroundColor: live ? "rgba(43,211,126,0.14)" : "rgba(107,122,158,0.16)",
+        border: `1px solid ${live ? "rgba(43,211,126,0.4)" : "rgba(107,122,158,0.4)"}`,
+        padding: "10px 22px",
+        borderRadius: 999,
+        marginBottom: 36,
+      }}
+    >
+      <div style={{ display: "flex", width: 12, height: 12, borderRadius: 999, backgroundColor: live ? GREEN : MUTED }} />
+      {label}
+    </div>
+  );
+}
+
+// Upcoming variant — VS (no score) + win-probability bar + kickoff. Mirrors the
+// on-page preview hero so the copied image matches what the user sees.
+function previewContent(fixture: FixtureDetail, context: string) {
+  const seg = forecastSegments(fixture.forecast);
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "56px 64px",
+      }}
+    >
+      {statusPill(`Preview${context ? ` · ${context}` : ""}`, false)}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 }}>
+        {teamSide(fixture.home_team, fixture.home_logo, "draw")}
+        <div style={{ display: "flex", fontSize: 88, fontWeight: 800, color: "rgba(255,255,255,0.6)" }}>VS</div>
+        {teamSide(fixture.away_team, fixture.away_logo, "draw")}
       </div>
 
-      {/* Content */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "56px 64px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: 1,
-            textTransform: "uppercase",
-            color: live ? GREEN : MUTED,
-            backgroundColor: live ? "rgba(43,211,126,0.14)" : "rgba(107,122,158,0.16)",
-            border: `1px solid ${live ? "rgba(43,211,126,0.4)" : "rgba(107,122,158,0.4)"}`,
-            padding: "10px 22px",
-            borderRadius: 999,
-            marginBottom: 36,
-          }}
-        >
-          <div style={{ display: "flex", width: 12, height: 12, borderRadius: 999, backgroundColor: live ? GREEN : MUTED }} />
-          {statusLabel(fixture)}
-          {context ? ` · ${context}` : ""}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 }}>
-          {teamSide(fixture.home_team, fixture.home_logo, homeOutcome)}
-          <div style={{ display: "flex", alignItems: "center", gap: 22, fontSize: 128, fontWeight: 800 }}>
-            <span style={{ opacity: homeOutcome === "lose" ? 0.5 : 1 }}>{hs}</span>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 80 }}>–</span>
-            <span style={{ opacity: awayOutcome === "lose" ? 0.5 : 1 }}>{as}</span>
+      {seg ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginTop: 36 }}>
+          <div style={{ display: "flex", fontSize: 20, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: MUTED }}>
+            Win probability · experimental
           </div>
-          {teamSide(fixture.away_team, fixture.away_logo, awayOutcome)}
-        </div>
-
-        {scorers.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginTop: 30 }}>
-            {scorers.slice(0, 4).map((line, i) => (
-              <div key={i} style={{ display: "flex", fontSize: 24, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>
-                {line}
-              </div>
-            ))}
+          <div style={{ display: "flex", width: 760, height: 56, borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: `${seg.homePct}%`, backgroundColor: ACCENT, color: "#04122E", fontSize: 28, fontWeight: 800 }}>
+              {seg.homePct}%
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: `${seg.drawPct}%`, backgroundColor: "#F4B740", color: "#2A1E00", fontSize: 28, fontWeight: 800 }}>
+              {seg.drawPct}%
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: `${seg.awayPct}%`, backgroundColor: MUTED, color: "#fff", fontSize: 28, fontWeight: 800 }}>
+              {seg.awayPct}%
+            </div>
           </div>
-        ) : null}
-
-        <div style={{ display: "flex", fontSize: 24, color: MUTED, marginTop: 26 }}>
-          {kickoffText(fixture.kickoff_utc)}
         </div>
-      </div>
+      ) : null}
 
-      {/* Branding footer */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 48px 40px",
-        }}
-      >
-        {brandLockup("sm")}
-        <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: MUTED }}>
-          {SITE.domain}
-        </div>
+      <div style={{ display: "flex", fontSize: 24, color: MUTED, marginTop: 30 }}>
+        {kickoffText(fixture.kickoff_utc)}
       </div>
     </div>
   );
+}
+
+// Live / finished variant — score with win/lose emphasis + scorers + kickoff.
+function resultContent(fixture: FixtureDetail, context: string) {
+  const hs = fixture.home_score ?? 0;
+  const as = fixture.away_score ?? 0;
+  const homeOutcome: SideOutcome = hs > as ? "win" : as > hs ? "lose" : "draw";
+  const awayOutcome: SideOutcome = as > hs ? "win" : hs > as ? "lose" : "draw";
+  const scorers = scorerLines(fixture);
+  const live = isLiveFixture(fixture);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "56px 64px",
+      }}
+    >
+      {statusPill(`${statusLabel(fixture)}${context ? ` · ${context}` : ""}`, live)}
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 36 }}>
+        {teamSide(fixture.home_team, fixture.home_logo, homeOutcome)}
+        <div style={{ display: "flex", alignItems: "center", gap: 22, fontSize: 128, fontWeight: 800 }}>
+          <span style={{ opacity: homeOutcome === "lose" ? 0.5 : 1 }}>{hs}</span>
+          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 80 }}>–</span>
+          <span style={{ opacity: awayOutcome === "lose" ? 0.5 : 1 }}>{as}</span>
+        </div>
+        {teamSide(fixture.away_team, fixture.away_logo, awayOutcome)}
+      </div>
+
+      {scorers.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, marginTop: 30 }}>
+          {scorers.slice(0, 4).map((line, i) => (
+            <div key={i} style={{ display: "flex", fontSize: 24, fontWeight: 600, color: "rgba(255,255,255,0.92)" }}>
+              {line}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div style={{ display: "flex", fontSize: 24, color: MUTED, marginTop: 26 }}>
+        {kickoffText(fixture.kickoff_utc)}
+      </div>
+    </div>
+  );
+}
+
+export function renderShareBanner(fixture: FixtureDetail) {
+  const context = fixture.group_name ?? fixture.stage ?? "";
+  const homeFlag = flagDataUri(fixture.home_team);
+  const awayFlag = flagDataUri(fixture.away_team);
+  const content =
+    matchState(fixture.status) === "preview"
+      ? previewContent(fixture, context)
+      : resultContent(fixture, context);
+  return shareFrame(homeFlag, awayFlag, content);
 }
 
 export function renderFallbackBanner() {

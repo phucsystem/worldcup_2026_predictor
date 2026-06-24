@@ -152,7 +152,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
           </>
         ) : (
           <>
-            <NextMatchCard fixture={fixture} linked={false} />
+            <NextMatchCard fixture={fixture} forecast={fixture.forecast} linked={false} />
             {forecastCard}
             {formCompare}
             {teamStatus}
