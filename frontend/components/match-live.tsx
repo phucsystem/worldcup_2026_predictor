@@ -6,9 +6,8 @@ import MatchTimeline from "@/components/match-timeline";
 import Goalscorers from "@/components/goalscorers";
 import MatchStats from "@/components/match-stats";
 import MatchBanner from "@/components/match-banner";
-import ShareResultButton from "@/components/share-result-button";
 import { liveMinute } from "@/lib/live";
-import { eventKey, freshEventKeys, sbsSearchUrl } from "@/lib/match";
+import { eventKey, freshEventKeys } from "@/lib/match";
 
 interface Props {
   initial: FixtureDetail;
@@ -70,8 +69,6 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
   const code = (fixture.status ?? "").toUpperCase();
   const clock = frozen ? (SHORT_FROZEN[code] ?? label) : minute != null ? `${minute}'` : "LIVE";
 
-  const sbsUrl = sbsSearchUrl(fixture.home_team, fixture.away_team);
-
   return (
     <>
       <section
@@ -85,28 +82,16 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
           eyebrowLabel={`Live now · ${label}`}
           events={fixture.events}
           meta={fixture.group_name ?? fixture.stage ?? null}
+          belowMeta={
+            <div className="nm-live-clock-wrap">
+              <span className="nm-live-clock" aria-hidden="true">{clock}</span>
+            </div>
+          }
+          watchLabel="Watch live on SBS"
+          watchLive
+          shareLabel="Share live score"
+          shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
         />
-        <div className="nm-live-clock-wrap">
-          <span className="nm-live-clock" aria-hidden="true">
-            {clock}
-          </span>
-        </div>
-        <div className="nm-actions">
-          <a
-            className="nm-watch"
-            href={sbsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Find ${fixture.home_team ?? "this match"} v ${fixture.away_team ?? ""} on SBS On Demand (opens in a new tab)`}
-          >
-            <span className="nw-dot" aria-hidden="true" /> Watch live on SBS
-          </a>
-          <ShareResultButton
-            fixtureId={fixture.fixture_id}
-            label="Share live score"
-            shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
-          />
-        </div>
       </section>
 
       {forecastSlot}

@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import type { FixtureRow, MatchEvent } from "@/lib/api";
 import MatchBanner from "@/components/match-banner";
-import ShareResultButton from "@/components/share-result-button";
 import { liveMinute } from "@/lib/live";
-import { sbsSearchUrl } from "@/lib/match";
 
 // Initial may be a bare row (no events); polling the detail endpoint fills in
 // goal events so the scorer strip matches the detail page.
@@ -88,33 +85,17 @@ export default function LiveMatchCard({ initial }: Props) {
         eyebrowLabel={`Live now · ${label}`}
         events={fixture.events}
         meta={fixture.group_name ?? fixture.stage ?? null}
+        belowMeta={
+          <div className="nm-live-clock-wrap">
+            <span className="nm-live-clock" aria-hidden="true">{clock}</span>
+          </div>
+        }
+        analysisHref={`/match/${fixture.fixture_id}`}
+        watchLabel="Watch live on SBS"
+        watchLive
+        shareLabel="Share live score"
+        shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
       />
-      <div className="nm-live-clock-wrap">
-        <span className="nm-live-clock" aria-hidden="true">{clock}</span>
-      </div>
-      <div className="nm-actions">
-        <a
-          className="nm-watch"
-          href={sbsSearchUrl(fixture.home_team, fixture.away_team)}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`Find ${fixture.home_team ?? "this match"} v ${fixture.away_team ?? ""} on SBS On Demand (opens in a new tab)`}
-        >
-          <span className="nw-dot" aria-hidden="true" /> Watch live on SBS
-        </a>
-        <ShareResultButton
-          fixtureId={fixture.fixture_id}
-          label="Share live score"
-          shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
-        />
-      </div>
-      <Link
-        className="nm-cta"
-        href={`/match/${fixture.fixture_id}`}
-        aria-label={`View ${fixture.home_team ?? "this match"} v ${fixture.away_team ?? ""} match analysis`}
-      >
-        Match analysis →
-      </Link>
     </section>
   );
 }

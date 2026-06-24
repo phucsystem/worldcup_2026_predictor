@@ -1793,8 +1793,11 @@ tr.log-detail-row > td {
 /* Winner/loser emphasis on the final result — loser dimmed (luminance cue),
    winner full-strength, plus an explicit W/L tag so it never reads by colour alone. */
 .next-match.is-final .nm-side.lose,
-.next-match.is-final .nm-sc.lose { opacity: 0.5; }
-.next-match.is-final .nm-sc.win { color: #fff; }
+.next-match.is-final .nm-sc.lose,
+.next-match.is-live .nm-side.lose,
+.next-match.is-live .nm-sc.lose { opacity: 0.5; }
+.next-match.is-final .nm-sc.win,
+.next-match.is-live .nm-sc.win { color: var(--status-live); text-shadow: 0 0 18px rgba(43, 211, 126, 0.45); }
 .nm-wl-tag {
   font-size: 10px; font-weight: 800; letter-spacing: 0.02em;
   padding: 1px 6px; border-radius: var(--radius-pill); line-height: 1.7;
@@ -1832,6 +1835,40 @@ tr.log-detail-row > td {
   gap: var(--space-3); margin-top: var(--space-4);
 }
 .nm-actions .nm-watch { margin: 0; }
+
+/* "View match analysis →" nav — home-only entry point. Always sits inline in
+   the action row (same line as Watch / Share), so it carries no block margin. */
+.next-match .nm-cta {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  font-size: 13px; font-weight: 700; color: #fff;
+  text-decoration: none; width: fit-content;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.next-match .nm-cta:hover { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
+
+/* Compact win-probability bar inside the upcoming hero (glanceable forecast
+   rate; the full forecast card below carries the detail). */
+.nm-forecast {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 100%; max-width: 360px; margin: var(--space-3) auto 0;
+}
+.nm-fc-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+.nm-fc-bar { display: flex; width: 100%; height: 26px; border-radius: var(--radius-pill); overflow: hidden; }
+.nm-fc-seg {
+  display: flex; align-items: center; justify-content: center; min-width: 0;
+  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+}
+.nm-fc-seg.home { background: var(--accent-bright); color: #04122E; }
+.nm-fc-seg.draw { background: var(--status-draw); color: #2A1E00; }
+.nm-fc-seg.away { background: var(--text-muted); color: #fff; }
 
 .share-result { position: relative; display: inline-flex; }
 .share-result-btn {

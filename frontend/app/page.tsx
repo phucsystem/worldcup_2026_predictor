@@ -121,9 +121,12 @@ export default async function HomePage() {
   // the scorer strip is present on first paint, not only after the first poll.
   const liveDetail = liveMatch ? await getFixture(liveMatch.fixture_id) : null;
   const upNext = upcoming.up_next;
+  // Fetch the up-next fixture detail for its forecast (mirrors the live-card
+  // scorer fetch); the bare upcoming row carries no forecast split.
+  const upNextDetail = upNext ? await getFixture(upNext.fixture_id) : null;
   const topStars = stars.slice(0, 6);
   const recentResults = recentResultStrip(standings?.groups ?? []);
-  const widgetRows = groupedResultRows(standings?.groups ?? [], 8);
+  const widgetRows = groupedResultRows(standings?.groups ?? []);
 
   const stakeMap = stakesByFixtureId(latest?.intelligence);
   const scenarios = scenariosForDisplay(latest?.intelligence);
@@ -148,7 +151,11 @@ export default async function HomePage() {
             <LiveMatchCard initial={liveDetail ?? liveMatch} />
           ) : (
             upNext && (
-              <NextMatchCard fixture={upNext} stakeText={stakeMap.get(upNext.fixture_id)} />
+              <NextMatchCard
+                fixture={upNext}
+                forecast={upNextDetail?.forecast}
+                stakeText={stakeMap.get(upNext.fixture_id)}
+              />
             )
           )}
           <CompactFixtureStrip fixtures={nextFixtures} />
