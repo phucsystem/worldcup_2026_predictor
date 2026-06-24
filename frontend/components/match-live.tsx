@@ -9,7 +9,7 @@ import MatchScorersStrip from "@/components/match-scorers-strip";
 import MatchStats from "@/components/match-stats";
 import FlagBackdrop from "@/components/flag-backdrop";
 import { liveMinute } from "@/lib/live";
-import { eventKey, freshEventKeys } from "@/lib/match";
+import { eventKey, freshEventKeys, sbsSearchUrl } from "@/lib/match";
 
 interface Props {
   initial: FixtureDetail;
@@ -71,13 +71,7 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
   const code = (fixture.status ?? "").toUpperCase();
   const clock = frozen ? (SHORT_FROZEN[code] ?? label) : minute != null ? `${minute}'` : "LIVE";
 
-  // SBS On Demand has no public fixture→video-ID mapping, so deep-link to its
-  // search (path-segment form) pre-filled with the two team names; falls back to
-  // the football hub when a team is unknown.
-  const sbsUrl =
-    fixture.home_team && fixture.away_team
-      ? `https://www.sbs.com.au/ondemand/search/${encodeURIComponent(`${fixture.home_team} ${fixture.away_team}`)}`
-      : "https://www.sbs.com.au/sport/football";
+  const sbsUrl = sbsSearchUrl(fixture.home_team, fixture.away_team);
 
   return (
     <>

@@ -54,9 +54,10 @@ class TestBuildVerdictFacts:
             {"player": "Rodrygo", "team": "Brazil", "minute": 78, "own_goal": False},
         ]
 
-    def test_own_goal_credited_to_opponent(self):
-        # An away player's own goal counts for the home team.
-        f = self._facts(1, 0, [_goal(30, "away", "Defender", detail="Own Goal")])
+    def test_own_goal_credited_to_beneficiary_side(self):
+        # Own goals are recorded under the team they benefit (side = home here),
+        # with the conceding player's name — side is used as-is, no opponent flip.
+        f = self._facts(1, 0, [_goal(30, "home", "Defender", detail="Own Goal")])
         assert f["scorers"] == [
             {"player": "Defender", "team": "Brazil", "minute": 30, "own_goal": True},
         ]

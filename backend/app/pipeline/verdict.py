@@ -23,13 +23,10 @@ class Verdict(BaseModel):
 
 
 def _scoring_side(event) -> Optional[str]:
-    """The side credited with a goal — an own goal credits the opponent."""
-    side = getattr(event, "side", None)
-    if side is None:
-        return None
-    if (getattr(event, "detail", None) or "").strip().lower() == "own goal":
-        return "away" if side == "home" else "home"
-    return side
+    """The side credited with a goal. The event's `side` is already the credited
+    team — own goals are recorded under the team they benefit, not the conceding
+    side — so it is returned as-is (no opponent flip)."""
+    return getattr(event, "side", None)
 
 
 def build_match_verdict_facts(
