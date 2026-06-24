@@ -5,6 +5,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 ## 25 Jun 2026
 
 - **Added** — When several matches are live at the same time (like the simultaneous final group-stage kickoffs), the home page now shows them all together in a side-by-side live board — each card with its live score, match clock, and what's at stake. A single live match keeps the larger spotlight banner.
+- **Internal** — Added an `infra/set-admin-password.sh` helper to set the production admin password directly on the VM via Azure CLI (no SSH), prompting for the value so it never lands in shell history or logs.
 
 ## 24 Jun 2026
 
