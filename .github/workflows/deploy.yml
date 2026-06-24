@@ -12,8 +12,12 @@
 #   SSH_PRIVATE_KEY  — private key whose public half is in the VM's authorized_keys
 # Optional:
 #   DEPLOY_DIR       — repo path on the VM (default: ~/worldcup_2026_predictor)
-# App secrets (API_FOOTBALL_KEY, DEEPSEEK_API_KEY, SITE_ADDRESS) live in the VM
-# .env, NOT in CI. New GHCR packages are PRIVATE by default — after the first push,
+#   ADMIN_PASSWORD   — admin-login password; the deploy syncs it into the VM .env
+#                      on each run. Must be a *repository* Actions secret (this job
+#                      has no `environment:`, so Environment-scoped secrets won't
+#                      resolve). Leave unset to keep managing it on the VM directly.
+# Other app secrets (API_FOOTBALL_KEY, DEEPSEEK_API_KEY, SITE_ADDRESS) live in the
+# VM .env, NOT in CI. New GHCR packages are PRIVATE by default — after the first push,
 # set wc2026-backend/wc2026-frontend to Public once (or have the VM docker-login),
 # else `docker compose pull` fails with "denied". See docs/deployment.md.
 
@@ -291,12 +295,23 @@ jobs:
             set -euo pipefail
             cd "${DEPLOY_DIR:-$HOME/worldcup_2026_predictor}"
             git pull --ff-only
+            # Sync ADMIN_PASSWORD from the CI secret into the VM .env so the
+            # frontend picks up the current value on recreate. Guarded: an empty
+            # secret is skipped, never blanking a working password and locking
+            # out admin. Other .env lines (SITE_ADDRESS, API keys) are preserved.
+            if [ -n "${ADMIN_PASSWORD:-}" ]; then
+              tmp="$(mktemp)"
+              grep -v '^ADMIN_PASSWORD=' .env 2>/dev/null > "$tmp" || true
+              printf 'ADMIN_PASSWORD=%s\n' "$ADMIN_PASSWORD" >> "$tmp"
+              mv "$tmp" .env
+            fi
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
             docker image prune -f
-          envs: DEPLOY_DIR
+          envs: DEPLOY_DIR,ADMIN_PASSWORD
         env:
           DEPLOY_DIR: ${{ secrets.DEPLOY_DIR }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
       - name: Close SSH for this runner
         if: always()
