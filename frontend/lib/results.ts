@@ -1,5 +1,5 @@
 // Pure data→view helper mapping recent finished matches into ResultChip props.
-import type { GroupStandings, RecentResult } from "@/lib/api";
+import type { GroupStandings, RecentResult, ResultItem } from "@/lib/api";
 import { dateKey, kickoffDayLabel } from "@/lib/time";
 
 export type ChipVariant = "win" | "draw" | "loss";
@@ -85,4 +85,39 @@ export function groupedResultRows(
   }
   rows.sort((a, b) => b.key.localeCompare(a.key)); // key is kickoff-prefixed ISO
   return rows.slice(0, limit);
+}
+
+/**
+ * Map the full `/api/results` list into ResultWidgetRow[] for the all-results
+ * page. Unlike groupedResultRows this has no per-team 5-cap and no limit — every
+ * finished match from the start of the tournament. Group-stage matches show their
+ * group letter; knockout matches fall back to their round (`stage`).
+ */
+export function resultRowsFromResults(items: ResultItem[]): ResultWidgetRow[] {
+  const rows: ResultWidgetRow[] = [];
+  for (const item of items) {
+    if (
+      item.home_team == null || item.away_team == null ||
+      item.home_score == null || item.away_score == null
+    ) {
+      continue;
+    }
+    const hs = item.home_score;
+    const as = item.away_score;
+    rows.push({
+      key: `${item.kickoff_utc}-${item.home_team}-${item.away_team}`,
+      fixtureId: item.fixture_id ?? null,
+      dateLabel: kickoffDayLabel(item.kickoff_utc),
+      briefDate: dateKey(item.kickoff_utc),
+      group: item.group_name ?? item.stage ?? "—",
+      home: item.home_team,
+      away: item.away_team,
+      homeScore: hs,
+      awayScore: as,
+      winner: hs > as ? "home" : hs < as ? "away" : "draw",
+      forecastCorrect: item.forecast_correct ?? null,
+    });
+  }
+  rows.sort((a, b) => b.key.localeCompare(a.key)); // key is kickoff-prefixed ISO
+  return rows;
 }
