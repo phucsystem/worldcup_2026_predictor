@@ -254,6 +254,62 @@ export async function getTournamentSummary(): Promise<TournamentSummary | null> 
   return apiFetch<TournamentSummary>("/api/tournament/summary");
 }
 
+// ---- Feedback ----
+export type FeedbackTopic = "bug" | "feature" | "other";
+export type FeedbackStatus = "new" | "done" | "wont";
+
+export interface Feedback {
+  id: number;
+  created_at: string;
+  message: string;
+  topic: FeedbackTopic | null;
+  page: string | null;
+  status: FeedbackStatus;
+  resolved_at: string | null;
+}
+
+// Server-to-server (called from Next route handlers); the backend stays GET-only
+// for the browser. Returns true on success so the widget can show its thank-you.
+export async function submitFeedback(input: {
+  message: string;
+  topic?: string | null;
+  page?: string | null;
+}): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function listFeedback(status?: FeedbackStatus): Promise<Feedback[]> {
+  const qs = status ? `?status=${status}` : "";
+  return (await apiFetch<Feedback[]>(`/api/feedback${qs}`)) ?? [];
+}
+
+export async function updateFeedbackStatus(
+  id: number,
+  status: FeedbackStatus,
+): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/feedback/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 // Unlike the other helpers, this throws on upstream failure so the same-origin
 // proxy can return a non-200 and the console's error state can engage (rather
 // than silently rendering an empty page).

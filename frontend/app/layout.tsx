@@ -6,6 +6,7 @@ import NavLinks from "@/components/nav-links";
 import BrandLogo from "@/components/brand-logo";
 import SiteBackground from "@/components/site-background";
 import CoffeeButton from "@/components/coffee-button";
+import FeedbackWidget from "@/components/feedback-widget";
 
 export const metadata: Metadata = {
   title: "WC26 Intelligence",
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Auto-published daily, 7:00 AM Australia/Melbourne
           </footer>
         </div>
+        <FeedbackWidget />
       </body>
     </html>
   );

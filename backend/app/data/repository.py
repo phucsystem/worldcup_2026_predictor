@@ -122,6 +122,25 @@ app_logs_table = sa.Table(
     sa.Column("run_id", sa.String),
 )
 
+feedback_table = sa.Table(
+    "feedback",
+    _metadata,
+    # BigInteger in Postgres (prod); Integer on SQLite so it aliases rowid and
+    # autoincrements under the unit-test harness. Same DDL on Postgres.
+    sa.Column(
+        "id",
+        sa.BigInteger().with_variant(sa.Integer, "sqlite"),
+        primary_key=True,
+        autoincrement=True,
+    ),
+    sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+    sa.Column("message", sa.Text, nullable=False),
+    sa.Column("topic", sa.String),
+    sa.Column("page", sa.String),
+    sa.Column("status", sa.String, nullable=False),
+    sa.Column("resolved_at", sa.DateTime(timezone=True)),
+)
+
 
 def make_engine(url: str | None = None):
     return create_engine(url or settings.DATABASE_URL, pool_pre_ping=True)
@@ -401,6 +420,66 @@ def prune_logs(session: Session, retention_days: int) -> int:
     )
     session.commit()
     return result.rowcount or 0
+
+
+# --- feedback helpers ---------------------------------------------------------
+
+_FEEDBACK_STATUSES = {"new", "done", "wont"}
+
+
+def insert_feedback(
+    session: Session,
+    *,
+    message: str,
+    topic: str | None = None,
+    page: str | None = None,
+) -> int:
+    """Insert a feedback row (status defaults to 'new'). Returns the new id."""
+    result = session.execute(
+        feedback_table.insert().values(
+            created_at=datetime.now(tz=timezone.utc),
+            message=message,
+            topic=topic,
+            page=page,
+            status="new",
+        )
+    )
+    session.commit()
+    return int(result.inserted_primary_key[0])
+
+
+def list_feedback(
+    session: Session,
+    *,
+    status: str | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[Any]:
+    """Feedback rows, newest first, optionally filtered by status."""
+    stmt = sa.select(feedback_table)
+    if status:
+        stmt = stmt.where(feedback_table.c.status == status)
+    rows = session.execute(
+        stmt.order_by(feedback_table.c.created_at.desc(), feedback_table.c.id.desc())
+        .limit(limit)
+        .offset(offset)
+    ).fetchall()
+    return list(rows)
+
+
+def set_feedback_status(session: Session, feedback_id: int, status: str) -> bool:
+    """Set a feedback row's status. `resolved_at` is stamped when leaving 'new'
+    and cleared on reopen. Returns False if the id does not exist."""
+    if status not in _FEEDBACK_STATUSES:
+        raise ValueError(f"invalid feedback status: {status}")
+    resolved_at = None if status == "new" else datetime.now(tz=timezone.utc)
+    result = session.execute(
+        feedback_table.update()
+        .where(feedback_table.c.id == feedback_id)
+        .values(status=status, resolved_at=resolved_at)
+    )
+    session.commit()
+    return (result.rowcount or 0) > 0
 
 
 def insert_agent_run(session: Session, run_record: dict[str, Any]) -> None:

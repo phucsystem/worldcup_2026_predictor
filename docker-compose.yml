@@ -118,6 +118,12 @@ services:
     environment:
       # SSR runs inside the container — reach the API via the compose network DNS.
       API_BASE: http://backend:8000
+      # Single-admin gate. Set both in the VM .env (never commit real values).
+      # When unset, admin login fails closed. NODE_ENV is left to Next itself
+      # (next dev → development, next start → production) so the session cookie's
+      # Secure flag matches the scheme.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
     depends_on:
       backend:
         condition: service_healthy
