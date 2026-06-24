@@ -107,7 +107,7 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
             {clock}
           </span>
         </div>
-        <div className="nm-watch-wrap">
+        <div className="nm-actions">
           <a
             className="nm-watch"
             href={sbsUrl}
@@ -117,12 +117,12 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
           >
             <span className="nw-dot" aria-hidden="true" /> Watch live on SBS
           </a>
+          <ShareResultButton
+            fixtureId={fixture.fixture_id}
+            label="Share live score"
+            shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
+          />
         </div>
-        <ShareResultButton
-          fixtureId={fixture.fixture_id}
-          label="Share live score"
-          shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
-        />
       </section>
 
       {forecastSlot}

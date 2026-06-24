@@ -1825,23 +1825,31 @@ tr.log-detail-row > td {
 .nm-watch:hover { color: #06231A; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(3, 8, 20, 0.45); }
 .nm-watch .nw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-loss); }
 
-/* ---- Share result / live score ---- */
-.share-result {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  margin-top: var(--space-3);
+/* ---- Hero action buttons (watch / share) ---- */
+/* Row that groups the Watch and Share pills, centered under the meta line. */
+.nm-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: var(--space-3); margin-top: var(--space-4);
 }
+.nm-actions .nm-watch { margin: 0; }
+
+.share-result { position: relative; display: inline-flex; }
 .share-result-btn {
   display: inline-flex; align-items: center; gap: var(--space-2);
-  padding: 8px 18px;
+  padding: 9px 18px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
 }
-.share-result-btn:hover { background: rgba(255, 255, 255, 0.16); border-color: var(--accent-bright); transform: translateY(-1px); }
+.share-result-btn:hover { background: rgba(255, 255, 255, 0.18); border-color: var(--accent-bright); transform: translateY(-1px); }
 .share-result-btn:disabled { opacity: 0.6; cursor: default; transform: none; }
-.share-result-status { min-height: 16px; font-size: 12px; color: var(--status-live); }
+/* Floats under the button so the transient toast never reflows the row. */
+.share-result-status {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-size: 12px; color: var(--status-live); pointer-events: none;
+}
 
 /* ---- Match timeline / key moments ---- */
 .mt-list { list-style: none; margin: 0; padding: 0; position: relative; }

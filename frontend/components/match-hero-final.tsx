@@ -60,7 +60,7 @@ export default function MatchHeroFinal({ fixture }: Props) {
       <div className="nm-meta">
         <LocalTime iso={fixture.kickoff_utc} mode="dayTime" withZone />
       </div>
-      <div className="nm-watch-wrap">
+      <div className="nm-actions">
         <a
           className="nm-watch"
           href={sbsSearchUrl(fixture.home_team, fixture.away_team)}
@@ -70,8 +70,8 @@ export default function MatchHeroFinal({ fixture }: Props) {
         >
           <span aria-hidden="true">▶</span> Watch highlights on SBS
         </a>
+        <ShareResultButton fixtureId={fixture.fixture_id} shareTitle={`${fixture.home_team ?? "TBD"} ${hs}–${as} ${fixture.away_team ?? "TBD"}`} />
       </div>
-      <ShareResultButton fixtureId={fixture.fixture_id} shareTitle={`${fixture.home_team ?? "TBD"} ${hs}–${as} ${fixture.away_team ?? "TBD"}`} />
     </section>
   );
 }

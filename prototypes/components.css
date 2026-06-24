@@ -2028,6 +2028,28 @@ table.standings tbody > tr:nth-child(n+6) { animation-delay: 0.28s; }
 .nm-watch:hover { color: #06231A; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(3, 8, 20, 0.45); }
 .nm-watch .nw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-loss); animation: pulse 1.4s ease-in-out infinite; }
 
+/* Hero action buttons (watch / share) — centered row under the meta line. */
+.nm-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: var(--space-3); margin-top: var(--space-4);
+}
+.nm-actions .nm-watch { margin: 0; }
+.share-result { position: relative; display: inline-flex; }
+.share-result-btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+.share-result-btn:hover { background: rgba(255, 255, 255, 0.18); border-color: var(--accent-bright); transform: translateY(-1px); }
+.share-result-status {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-size: 12px; color: var(--status-live); pointer-events: none;
+}
+
 /* ---- Scorers strip inside the in-progress banner (name + minute) ---- */
 .nm-scorers { display: grid; grid-template-columns: 1fr 1fr; gap: 4px var(--space-6); max-width: 460px; margin: var(--space-3) auto 0; }
 .nm-sc-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
