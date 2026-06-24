@@ -72,6 +72,20 @@ export interface RecentResult {
   forecast_correct?: boolean | null;
 }
 
+// One finished match in the full results list (`GET /api/results`). Unlike
+// RecentResult it carries its own group/stage label and has no per-team outcome.
+export interface ResultItem {
+  fixture_id: number | null;
+  home_team: string | null;
+  away_team: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  kickoff_utc: string | null;
+  group_name: string | null; // "A"–"L" for group stage; null for knockout
+  stage: string | null; // raw round, e.g. "Round of 16"; labels knockout matches
+  forecast_correct: boolean | null;
+}
+
 export interface StandingRow {
   position: number | null;
   prev_position: number | null;
@@ -240,6 +254,10 @@ export async function getBrief(date: string): Promise<BriefDetail | null> {
 export async function getStandings(date?: string): Promise<StandingsSnapshot | null> {
   const qs = date ? `?date=${date}` : "";
   return apiFetch<StandingsSnapshot>(`/api/standings${qs}`);
+}
+
+export async function getAllResults(): Promise<ResultItem[]> {
+  return (await apiFetch<ResultItem[]>("/api/results")) ?? [];
 }
 
 export async function getUpcomingFixtures(): Promise<UpcomingFixtures> {

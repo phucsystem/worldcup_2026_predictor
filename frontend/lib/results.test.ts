@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { groupedResultRows, resultsToChips } from "@/lib/results";
-import type { GroupStandings, RecentResult } from "@/lib/api";
+import { groupedResultRows, resultRowsFromResults, resultsToChips } from "@/lib/results";
+import type { GroupStandings, RecentResult, ResultItem } from "@/lib/api";
 
 function r(partial: Partial<RecentResult>): RecentResult {
   return {
@@ -82,5 +82,60 @@ describe("groupedResultRows", () => {
       group([{ fixture_id: 9, kickoff_utc: "2026-06-12T18:00:00Z" }]),
     ]);
     expect(row.forecastCorrect).toBeNull();
+  });
+});
+
+function item(partial: Partial<ResultItem>): ResultItem {
+  return {
+    fixture_id: 1,
+    home_team: "Brazil",
+    away_team: "Serbia",
+    home_score: 3,
+    away_score: 1,
+    kickoff_utc: "2026-06-12T18:00:00Z",
+    group_name: "A",
+    stage: "Group Stage - 1",
+    forecast_correct: true,
+    ...partial,
+  };
+}
+
+describe("resultRowsFromResults", () => {
+  it("maps fields and derives winner from the score", () => {
+    const [row] = resultRowsFromResults([item({})]);
+    expect(row.home).toBe("Brazil");
+    expect(row.winner).toBe("home");
+    expect(row.group).toBe("A");
+    expect(row.forecastCorrect).toBe(true);
+  });
+
+  it("labels knockout matches by stage when group_name is null", () => {
+    const [row] = resultRowsFromResults([
+      item({ group_name: null, stage: "Round of 16" }),
+    ]);
+    expect(row.group).toBe("Round of 16");
+  });
+
+  it("sorts newest first and applies no limit", () => {
+    const rows = resultRowsFromResults([
+      item({ fixture_id: 1, kickoff_utc: "2026-06-12T18:00:00Z" }),
+      item({ fixture_id: 2, kickoff_utc: "2026-06-20T18:00:00Z", away_team: "Poland" }),
+      item({ fixture_id: 3, kickoff_utc: "2026-06-15T18:00:00Z", away_team: "Ghana" }),
+    ]);
+    expect(rows).toHaveLength(3);
+    expect(rows.map((row) => row.fixtureId)).toEqual([2, 3, 1]);
+  });
+
+  it("skips items with missing teams or scores", () => {
+    const rows = resultRowsFromResults([
+      item({ home_score: null }),
+      item({ away_team: null }),
+    ]);
+    expect(rows).toEqual([]);
+  });
+
+  it("draws when scores are level", () => {
+    const [row] = resultRowsFromResults([item({ home_score: 2, away_score: 2 })]);
+    expect(row.winner).toBe("draw");
   });
 });

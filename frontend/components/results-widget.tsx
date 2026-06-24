@@ -16,7 +16,13 @@ function accuracyTier(pct: number): "high" | "mid" | "low" {
  * toggle. Inline `order` is set on every row/header so server and client markup
  * are identical — no hydration mismatch.
  */
-export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
+export default function ResultsWidget({
+  rows,
+  viewAllHref,
+}: {
+  rows: ResultWidgetRow[];
+  viewAllHref?: string; // when set, render a "View all results →" link in the header
+}) {
   const [grouped, setGrouped] = useState(false);
   // Which date's forecast summary is open. Hover opens transiently; a click
   // pins it open (and toggles closed) so touch users get the same summary.
@@ -130,6 +136,11 @@ export default function ResultsWidget({ rows }: { rows: ResultWidgetRow[] }) {
     <section className={`results-widget${grouped ? " grouped" : ""}${!grouped ? " has-date-headers" : ""}`}>
       <div className="rw-head">
         <h2 className="rw-title">Latest Results</h2>
+        {viewAllHref && (
+          <Link className="next-two-all" href={viewAllHref}>
+            View all results →
+          </Link>
+        )}
       </div>
 
       <label className="rw-toggle-bar">

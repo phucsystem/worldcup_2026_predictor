@@ -2,6 +2,10 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.14.0 — 24 Jun 2026
+
+- **Added** — A full results page listing every match from the start of the tournament, grouped by date. Reach it from the "View all results →" link in the home Latest Results section.
+
 ## v0.13.0 — 24 Jun 2026
 
 - **Added** — A friendly feedback chat in the bottom-right of every page: three host-nation supporters collect your bug reports and ideas in a couple of taps — no account needed.
