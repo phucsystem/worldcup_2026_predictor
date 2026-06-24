@@ -7,9 +7,10 @@ import BrandLogo from "@/components/brand-logo";
 import SiteBackground from "@/components/site-background";
 import CoffeeButton from "@/components/coffee-button";
 import FeedbackWidget from "@/components/feedback-widget";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "WC26 Intelligence",
+  title: SITE.brandName,
   description: "Daily World Cup 2026 intelligence briefs and standings",
 };
 
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="relative z-10 flex min-h-full flex-col">
           <header className="app-header">
             <nav className="nav-inner">
-              <Link href="/" aria-label="WC26 Intelligence — home" className="brand">
+              <Link href="/" aria-label={`${SITE.brandName} — home`} className="brand">
                 <BrandLogo height={40} />
               </Link>
               <div className="nav-actions">

@@ -2,6 +2,16 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.16.0 — 24 Jun 2026
+
+- **Fixed** — Own goals now show on the correct side of the match timeline, so the running score matches the final result (e.g. a 5–0 win no longer reads 4–1).
+- **Added** — Finished match pages now have a "Watch highlights on SBS" link, matching the live "Watch on SBS" button.
+
+## v0.15.0 — 24 Jun 2026
+
+- **Added** — A "Share result" button on finished and live match pages: it copies a branded scoreline image to your clipboard so you can paste it straight to a friend (with a share sheet on mobile and a download fallback).
+- **Added** — Pasting a match link into a chat now shows a rich preview card with the scoreline banner.
+
 ## v0.14.0 — 24 Jun 2026
 
 - **Fixed** — Own goals now show on the correct side of the match timeline, so the running score matches the final result (e.g. a 5–0 win no longer reads 4–1).

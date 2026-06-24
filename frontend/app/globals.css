@@ -1825,6 +1825,60 @@ tr.log-detail-row > td {
 .nm-watch:hover { color: #06231A; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(3, 8, 20, 0.45); }
 .nm-watch .nw-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-loss); }
 
+/* ---- Hero action buttons (watch / share) ---- */
+/* Row that groups the Watch and Share pills, centered under the meta line. */
+.nm-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: var(--space-3); margin-top: var(--space-4);
+}
+.nm-actions .nm-watch { margin: 0; }
+
+.share-result { position: relative; display: inline-flex; }
+.share-result-btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(180deg, rgba(77, 139, 255, 0.2), rgba(77, 139, 255, 0.08));
+  border: 1px solid rgba(77, 139, 255, 0.38);
+  color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 2px 10px rgba(3, 8, 20, 0.25);
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+}
+.share-result-btn:hover {
+  background: linear-gradient(180deg, rgba(77, 139, 255, 0.3), rgba(77, 139, 255, 0.15));
+  border-color: var(--accent-bright);
+  box-shadow: 0 8px 22px rgba(45, 107, 246, 0.32);
+  transform: translateY(-1px);
+}
+.share-result-btn:active { transform: translateY(0) scale(0.96); }
+.share-result-btn:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+.share-result-btn:disabled { cursor: default; }
+/* Success flash — the button itself confirms the copy with a green tint + check. */
+.share-result-btn[data-status="copied"],
+.share-result-btn[data-status="shared"],
+.share-result-btn[data-status="downloaded"] {
+  background: linear-gradient(180deg, rgba(43, 211, 126, 0.26), rgba(43, 211, 126, 0.12));
+  border-color: var(--status-live);
+  box-shadow: 0 6px 18px rgba(43, 211, 126, 0.28);
+}
+.share-result-btn[data-status="error"] {
+  background: rgba(229, 72, 77, 0.16);
+  border-color: #E5484D;
+}
+.share-ico { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; }
+.share-spin { transform-origin: center; animation: share-spin 0.7s linear infinite; }
+@keyframes share-spin { to { transform: rotate(360deg); } }
+/* Floats under the button so the transient toast never reflows the row. */
+.share-result-status {
+  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  white-space: nowrap; font-size: 12px; color: var(--status-live); pointer-events: none;
+}
+.share-result-btn[data-status="error"] + .share-result-status { color: #E5484D; }
+@media (prefers-reduced-motion: reduce) {
+  .share-result-btn, .share-result-btn:hover, .share-result-btn:active { transition: none; transform: none; }
+  .share-spin { animation: none; }
+}
+
 /* ---- Match timeline / key moments ---- */
 .mt-list { list-style: none; margin: 0; padding: 0; position: relative; }
 .mt-list::before {

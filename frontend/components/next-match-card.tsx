@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { FixtureRow } from "@/lib/api";
-import TeamFlag from "@/components/team-flag";
 import Countdown from "@/components/countdown";
 import LocalTime from "@/components/local-time";
-import FlagBackdrop from "@/components/flag-backdrop";
+import MatchBanner from "@/components/match-banner";
 
 interface Props {
   fixture: FixtureRow | null;
@@ -18,25 +17,17 @@ export default function NextMatchCard({ fixture, stakeText, linked = true }: Pro
 
   const body = (
     <>
-      <FlagBackdrop home={fixture.home_team} away={fixture.away_team} />
-      <span className="nm-eyebrow">
-        <span className="dot" /> Next kickoff
-      </span>
-      <div className="nm-body">
-        <span className="nm-side">
-          <TeamFlag team={fixture.home_team} logo={fixture.home_logo} size={40} />
-          {fixture.home_team ?? "TBD"}
-        </span>
-        <span className="nm-vs">VS</span>
-        <span className="nm-side">
-          {fixture.away_team ?? "TBD"}
-          <TeamFlag team={fixture.away_team} logo={fixture.away_logo} size={40} />
-        </span>
-      </div>
-      <div className="nm-meta">
-        <LocalTime iso={fixture.kickoff_utc} mode="dayTime" withZone />
-        {fixture.group_name ? ` · ${fixture.group_name}` : ""}
-      </div>
+      <MatchBanner
+        fixture={fixture}
+        variant="preview"
+        eyebrowLabel="Next kickoff"
+        meta={
+          <>
+            <LocalTime iso={fixture.kickoff_utc} mode="dayTime" withZone />
+            {fixture.group_name ? ` · ${fixture.group_name}` : ""}
+          </>
+        }
+      />
       <div className="nm-countdown-wrap">
         <span className="nm-cd-label">Kicks off in</span>
         <Countdown kickoffUtc={fixture.kickoff_utc} variant="tiles" />

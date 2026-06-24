@@ -2,22 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import type { FixtureRow } from "@/lib/api";
-import TeamFlag from "@/components/team-flag";
-import FlagBackdrop from "@/components/flag-backdrop";
+import type { FixtureRow, MatchEvent } from "@/lib/api";
+import MatchBanner from "@/components/match-banner";
+import ShareResultButton from "@/components/share-result-button";
 import { liveMinute } from "@/lib/live";
+import { sbsSearchUrl } from "@/lib/match";
+
+// Initial may be a bare row (no events); polling the detail endpoint fills in
+// goal events so the scorer strip matches the detail page.
+type LiveFixture = FixtureRow & { events?: MatchEvent[] };
 
 interface Props {
-  initial: FixtureRow;
+  initial: LiveFixture;
 }
 
 const POLL_MS = 30_000;
 const TICK_MS = 1_000;
-
 const SHORT_FROZEN: Record<string, string> = { HT: "HT", BT: "BREAK", P: "PENS" };
 
 export default function LiveMatchCard({ initial }: Props) {
-  const [fixture, setFixture] = useState<FixtureRow | null>(initial);
+  const [fixture, setFixture] = useState<LiveFixture | null>(initial);
   // Seed from the server-provided anchor so SSR and first client render agree;
   // the 1s effect switches to the real wall clock after mount.
   const [nowMs, setNowMs] = useState<number>(() => {
@@ -26,31 +30,36 @@ export default function LiveMatchCard({ initial }: Props) {
   });
   const inFlight = useRef(false);
 
-  // Tick the wall clock each second. nowMs is seeded from updated_at, so the
-  // first render shows the real elapsed minute; the interval then interpolates.
   useEffect(() => {
     const tick = setInterval(() => setNowMs(Date.now()), TICK_MS);
     return () => clearInterval(tick);
   }, []);
 
+  // Poll the match detail (includes events) so the live score AND scorer strip
+  // stay current. Runs once immediately so events appear without a full delay.
   useEffect(() => {
+    let active = true;
     async function poll() {
       if (inFlight.current) return;
       inFlight.current = true;
       try {
-        const res = await fetch("/api/live", { cache: "no-store" });
+        const res = await fetch(`/api/fixtures/${initial.fixture_id}`, { cache: "no-store" });
         if (!res.ok) return;
-        const list: FixtureRow[] = await res.json();
-        setFixture(list.length > 0 ? list[0] : null); // soonest-kicked first from the API
+        const next: LiveFixture = await res.json();
+        if (active) setFixture(next);
       } catch {
         // keep the last good state on a transient failure
       } finally {
         inFlight.current = false;
       }
     }
+    poll();
     const id = setInterval(poll, POLL_MS);
-    return () => clearInterval(id);
-  }, []);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [initial.fixture_id]);
 
   if (!fixture) return null;
 
@@ -68,36 +77,44 @@ export default function LiveMatchCard({ initial }: Props) {
       : "LIVE";
 
   return (
-    <Link
+    <section
       className="next-match is-live"
       data-flag-bg
-      href={`/match/${fixture.fixture_id}`}
-      aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}. View match analysis.`}
+      aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}.`}
     >
-      <FlagBackdrop home={fixture.home_team} away={fixture.away_team} />
-      <span className="nm-eyebrow">
-        <span className="dot" /> Live now · {label}
-      </span>
-      <div className="nm-body">
-        <span className="nm-side">
-          <TeamFlag team={fixture.home_team} logo={fixture.home_logo} size={40} />
-          {fixture.home_team ?? "TBD"}
-        </span>
-        <span className="nm-score" aria-hidden="true">
-          <span className="nm-sc">{fixture.home_score ?? 0}</span>
-          <span className="nm-sc-sep">–</span>
-          <span className="nm-sc">{fixture.away_score ?? 0}</span>
-        </span>
-        <span className="nm-side">
-          {fixture.away_team ?? "TBD"}
-          <TeamFlag team={fixture.away_team} logo={fixture.away_logo} size={40} />
-        </span>
-      </div>
-      <div className="nm-meta">{fixture.group_name ?? "Live"}</div>
+      <MatchBanner
+        fixture={fixture}
+        variant="live"
+        eyebrowLabel={`Live now · ${label}`}
+        events={fixture.events}
+        meta={fixture.group_name ?? fixture.stage ?? null}
+      />
       <div className="nm-live-clock-wrap">
         <span className="nm-live-clock" aria-hidden="true">{clock}</span>
       </div>
-      <span className="nm-cta">Match analysis →</span>
-    </Link>
+      <div className="nm-actions">
+        <a
+          className="nm-watch"
+          href={sbsSearchUrl(fixture.home_team, fixture.away_team)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Find ${fixture.home_team ?? "this match"} v ${fixture.away_team ?? ""} on SBS On Demand (opens in a new tab)`}
+        >
+          <span className="nw-dot" aria-hidden="true" /> Watch live on SBS
+        </a>
+        <ShareResultButton
+          fixtureId={fixture.fixture_id}
+          label="Share live score"
+          shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
+        />
+      </div>
+      <Link
+        className="nm-cta"
+        href={`/match/${fixture.fixture_id}`}
+        aria-label={`View ${fixture.home_team ?? "this match"} v ${fixture.away_team ?? ""} match analysis`}
+      >
+        Match analysis →
+      </Link>
+    </section>
   );
 }

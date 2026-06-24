@@ -7,6 +7,7 @@ import {
   getStars,
   getStandings,
   getTournamentSummary,
+  getFixture,
 } from "@/lib/api";
 import type { FixtureRow as Fixture, RecentResult } from "@/lib/api";
 import { HeroBriefCard, CompactBriefCard } from "@/components/brief-card";
@@ -116,6 +117,9 @@ export default async function HomePage() {
   // A live match takes the lead card; the soonest in-play game (API returns
   // them soonest-kicked first). Falls back to the next upcoming match.
   const liveMatch = live[0] ?? null;
+  // Hydrate the live card with goal events (the bare /live row carries none) so
+  // the scorer strip is present on first paint, not only after the first poll.
+  const liveDetail = liveMatch ? await getFixture(liveMatch.fixture_id) : null;
   const upNext = upcoming.up_next;
   const topStars = stars.slice(0, 6);
   const recentResults = recentResultStrip(standings?.groups ?? []);
@@ -141,7 +145,7 @@ export default async function HomePage() {
         <section aria-label={liveMatch ? "Live now" : "Up next"}>
           <h2 className="section-title">{liveMatch ? "Live now" : "Up next"}</h2>
           {liveMatch ? (
-            <LiveMatchCard initial={liveMatch} />
+            <LiveMatchCard initial={liveDetail ?? liveMatch} />
           ) : (
             upNext && (
               <NextMatchCard fixture={upNext} stakeText={stakeMap.get(upNext.fixture_id)} />

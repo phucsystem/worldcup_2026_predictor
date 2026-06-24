@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getFixture, getStandings } from "@/lib/api";
@@ -15,6 +16,32 @@ import ForecastOutcome from "@/components/forecast-outcome";
 import MatchLive from "@/components/match-live";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ fixture_id: string }>;
+}): Promise<Metadata> {
+  const { fixture_id } = await params;
+  const fixture = await getFixture(Number(fixture_id));
+  if (!fixture) return {};
+  const home = fixture.home_team ?? "TBD";
+  const away = fixture.away_team ?? "TBD";
+  const scored =
+    fixture.home_score != null && fixture.away_score != null
+      ? `${home} ${fixture.home_score}–${fixture.away_score} ${away}`
+      : `${home} vs ${away}`;
+  const state = matchState(fixture.status);
+  const title =
+    state === "live" ? `LIVE: ${scored}` : state === "finished" ? `${scored} · Full Time` : scored;
+  const description = `${scored}${fixture.group_name ? ` · ${fixture.group_name}` : ""} — World Cup 2026 result, forecast and analysis.`;
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function MatchPage({ params }: { params: Promise<{ fixture_id: string }> }) {
   const { fixture_id } = await params;

@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { FixtureDetail } from "@/lib/api";
-import TeamFlag from "@/components/team-flag";
 import MatchTimeline from "@/components/match-timeline";
 import Goalscorers from "@/components/goalscorers";
-import MatchScorersStrip from "@/components/match-scorers-strip";
 import MatchStats from "@/components/match-stats";
-import FlagBackdrop from "@/components/flag-backdrop";
+import MatchBanner from "@/components/match-banner";
+import ShareResultButton from "@/components/share-result-button";
 import { liveMinute } from "@/lib/live";
 import { eventKey, freshEventKeys, sbsSearchUrl } from "@/lib/match";
 
@@ -80,33 +79,19 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
         data-flag-bg
         aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}`}
       >
-        <FlagBackdrop home={fixture.home_team} away={fixture.away_team} />
-        <span className="nm-eyebrow">
-          <span className="dot" /> Live now · {label}
-        </span>
-        <div className="nm-body">
-          <span className="nm-side">
-            <TeamFlag team={fixture.home_team} logo={fixture.home_logo} size={40} />
-            {fixture.home_team ?? "TBD"}
-          </span>
-          <span className="nm-score" aria-hidden="true">
-            <span className="nm-sc">{fixture.home_score ?? 0}</span>
-            <span className="nm-sc-sep">–</span>
-            <span className="nm-sc">{fixture.away_score ?? 0}</span>
-          </span>
-          <span className="nm-side">
-            {fixture.away_team ?? "TBD"}
-            <TeamFlag team={fixture.away_team} logo={fixture.away_logo} size={40} />
-          </span>
-        </div>
-        <MatchScorersStrip events={fixture.events} />
-        <div className="nm-meta">{fixture.group_name ?? "Live"}</div>
+        <MatchBanner
+          fixture={fixture}
+          variant="live"
+          eyebrowLabel={`Live now · ${label}`}
+          events={fixture.events}
+          meta={fixture.group_name ?? fixture.stage ?? null}
+        />
         <div className="nm-live-clock-wrap">
           <span className="nm-live-clock" aria-hidden="true">
             {clock}
           </span>
         </div>
-        <div className="nm-watch-wrap">
+        <div className="nm-actions">
           <a
             className="nm-watch"
             href={sbsUrl}
@@ -116,6 +101,11 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
           >
             <span className="nw-dot" aria-hidden="true" /> Watch live on SBS
           </a>
+          <ShareResultButton
+            fixtureId={fixture.fixture_id}
+            label="Share live score"
+            shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
+          />
         </div>
       </section>
 
