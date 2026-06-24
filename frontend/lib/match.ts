@@ -27,8 +27,9 @@ export interface TimelineRow {
   assist: string | null;
   team: string | null;
   side: "home" | "away" | null;
-  // Side credited with the goal (own goal credits the opponent) — null on
-  // non-goal rows. Drives the running-score chip colour.
+  // Side credited with the goal — null on non-goal rows. Drives the
+  // running-score chip colour. Equals the event's own side: the data records an
+  // own goal under the team it benefits, so there is no opponent-flip here.
   scoringSide: "home" | "away" | null;
   // Running score after this event — only set on goal rows; null otherwise.
   score: { home: number; away: number } | null;
@@ -39,10 +40,6 @@ function isGoal(e: MatchEvent): boolean {
   // API-Football logs a missed/saved penalty as a "Goal"-type event with
   // detail "Missed Penalty" — it never changes the score, so it is not a goal.
   return (e.detail ?? "").toLowerCase() !== "missed penalty";
-}
-
-function isOwnGoal(e: MatchEvent): boolean {
-  return (e.detail ?? "").toLowerCase() === "own goal";
 }
 
 function byMinute(a: MatchEvent, b: MatchEvent): number {
@@ -58,8 +55,10 @@ export function buildTimeline(events: MatchEvent[]): TimelineRow[] {
     let score: TimelineRow["score"] = null;
     let scoringSide: TimelineRow["scoringSide"] = null;
     if (isGoal(e)) {
-      // An own goal credits the opposing side.
-      scoringSide = isOwnGoal(e) ? (e.side === "home" ? "away" : "home") : e.side;
+      // The event's `side` is already the team credited with the goal. Own goals
+      // are recorded under the team they benefit (not the conceding side), so the
+      // running score follows `side` directly — same as goalscorers().
+      scoringSide = e.side;
       if (scoringSide === "home") home += 1;
       else if (scoringSide === "away") away += 1;
       score = { home, away };
@@ -120,6 +119,15 @@ export interface ScorerEntry {
   player: string | null;
   minutes: number[];
   goals: ScorerGoal[];
+}
+
+// SBS On Demand has no public fixture→video-ID mapping, so deep-link to its
+// search (path-segment form) pre-filled with both team names; falls back to the
+// football hub when a team is unknown. Shared by the live and finished heroes.
+export function sbsSearchUrl(home: string | null, away: string | null): string {
+  return home && away
+    ? `https://www.sbs.com.au/ondemand/search/${encodeURIComponent(`${home} ${away}`)}`
+    : "https://www.sbs.com.au/sport/football";
 }
 
 export function goalscorers(events: MatchEvent[]): ScorerEntry[] {

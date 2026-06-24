@@ -7,6 +7,7 @@ import {
   eventKey,
   freshEventKeys,
   forecastOutcome,
+  sbsSearchUrl,
 } from "./match";
 import type { Forecast } from "./match";
 import type { MatchEvent } from "./api";
@@ -58,12 +59,35 @@ describe("buildTimeline", () => {
     ]);
   });
 
-  it("credits the opponent for an own goal", () => {
+  it("credits the recorded side for an own goal (data stores the beneficiary)", () => {
+    // An own goal's event carries side = the team it benefits (the conceding
+    // player's name is in `player`), so the running score follows side, no flip.
     const events = [
       ev({ minute: 30, side: "home", detail: "Own Goal", player: "Defender" }),
     ];
     const rows = buildTimeline(events);
-    expect(rows[0].score).toEqual({ home: 0, away: 1 });
+    expect(rows[0].score).toEqual({ home: 1, away: 0 });
+    expect(rows[0].scoringSide).toBe("home");
+  });
+
+  it("keeps the running score correct when an own goal sits among normal goals", () => {
+    // Regression: a 5–0 win with one own goal (all credited home) must end 5–0,
+    // not 4–1 — the own goal must not be flipped to the opponent.
+    const events = [
+      ev({ minute: 6, side: "home", player: "A" }),
+      ev({ minute: 17, side: "home", player: "B" }),
+      ev({ minute: 39, side: "home", player: "C" }),
+      ev({ minute: 60, side: "home", detail: "Own Goal", player: "Opp Defender" }),
+      ev({ minute: 87, side: "home", player: "D" }),
+    ];
+    const rows = buildTimeline(events);
+    expect(rows.map((r) => r.score)).toEqual([
+      { home: 1, away: 0 },
+      { home: 2, away: 0 },
+      { home: 3, away: 0 },
+      { home: 4, away: 0 },
+      { home: 5, away: 0 },
+    ]);
   });
 
   it("non-goal events carry no score and do not change the running total", () => {
@@ -105,6 +129,19 @@ describe("buildTimeline", () => {
     ];
     const rows = buildTimeline(events);
     expect(rows.map((r) => r.player)).toEqual(["Early", "First", "Late"]);
+  });
+});
+
+describe("sbsSearchUrl", () => {
+  it("builds an SBS On Demand search from both team names", () => {
+    expect(sbsSearchUrl("Portugal", "Uzbekistan")).toBe(
+      "https://www.sbs.com.au/ondemand/search/Portugal%20Uzbekistan",
+    );
+  });
+
+  it("falls back to the football hub when a team is unknown", () => {
+    expect(sbsSearchUrl("Portugal", null)).toBe("https://www.sbs.com.au/sport/football");
+    expect(sbsSearchUrl(null, null)).toBe("https://www.sbs.com.au/sport/football");
   });
 });
 
