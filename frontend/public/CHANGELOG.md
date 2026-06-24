@@ -4,6 +4,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 
 ## 24 Jun 2026
 
+- **Internal** — The deploy now syncs the admin password from the CI secret into the VM environment on each release, so it no longer has to be set on the server by hand.
 - **Changed** — Admin sign-in now needs only the admin password; the separate session secret is gone. Existing admin sessions will need to sign in once more.
 - **Fixed** — Own goals now show on the correct side of the match timeline, so the running score matches the final result (e.g. a 5–0 win no longer reads 4–1).
 - **Added** — Finished match pages now have a "Watch highlights on SBS" link, matching the live "Watch on SBS" button.
