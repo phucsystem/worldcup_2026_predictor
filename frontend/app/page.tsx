@@ -75,8 +75,8 @@ function CompactFixtureStrip({ fixtures }: { fixtures: Fixture[] }) {
   if (fixtures.length === 0) return null;
 
   return (
-    <div className="next-two" aria-label="Next two fixtures">
-      <span className="next-two-label">Next 2</span>
+    <div className="next-two" aria-label="Upcoming fixtures">
+      <span className="next-two-label">Upcoming</span>
       {fixtures.map((fixture) => (
         <Link
           key={fixture.fixture_id}
@@ -131,11 +131,13 @@ export default async function HomePage() {
   const stakeMap = stakesByFixtureId(latest?.intelligence);
   const scenarios = scenariosForDisplay(latest?.intelligence);
 
-  // Next two fixtures after the featured up-next (flatten upcoming days).
+  // Upcoming fixtures from the next two days after the featured up-next,
+  // capped at six so the strip stays scannable.
   const nextFixtures: Fixture[] = upcoming.days
+    .slice(0, 2)
     .flatMap((d) => d.fixtures)
     .filter((f) => f.fixture_id !== upNext?.fixture_id)
-    .slice(0, 2);
+    .slice(0, 6);
 
   return (
     <div className="home-shell">

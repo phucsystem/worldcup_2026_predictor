@@ -2,6 +2,10 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first, grouped by release date.
 
+## 25 Jun 2026
+
+- **Improved** — The home "Up next" strip now lists every upcoming game across the next two match days (up to six) instead of only the next two, so a busy day's fixtures are all visible at a glance.
+
 ## 24 Jun 2026
 
 - **Added** — A "What fans are saying" panel on upcoming match pages: highlights of public fan discussion from Reddit and Bluesky, auto-curated for insight and shown alongside the forecast (with a link back to each source). The forecast itself is unchanged — fan opinion never feeds the model.

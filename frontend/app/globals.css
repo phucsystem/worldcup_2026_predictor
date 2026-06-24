@@ -1097,13 +1097,14 @@ a.next-match.is-live:hover {
 }
 
 .next-two {
-  display: grid;
-  grid-template-columns: auto 1fr 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-6);
 }
 .next-two-label {
+  flex-shrink: 0;
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -1111,6 +1112,7 @@ a.next-match.is-live:hover {
   color: var(--text-muted);
 }
 .next-two-match {
+  flex: 1 1 280px;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -1158,6 +1160,8 @@ a.next-match.is-live:hover {
   color: var(--text-secondary);
 }
 .next-two-all {
+  flex-shrink: 0;
+  margin-left: auto;
   font-size: 13px;
   font-weight: 700;
   color: var(--primary);
@@ -1498,11 +1502,11 @@ a.next-match.is-live:hover {
   .sp-progress-label { font-size: 11px; }
   .fixture-row { grid-template-columns: 70px 1fr; }
   .fixture-meta { grid-column: 2; align-items: flex-start; text-align: left; }
-  .next-two { grid-template-columns: 1fr; }
+  .next-two { flex-direction: column; align-items: stretch; }
   .next-two-label { margin-bottom: var(--space-1); }
-  .next-two-match { justify-content: space-between; }
+  .next-two-match { flex: 0 0 auto; justify-content: space-between; }
   .next-two-teams { flex: 1; }
-  .next-two-all { justify-self: start; margin-top: var(--space-1); }
+  .next-two-all { margin-left: 0; align-self: flex-start; margin-top: var(--space-1); }
   .rw-title { font-size: 21px; }
   .match-row {
     grid-template-columns: 1fr auto auto auto 1fr;
