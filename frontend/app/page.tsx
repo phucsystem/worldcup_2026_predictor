@@ -17,6 +17,7 @@ import EmptyState from "@/components/empty-state";
 import SummaryPanel from "@/components/summary-panel";
 import NextMatchCard from "@/components/next-match-card";
 import LiveMatchCard from "@/components/live-match-card";
+import LiveBoard from "@/components/live-board";
 import ResultsWidget from "@/components/results-widget";
 import StakeGrid from "@/components/stake-grid";
 import { groupedResultRows } from "@/lib/results";
@@ -117,9 +118,13 @@ export default async function HomePage() {
   // A live match takes the lead card; the soonest in-play game (API returns
   // them soonest-kicked first). Falls back to the next upcoming match.
   const liveMatch = live[0] ?? null;
-  // Hydrate the live card with goal events (the bare /live row carries none) so
-  // the scorer strip is present on first paint, not only after the first poll.
-  const liveDetail = liveMatch ? await getFixture(liveMatch.fixture_id) : null;
+  // 2+ concurrent live matches switch to the compact LiveBoard; a single live
+  // match keeps the big LiveMatchCard hero.
+  const multiLive = live.length >= 2;
+  // Hydrate the single live card with goal events (the bare /live row carries
+  // none) so the scorer strip is present on first paint, not only after the
+  // first poll. The board's compact cards show no scorers, so skip it there.
+  const liveDetail = liveMatch && !multiLive ? await getFixture(liveMatch.fixture_id) : null;
   const upNext = upcoming.up_next;
   // Fetch the up-next fixture detail for its forecast (mirrors the live-card
   // scorer fetch); the bare upcoming row carries no forecast split.
@@ -147,7 +152,9 @@ export default async function HomePage() {
       {(liveMatch || upNext || nextFixtures.length > 0) && (
         <section aria-label={liveMatch ? "Live now" : "Up next"}>
           <h2 className="section-title">{liveMatch ? "Live now" : "Up next"}</h2>
-          {liveMatch ? (
+          {multiLive ? (
+            <LiveBoard initial={live} stakes={Object.fromEntries(stakeMap)} />
+          ) : liveMatch ? (
             <LiveMatchCard initial={liveDetail ?? liveMatch} />
           ) : (
             upNext && (
