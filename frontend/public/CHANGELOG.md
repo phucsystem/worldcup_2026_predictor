@@ -2,6 +2,12 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first.
 
+## v0.13.0 — 24 Jun 2026
+
+- **Added** — A friendly feedback chat in the bottom-right of every page: three host-nation supporters collect your bug reports and ideas in a couple of taps — no account needed.
+- **Added** — A private admin area to review that feedback and mark each item done or won't-do.
+- **Changed** — The system logs console moved into the admin area and is no longer public.
+
 ## v0.12.0 — 24 Jun 2026
 
 - **Added** — Each date in "Latest Results" now shows how well the model's pre-match forecasts did that day (e.g. 3/4 · 75%), colored by accuracy.
