@@ -1096,6 +1096,76 @@ a.next-match.is-live:hover {
   color: var(--text-secondary);
 }
 
+/* ---- LIVE board: 2+ concurrent in-progress matches as equal compact cards.
+   Same green identity as the single .is-live hero, sized down into a grid. ---- */
+.live-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.live-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(125% 130% at 50% 4%, rgba(43, 211, 126, 0.26) 0%, transparent 56%),
+    linear-gradient(135deg, #0e5a39 0%, #0a3a2a 36%, var(--surface) 100%);
+  border: 1px solid var(--status-live);
+  box-shadow: 0 16px 40px -16px rgba(43, 211, 126, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.lc-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.lc-clock { font-size: 14px; padding: 4px 11px; }
+
+.lc-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+.lc-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.lc-side:first-child { justify-content: flex-end; }
+.lc-side .lc-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-side.lose { opacity: 0.5; }
+
+.lc-score {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.lc-sc { font-size: 24px; font-weight: 800; line-height: 1; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.lc-sc.win { color: var(--status-live); text-shadow: 0 0 14px rgba(43, 211, 126, 0.4); }
+.lc-sc.lose { opacity: 0.55; }
+.lc-sc-sep { font-size: 16px; font-weight: 700; color: rgba(255, 255, 255, 0.4); }
+
+.lc-stake {
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.82);
+}
+.lc-stake::before { content: "→ "; color: var(--status-live); font-weight: 800; }
+
+.live-card .nm-actions { margin-top: var(--space-2); }
+
 .next-two {
   display: flex;
   flex-wrap: wrap;
@@ -1842,7 +1912,8 @@ tr.log-detail-row > td {
 
 /* "View match analysis →" nav — home-only entry point. Always sits inline in
    the action row (same line as Watch / Share), so it carries no block margin. */
-.next-match .nm-cta {
+.next-match .nm-cta,
+.live-card .nm-cta {
   display: inline-flex; align-items: center; gap: 6px; margin: 0;
   padding: 8px 16px;
   border-radius: var(--radius-pill);
@@ -1853,7 +1924,8 @@ tr.log-detail-row > td {
   text-decoration: none; width: fit-content;
   transition: background 0.16s ease, border-color 0.16s ease;
 }
-.next-match .nm-cta:hover { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
+.next-match .nm-cta:hover,
+.live-card .nm-cta:hover { background: rgba(255, 255, 255, 0.2); border-color: rgba(255, 255, 255, 0.4); }
 
 /* Compact win-probability bar inside the upcoming hero (glanceable forecast
    rate; the full forecast card below carries the detail). */
