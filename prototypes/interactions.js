@@ -612,3 +612,245 @@ document.addEventListener('DOMContentLoaded', function () {
 
   render();
 });
+
+/* ====================================================================
+   Supporter feedback bot (S-12) + Admin feedback triage (S-14)
+   Original host-nation supporter characters (moose/jaguar/eagle).
+   ==================================================================== */
+(function () {
+  // --- Mascot SVGs (original art; NOT the trademarked FIFA 2026 mascots) ---
+  const MASCOTS = {
+    moose:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M16 13 Q9 6 5 9 Q11 9 12 13 Q7 11 6 15 Q12 13 15 16Z" fill="#8a5a2b"/>' +
+      '<path d="M32 13 Q39 6 43 9 Q37 9 36 13 Q41 11 42 15 Q36 13 33 16Z" fill="#8a5a2b"/>' +
+      '<ellipse cx="13" cy="20" rx="3.4" ry="5" fill="#6a3f22"/><ellipse cx="35" cy="20" rx="3.4" ry="5" fill="#6a3f22"/>' +
+      '<ellipse cx="24" cy="26" rx="12" ry="13" fill="#7a4a28"/>' +
+      '<ellipse cx="24" cy="33" rx="8" ry="7" fill="#9a6638"/>' +
+      '<ellipse cx="24" cy="33.5" rx="3.4" ry="2.5" fill="#33200f"/>' +
+      '<circle cx="19" cy="24" r="2.2" fill="#1a0f08"/><circle cx="29" cy="24" r="2.2" fill="#1a0f08"/>' +
+      '<circle cx="19.7" cy="23.3" r="0.8" fill="#fff"/><circle cx="29.7" cy="23.3" r="0.8" fill="#fff"/>' +
+      '<circle cx="14" cy="30" r="2" fill="#D80621" opacity="0.5"/><circle cx="34" cy="30" r="2" fill="#D80621" opacity="0.5"/>' +
+      '</svg>',
+    jaguar:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M12 13 L19 20 L10 22Z" fill="#c98a2e"/><path d="M36 13 L29 20 L38 22Z" fill="#c98a2e"/>' +
+      '<path d="M13 16 L17 20 L12 21Z" fill="#5a3a12"/><path d="M35 16 L31 20 L36 21Z" fill="#5a3a12"/>' +
+      '<ellipse cx="24" cy="26" rx="13" ry="12" fill="#e0a93f"/>' +
+      '<circle cx="14" cy="22" r="1.5" fill="#5a3a12"/><circle cx="34" cy="22" r="1.5" fill="#5a3a12"/>' +
+      '<circle cx="12.5" cy="29" r="1.2" fill="#5a3a12"/><circle cx="35.5" cy="29" r="1.2" fill="#5a3a12"/>' +
+      '<ellipse cx="24" cy="31" rx="8" ry="6" fill="#f3d79a"/>' +
+      '<circle cx="19" cy="24" r="2.4" fill="#1c3a1c"/><circle cx="29" cy="24" r="2.4" fill="#1c3a1c"/>' +
+      '<circle cx="19.8" cy="23.2" r="0.8" fill="#fff"/><circle cx="29.8" cy="23.2" r="0.8" fill="#fff"/>' +
+      '<path d="M21.5 29 L26.5 29 L24 31.6Z" fill="#2BD37E"/>' +
+      '</svg>',
+    eagle:
+      '<svg viewBox="0 0 48 48" aria-hidden="true">' +
+      '<path d="M11 18 Q14 11 18 16 Q20 10 24 15 Q28 10 30 16 Q34 11 37 18Z" fill="#dfe7f5"/>' +
+      '<ellipse cx="24" cy="24" rx="13" ry="13" fill="#f4f7ff"/>' +
+      '<path d="M13 21 Q19 18 23 22.5" stroke="#1b3a6b" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M35 21 Q29 18 25 22.5" stroke="#1b3a6b" stroke-width="2.4" fill="none" stroke-linecap="round"/>' +
+      '<circle cx="18" cy="24.5" r="2.4" fill="#15233f"/><circle cx="30" cy="24.5" r="2.4" fill="#15233f"/>' +
+      '<circle cx="18.8" cy="23.7" r="0.8" fill="#fff"/><circle cx="30.8" cy="23.7" r="0.8" fill="#fff"/>' +
+      '<path d="M21 28 L27 28 L24 37 Q22.5 33 21 28Z" fill="#F4B740"/>' +
+      '<path d="M21 28 L27 28 L24 30.5Z" fill="#d99a1f"/>' +
+      '<circle cx="12.5" cy="28" r="1.9" fill="#2D6BF6" opacity="0.45"/><circle cx="35.5" cy="28" r="1.9" fill="#2D6BF6" opacity="0.45"/>' +
+      '</svg>',
+  };
+  const ORDER = ['moose', 'jaguar', 'eagle'];
+
+  function renderMascots(root) {
+    (root || document).querySelectorAll('[data-mascot]').forEach(function (el) {
+      if (el.dataset.rendered) return;
+      const kind = el.dataset.mascot;
+      el.innerHTML = MASCOTS[kind] || MASCOTS.moose;
+      if (!el.classList.contains(kind)) el.classList.add(kind);
+      el.dataset.rendered = '1';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    renderMascots();
+
+    /* ---- S-12 supporter feedback widget ---- */
+    const fab = document.querySelector('[data-fb-fab]');
+    const panel = document.querySelector('[data-fb-panel]');
+    if (fab && panel) {
+      const body = panel.querySelector('[data-fb-body]');
+      const composer = panel.querySelector('[data-fb-composer]');
+      const input = panel.querySelector('.fb-input');
+      const sendBtn = panel.querySelector('.fb-send');
+      let turn = 0; // 0 = greeting, 1 = picked a topic
+
+      function open() { panel.hidden = false; fab.setAttribute('aria-expanded', 'true'); if (input) input.focus(); }
+      function close() { panel.hidden = true; fab.setAttribute('aria-expanded', 'false'); }
+      fab.addEventListener('click', function () { panel.hidden ? open() : close(); });
+      panel.querySelectorAll('[data-fb-close]').forEach(function (b) { b.addEventListener('click', close); });
+
+      function addBubble(side, text, mascot) {
+        const row = document.createElement('div');
+        row.className = 'fb-msg ' + side;
+        if (side === 'bot') {
+          const av = document.createElement('span');
+          av.className = 'mascot-av ' + (mascot || 'moose');
+          av.dataset.mascot = mascot || 'moose';
+          row.appendChild(av);
+        }
+        const bubble = document.createElement('div');
+        bubble.className = 'fb-bubble';
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        body.insertBefore(row, body.querySelector('[data-fb-prompts]') || null);
+        renderMascots(row);
+        body.scrollTop = body.scrollHeight;
+      }
+
+      function botFollowUp(topic) {
+        const lines = {
+          bug: "Oh no — what broke? Tell me what you saw and where.",
+          feature: "Love it! What would make the platform better for you?",
+          other: "Go ahead — I'm all ears (well, antlers).",
+        };
+        const prompts = panel.querySelector('[data-fb-prompts]');
+        if (prompts) prompts.remove();
+        addBubble('bot', lines[topic] || lines.other, ORDER[turn % 3]);
+        turn = 1;
+        if (composer) composer.hidden = false;
+        if (input) input.focus();
+      }
+
+      panel.querySelectorAll('[data-fb-prompt]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          addBubble('user', btn.textContent.trim());
+          botFollowUp(btn.dataset.fbPrompt);
+        });
+      });
+
+      function celebrate() {
+        const colors = ['#FCDD09', '#2BD37E', '#4D8BFF', '#FF5A5A', '#F4B740'];
+        const wrap = document.createElement('div');
+        wrap.className = 'fb-confetti';
+        for (let i = 0; i < 16; i++) {
+          const c = document.createElement('i');
+          c.style.left = (6 + Math.random() * 88) + '%';
+          c.style.background = colors[i % colors.length];
+          c.style.animationDelay = (Math.random() * 0.25) + 's';
+          c.style.transform = 'rotate(' + (Math.random() * 90) + 'deg)';
+          wrap.appendChild(c);
+        }
+        panel.appendChild(wrap);
+        setTimeout(function () { wrap.remove(); }, 1300);
+      }
+
+      function submit() {
+        const text = (input.value || '').trim();
+        if (!text) return;
+        // In production this POSTs to /api/feedback (page URL captured server-side).
+        body.innerHTML =
+          '<div class="fb-thanks">' +
+          '<span class="mascot-av lg ' + ORDER[turn % 3] + '" data-mascot="' + ORDER[turn % 3] + '"></span>' +
+          '<h3>Thank you! 🎉</h3>' +
+          '<p>Your feedback is in. The supporters are on it.</p>' +
+          '</div>';
+        renderMascots(body);
+        if (composer) composer.hidden = true;
+        celebrate();
+      }
+      if (sendBtn) sendBtn.addEventListener('click', submit);
+      if (input) input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+      });
+    }
+
+    /* ---- S-14 admin: tabs, filter, feedback status triage ---- */
+    const admin = document.querySelector('[data-admin-feedback]');
+    if (admin) {
+      // tab switching
+      admin.querySelectorAll('[data-admin-tab]').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          const name = tab.dataset.adminTab;
+          admin.querySelectorAll('[data-admin-tab]').forEach(function (t) { t.classList.toggle('active', t === tab); });
+          admin.querySelectorAll('[data-admin-panel]').forEach(function (p) {
+            p.hidden = p.dataset.adminPanel !== name;
+          });
+        });
+      });
+
+      const list = admin.querySelector('[data-fb-list]');
+      const emptyState = admin.querySelector('[data-fb-empty]');
+      const labels = { new: 'New', done: 'Done', wont: "Won't do" };
+      let currentFilter = 'all';
+
+      function items() { return list ? Array.prototype.slice.call(list.querySelectorAll('.fb-item')) : []; }
+
+      function recount() {
+        const c = { all: 0, new: 0, done: 0, wont: 0 };
+        items().forEach(function (it) { c.all++; c[it.dataset.status] = (c[it.dataset.status] || 0) + 1; });
+        admin.querySelectorAll('[data-count]').forEach(function (el) {
+          el.textContent = c[el.dataset.count] || 0;
+        });
+      }
+
+      function applyFilter(f) {
+        currentFilter = f;
+        let visible = 0;
+        items().forEach(function (it) {
+          const show = f === 'all' || it.dataset.status === f;
+          it.hidden = !show;
+          if (show) visible++;
+        });
+        admin.querySelectorAll('[data-fb-filter]').forEach(function (b) {
+          b.setAttribute('aria-pressed', b.dataset.fbFilter === f ? 'true' : 'false');
+        });
+        if (emptyState) emptyState.hidden = visible > 0;
+      }
+
+      admin.querySelectorAll('[data-fb-filter]').forEach(function (btn) {
+        btn.addEventListener('click', function () { applyFilter(btn.dataset.fbFilter); });
+      });
+
+      let toastTimer = null;
+      function toast(msg) {
+        const existing = document.querySelector('.fb-toast');
+        if (existing) existing.remove();
+        const t = document.createElement('div');
+        t.className = 'fb-toast';
+        t.setAttribute('role', 'status');
+        t.innerHTML = '<span class="dot"></span>' + msg;
+        document.body.appendChild(t);
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.remove(); }, 2600);
+      }
+
+      function setStatus(item, status) {
+        item.dataset.status = status;
+        item.classList.toggle('is-done', status === 'done');
+        item.classList.toggle('is-wont', status === 'wont');
+        const pill = item.querySelector('.fb-status');
+        if (pill) {
+          pill.className = 'fb-status ' + status;
+          pill.innerHTML = '<span class="dot"></span>' + labels[status];
+        }
+        const actions = item.querySelector('.fb-it-actions');
+        if (actions) {
+          actions.innerHTML = status === 'new'
+            ? '<button class="fb-act wont" data-set="wont">Won\'t do</button>' +
+              '<button class="fb-act done" data-set="done">✓ Mark done</button>'
+            : '<button class="fb-act reopen" data-set="new">↺ Reopen</button>';
+          wireActions(item);
+        }
+        recount();
+        applyFilter(currentFilter);
+        toast(status === 'new' ? 'Reopened' : status === 'done' ? 'Marked done' : "Marked won't do");
+      }
+      function wireActions(item) {
+        item.querySelectorAll('[data-set]').forEach(function (b) {
+          b.addEventListener('click', function () { setStatus(item, b.dataset.set); });
+        });
+      }
+      items().forEach(wireActions);
+      recount();
+      applyFilter('all');
+    }
+  });
+})();

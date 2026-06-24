@@ -1,0 +1,151 @@
+<!--
+  Screen: S-14 Admin — Feedback triage + Logs
+  Authenticated admin shell. Feedback tab: list supporter feedback, mark each
+  Done / Won't do (reopen to revert). Logs tab: the system logs, moved here from
+  the public /logs route. Route: /admin
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Feedback &amp; Logs · WC26 Intelligence</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="components.css">
+</head>
+<body class="cjx-usage">
+  <div class="app-layout">
+    <nav class="sidebar">
+      <div class="nav-inner">
+        <a class="brand" href="s01-brief-list.html"><img class="brand-logo" src="logo.svg" alt="WC26 Intelligence"></a>
+        <div class="nav-links">
+          <span class="admin-badge">● Admin</span>
+          <a class="nav-link" href="s01-brief-list.html">View site</a>
+          <a class="btn ghost" href="s13-admin-login.html">Log out</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="main-content standings-wide" data-admin-feedback data-cjx-entrance>
+      <h1 class="display-headline" style="font-size:2rem">Admin</h1>
+
+      <div class="admin-tabs">
+        <button class="toggle-btn active" data-admin-tab="feedback">Feedback</button>
+        <button class="toggle-btn" data-admin-tab="logs">Logs</button>
+      </div>
+
+      <!-- ============ FEEDBACK TAB ============ -->
+      <div data-admin-panel="feedback">
+        <!-- Counts ARE the filter: one control. Active chip = current view. -->
+        <div class="fb-filterbar" role="group" aria-label="Filter feedback by status">
+          <button class="fb-fstat" data-fb-filter="all" aria-pressed="true"><span class="fs-num" data-count="all">0</span> All</button>
+          <button class="fb-fstat" data-fb-filter="new" aria-pressed="false"><span class="fs-num" data-count="new">0</span> New</button>
+          <button class="fb-fstat" data-fb-filter="done" aria-pressed="false"><span class="fs-num" data-count="done">0</span> Done</button>
+          <button class="fb-fstat" data-fb-filter="wont" aria-pressed="false"><span class="fs-num" data-count="wont">0</span> Won't do</button>
+        </div>
+
+        <div class="fb-list" data-fb-list>
+          <article class="fb-item" data-status="new" data-topic="feature">
+            <div class="fb-it-head">
+              <span class="fb-topic feature"><span class="dot"></span>Feature</span>
+              <span class="fb-it-meta"><code>/</code><span>2 hours ago</span></span>
+              <span class="fb-status new"><span class="dot"></span>New</span>
+            </div>
+            <p class="fb-it-text">The forecast accuracy pill is brilliant — could you also show a season-long total somewhere?</p>
+            <div class="fb-it-actions">
+              <button class="fb-act wont" data-set="wont">Won't do</button>
+              <button class="fb-act done" data-set="done">✓ Mark done</button>
+            </div>
+          </article>
+
+          <article class="fb-item" data-status="new" data-topic="bug">
+            <div class="fb-it-head">
+              <span class="fb-topic bug"><span class="dot"></span>Bug</span>
+              <span class="fb-it-meta"><code>/standings</code><span>5 hours ago</span></span>
+              <span class="fb-status new"><span class="dot"></span>New</span>
+            </div>
+            <p class="fb-it-text">Standings table scrolls sideways on my phone and the team names get cut off.</p>
+            <div class="fb-it-actions">
+              <button class="fb-act wont" data-set="wont">Won't do</button>
+              <button class="fb-act done" data-set="done">✓ Mark done</button>
+            </div>
+          </article>
+
+          <article class="fb-item" data-status="new" data-topic="feature">
+            <div class="fb-it-head">
+              <span class="fb-topic feature"><span class="dot"></span>Feature</span>
+              <span class="fb-it-meta"><code>/brief/2026-06-23</code><span>yesterday</span></span>
+              <span class="fb-status new"><span class="dot"></span>New</span>
+            </div>
+            <p class="fb-it-text">Love the daily brief. A dark/light toggle would be a nice touch for reading in the morning.</p>
+            <div class="fb-it-actions">
+              <button class="fb-act wont" data-set="wont">Won't do</button>
+              <button class="fb-act done" data-set="done">✓ Mark done</button>
+            </div>
+          </article>
+
+          <article class="fb-item is-done" data-status="done" data-topic="bug">
+            <div class="fb-it-head">
+              <span class="fb-topic bug"><span class="dot"></span>Bug</span>
+              <span class="fb-it-meta"><code>/</code><span>2 days ago</span></span>
+              <span class="fb-status done"><span class="dot"></span>Done</span>
+            </div>
+            <p class="fb-it-text">The "Next 2" cards didn't link anywhere — tapping them did nothing.</p>
+            <div class="fb-it-actions">
+              <button class="fb-act reopen" data-set="new">↺ Reopen</button>
+            </div>
+          </article>
+
+          <article class="fb-item is-wont" data-status="wont" data-topic="other">
+            <div class="fb-it-head">
+              <span class="fb-topic other"><span class="dot"></span>Other</span>
+              <span class="fb-it-meta"><code>/match/1489388</code><span>3 days ago</span></span>
+              <span class="fb-status wont"><span class="dot"></span>Won't do</span>
+            </div>
+            <p class="fb-it-text">Can you add live betting odds from my bookmaker directly on the match page?</p>
+            <div class="fb-it-actions">
+              <button class="fb-act reopen" data-set="new">↺ Reopen</button>
+            </div>
+          </article>
+
+          <div class="fb-empty" data-fb-empty hidden>
+            <strong>Nothing here</strong>
+            No feedback with this status yet.
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ LOGS TAB (moved here from public /logs) ============ -->
+      <div data-admin-panel="logs" hidden>
+        <p class="summary-deck" style="font-size:15px;margin-bottom:var(--space-4)">System events — moved into the admin area so they're no longer public.</p>
+        <div class="table-container">
+          <table class="standings" aria-label="System logs">
+            <thead>
+              <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Level</th>
+                <th scope="col">Source</th>
+                <th scope="col">Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>07:00:04</td><td><span class="fb-status done" style="text-transform:none"><span class="dot"></span>INFO</span></td><td>pipeline.run</td><td>Brief published for 2026-06-24</td></tr>
+              <tr><td>07:00:01</td><td><span class="fb-status done" style="text-transform:none"><span class="dot"></span>INFO</span></td><td>data.collect</td><td>Fetched 12 fixtures, 8 standings groups</td></tr>
+              <tr><td>06:32:18</td><td><span class="fb-status new" style="text-transform:none"><span class="dot"></span>WARN</span></td><td>api_football</td><td>Rate limit at 80% — backing off 30s</td></tr>
+              <tr><td>06:30:55</td><td><span class="fb-status done" style="text-transform:none"><span class="dot"></span>INFO</span></td><td>live_poller</td><td>Match 1489388 entered live window</td></tr>
+              <tr><td>05:14:02</td><td><span class="fb-status wont" style="text-transform:none;color:var(--status-loss);background:rgba(255,90,90,0.14)"><span class="dot" style="background:var(--status-loss)"></span>ERROR</span></td><td>pipeline.forecast</td><td>DeepSeek timeout on fixture 1489402 — retried OK</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <span>Admin area — administrator only.</span>
+      </div>
+    </footer>
+  </div>
+  <script src="interactions.js"></script>
+</body>
+</html>
