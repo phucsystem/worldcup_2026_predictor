@@ -151,7 +151,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {widgetRows.length > 0 && <ResultsWidget rows={widgetRows} />}
+      {widgetRows.length > 0 && <ResultsWidget rows={widgetRows} viewAllHref="/results" />}
 
       {latest ? (
         <section aria-label="Today's brief">

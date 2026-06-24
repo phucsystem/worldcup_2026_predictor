@@ -10,6 +10,7 @@ from app.api.briefs import router as briefs_router
 from app.api.feedback import router as feedback_router
 from app.api.fixtures import router as fixtures_router, stars_router
 from app.api.logs import router as logs_router
+from app.api.results import router as results_router
 from app.api.standings import router as standings_router
 from app.api.tournament import router as tournament_router
 from app.logging_config import configure_logging, stop_logging
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(briefs_router)
 app.include_router(standings_router)
+app.include_router(results_router)
 app.include_router(fixtures_router)
 app.include_router(stars_router)
 app.include_router(tournament_router)
