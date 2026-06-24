@@ -106,10 +106,34 @@ function kickoffText(iso: string | null): string {
   return `${date} · ${time} ${zone}`.trim();
 }
 
-// WC26 Intelligence wordmark, mirrored from components/brand-logo.tsx as a raw
-// SVG string (kebab-case attrs) so resvg renders the gradient inside Satori.
-const BRAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 60" width="150" height="60"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E54E0"/><stop offset="1" stop-color="#4D8BFF"/></linearGradient></defs><g font-family="Inter, sans-serif"><text x="0" y="42" font-size="42" font-weight="800" letter-spacing="-2" fill="#FFFFFF">WC</text><g transform="translate(72,27)"><circle r="14.5" fill="#FFFFFF" stroke="#0A1B3D" stroke-width="1.4"/><polygon points="0,-7 6.66,-2.16 4.11,5.66 -4.11,5.66 -6.66,-2.16" fill="#0A1B3D"/><g stroke="#0A1B3D" stroke-width="1.4" stroke-linecap="round"><line x1="0" y1="-7" x2="0" y2="-14.5"/><line x1="6.66" y1="-2.16" x2="13.8" y2="-4.48"/><line x1="4.11" y1="5.66" x2="8.52" y2="11.73"/><line x1="-4.11" y1="5.66" x2="-8.52" y2="11.73"/><line x1="-6.66" y1="-2.16" x2="-13.8" y2="-4.48"/></g></g><text x="90" y="42" font-size="42" font-weight="800" letter-spacing="-2" fill="url(#g)">26</text><text x="1" y="55" font-size="10" font-weight="600" letter-spacing="4" fill="#A9B6D4">INTELLIGENCE</text></g></svg>`;
-const BRAND_URI = `data:image/svg+xml;base64,${Buffer.from(BRAND_SVG).toString("base64")}`;
+const ACCENT = "#4D8BFF";
+
+// Soccer-ball mark from components/brand-logo.tsx, as pure SVG shapes only — no
+// <text>, since Satori hands nested SVG to resvg which has no font for it (the
+// "WC26 INTELLIGENCE" wordmark is rendered with Satori-native text instead).
+const BALL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16 -16 32 32" width="44" height="44"><circle r="14.5" fill="#FFFFFF" stroke="#0A1B3D" stroke-width="1.4"/><polygon points="0,-7 6.66,-2.16 4.11,5.66 -4.11,5.66 -6.66,-2.16" fill="#0A1B3D"/><g stroke="#0A1B3D" stroke-width="1.4" stroke-linecap="round"><line x1="0" y1="-7" x2="0" y2="-14.5"/><line x1="6.66" y1="-2.16" x2="13.8" y2="-4.48"/><line x1="4.11" y1="5.66" x2="8.52" y2="11.73"/><line x1="-4.11" y1="5.66" x2="-8.52" y2="11.73"/><line x1="-6.66" y1="-2.16" x2="-13.8" y2="-4.48"/></g></svg>`;
+const BALL_URI = `data:image/svg+xml;base64,${Buffer.from(BALL_SVG).toString("base64")}`;
+
+// Brand lockup built from Satori-native text so the wordmark always renders.
+function brandLockup(size: "sm" | "lg") {
+  const ball = size === "lg" ? 64 : 44;
+  const word = size === "lg" ? 44 : 30;
+  const sub = size === "lg" ? 14 : 10;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <img src={BALL_URI} alt="" width={ball} height={ball} style={{ width: ball, height: ball }} />
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", fontSize: word, fontWeight: 800, letterSpacing: -1, lineHeight: 1 }}>
+          <span style={{ color: "#fff" }}>WC</span>
+          <span style={{ color: ACCENT }}>26</span>
+        </div>
+        <div style={{ display: "flex", fontSize: sub, fontWeight: 600, letterSpacing: 4, color: MUTED, marginTop: 4 }}>
+          INTELLIGENCE
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type SideOutcome = "win" | "lose" | "draw";
 
@@ -305,7 +329,7 @@ export function renderShareBanner(fixture: FixtureDetail) {
           padding: "0 48px 40px",
         }}
       >
-        <img src={BRAND_URI} alt="" width={130} height={52} style={{ width: 130, height: 52 }} />
+        {brandLockup("sm")}
         <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: MUTED }}>
           wc2026.phucsystemlabs.com
         </div>
@@ -329,7 +353,7 @@ export function renderFallbackBanner() {
         backgroundImage: "linear-gradient(135deg, #0a1430 0%, #122a52 100%)",
       }}
     >
-      <img src={BRAND_URI} alt="" width={260} height={104} style={{ width: 260, height: 104 }} />
+      {brandLockup("lg")}
       <div style={{ display: "flex", fontSize: 30, color: MUTED, marginTop: 24 }}>
         wc2026.phucsystemlabs.com
       </div>
