@@ -47,9 +47,12 @@ export interface ResultWidgetRow {
  * finished match appears under both teams in the snapshot; we keep one row and
  * carry the group_name from its containing standings group.
  */
+// Home "Latest Results" widget: keep every finished match from the most-recent
+// `dayWindow` result days (not a fixed match count), so recent days are never
+// truncated — a busy day with >8 matches still shows in full.
 export function groupedResultRows(
   groups: GroupStandings[],
-  limit = 8,
+  dayWindow = 3,
 ): ResultWidgetRow[] {
   const seen = new Set<string>();
   const rows: ResultWidgetRow[] = [];
@@ -84,7 +87,16 @@ export function groupedResultRows(
     }
   }
   rows.sort((a, b) => b.key.localeCompare(a.key)); // key is kickoff-prefixed ISO
-  return rows.slice(0, limit);
+  // Collect the most-recent `dayWindow` distinct result days (rows are already
+  // newest-first), then keep every match falling on one of them.
+  const keepDays = new Set<string>();
+  for (const row of rows) {
+    if (!keepDays.has(row.briefDate)) {
+      if (keepDays.size >= dayWindow) break;
+      keepDays.add(row.briefDate);
+    }
+  }
+  return rows.filter((row) => keepDays.has(row.briefDate));
 }
 
 /**

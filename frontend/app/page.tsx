@@ -126,7 +126,7 @@ export default async function HomePage() {
   const upNextDetail = upNext ? await getFixture(upNext.fixture_id) : null;
   const topStars = stars.slice(0, 6);
   const recentResults = recentResultStrip(standings?.groups ?? []);
-  const widgetRows = groupedResultRows(standings?.groups ?? [], 8);
+  const widgetRows = groupedResultRows(standings?.groups ?? []);
 
   const stakeMap = stakesByFixtureId(latest?.intelligence);
   const scenarios = scenariosForDisplay(latest?.intelligence);

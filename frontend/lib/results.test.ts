@@ -83,6 +83,30 @@ describe("groupedResultRows", () => {
     ]);
     expect(row.forecastCorrect).toBeNull();
   });
+
+  it("keeps every match from the most-recent 3 days, dropping older days", () => {
+    // 5 days, 2 matches each; only the newest 3 days (6 matches) should remain.
+    // Morning UTC times stay on the same publishing-tz (Melbourne) calendar day.
+    const days = ["2026-06-10", "2026-06-11", "2026-06-12", "2026-06-13", "2026-06-14"];
+    const recent = days.flatMap((d, i) => [
+      { fixture_id: i * 2 + 1, kickoff_utc: `${d}T02:00:00Z`, away_team: `A${i}` },
+      { fixture_id: i * 2 + 2, kickoff_utc: `${d}T06:00:00Z`, away_team: `B${i}` },
+    ]);
+    const rows = groupedResultRows([group(recent)]);
+    expect(new Set(rows.map((row) => row.briefDate)).size).toBe(3);
+    // The two oldest days (06-10, 06-11) are dropped.
+    expect(rows.every((row) => row.briefDate > "2026-06-11")).toBe(true);
+    expect(rows).toHaveLength(6);
+  });
+
+  it("does not cap a single busy day at a match count", () => {
+    const many = Array.from({ length: 10 }, (_, i) => ({
+      fixture_id: i + 1,
+      kickoff_utc: `2026-06-12T0${i}:00:00Z`, // 00:00–09:00 UTC → one Melbourne day
+      away_team: `T${i}`,
+    }));
+    expect(groupedResultRows([group(many)])).toHaveLength(10);
+  });
 });
 
 function item(partial: Partial<ResultItem>): ResultItem {
