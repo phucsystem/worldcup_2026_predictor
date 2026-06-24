@@ -2,7 +2,10 @@
   Screen: S-07 Live Match Analysis (single-match deep dive, in-progress state)
   CJX Stage: Read / Verify -> cjx-usage
   Scope: one in-progress match — live score & clock (in-progress banner variant),
-         live read, pre-match forecast, key moments so far, live stats, standings impact.
+         live read, win-probability comparison (pre-match forecast vs live model, side by
+         side) + a win-probability swing chart annotated with the goals, pre-match factors,
+         key moments so far, live stats, standings impact.
+         The live win probability is Python-computed (not an LLM) and shifts each poll.
          The forecast-vs-result conclusion is intentionally absent until full time.
          Distinct from S-02 (editorial daily brief); links back to it for context.
   Source: brainstorm 2026-06-20 (add match analysis pages)
@@ -15,6 +18,39 @@
   <title>Brazil 2–1 Serbia (Live) · Match Analysis · WC26 Intelligence</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="components.css">
+  <style>
+    /* Highlighted live read — the headline insight, visually elevated */
+    .live-read { position: relative; margin-bottom: var(--space-6);
+      padding: var(--space-5); border-radius: var(--radius-input);
+      background: linear-gradient(180deg, rgba(43, 211, 126, 0.10), rgba(43, 211, 126, 0.03));
+      border: 1px solid rgba(43, 211, 126, 0.22); border-left: 3px solid var(--status-live); }
+    .live-read .an-eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--status-live); }
+    .live-read p { margin: var(--space-2) 0 0; font-size: 16px; line-height: 1.65; color: var(--text-primary); }
+    .lr-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-live);
+      box-shadow: 0 0 0 0 rgba(43, 211, 126, 0.5); animation: lrPulse 1.6s ease-out infinite; }
+    @keyframes lrPulse { 70% { box-shadow: 0 0 0 7px rgba(43, 211, 126, 0); } 100% { box-shadow: 0 0 0 0 rgba(43, 211, 126, 0); } }
+    @media (prefers-reduced-motion: reduce) { .lr-dot { animation: none; } }
+
+    /* Win-probability: one comparison card with an internal divider (calmer than two boxes) */
+    .wp-compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+    .wp-side-live { padding-left: var(--space-5); border-left: 1px solid rgba(255, 255, 255, 0.10); }
+    @media (max-width: 760px) {
+      .wp-compare { grid-template-columns: 1fr; }
+      .wp-side-live { padding-left: 0; padding-top: var(--space-4); border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.10); }
+    }
+    .wp-side-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3);
+      font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+    .wp-side-live .wp-side-head { color: var(--status-live); }
+    .wp-side-tag { font-size: 10.5px; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
+    .wp-side-live .wp-side-tag { color: var(--status-live); }
+    .wp-delta { font-size: 12px; font-weight: 800; margin-left: 4px; }
+    .wp-up { color: var(--status-live); }
+    .wp-down { color: var(--text-muted); }
+    .wp-inputs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0 0; }
+    .wp-chip { font-size: 12px; font-weight: 700; color: var(--text-secondary); background: rgba(107, 122, 158, 0.14); border-radius: 999px; padding: 4px 11px; }
+    .wp-chip strong { color: var(--text-primary); }
+    .wp-chart { width: 100%; height: auto; display: block; margin-top: var(--space-1); }
+  </style>
 </head>
 <body class="cjx-usage" data-flag-bg-page data-home="br" data-away="rs">
   <div class="app-layout">
@@ -70,32 +106,117 @@
         </div>
       </div>
 
-      <!-- One-line read of the live state -->
-      <div class="analysis-note" style="margin-bottom:var(--space-6)">
-        <span class="an-eyebrow">Live read</span>
+      <!-- Highlighted live read — the headline insight, visually elevated -->
+      <div class="live-read">
+        <span class="an-eyebrow"><span class="lr-dot" aria-hidden="true"></span> Live read</span>
         <p>Brazil have turned it around after falling behind early, leading 2–1 just past the hour. They're controlling the second half and look the likelier side to extend their lead; Serbia need a response to keep their qualification hopes alive.</p>
       </div>
 
-      <!-- Pre-match forecast: EXPERIMENTAL, model-preview only (now settled) -->
-      <h2 class="section-title">Pre-match forecast</h2>
-      <section class="forecast-card" aria-label="Experimental pre-match win-probability forecast — model preview, illustrative only">
+      <!-- Win probability — before→now slope/dumbbell: each outcome's pre-match vs live chance -->
+      <h2 class="section-title">Win probability <span style="font-size:13px;font-weight:700;color:var(--status-live);vertical-align:middle">· live</span></h2>
+      <section class="forecast-card" aria-label="Win probability — pre-match forecast vs live model" style="margin-bottom:var(--space-6)">
         <div class="fc-head">
-          <h2 class="fc-title">Win probability · before kickoff</h2>
-          <span class="fc-tag">Model preview · experimental</span>
+          <h2 class="fc-title">Before kickoff → now</h2>
+          <span class="fc-tag"><span class="wp-dot-key"><span class="wp-dot ghost"></span> before</span> <span class="wp-dot-key"><span class="wp-dot solid"></span> now · 64'</span></span>
         </div>
-        <div class="fc-bar" role="img" aria-label="Pre-match win probability: Brazil 64 percent, draw 22 percent, Serbia 14 percent">
-          <span class="fc-seg home lead" style="width:64%">64%</span>
-          <span class="fc-seg draw" style="width:22%">22%</span>
-          <span class="fc-seg away" style="width:14%">14%</span>
-        </div>
-        <div class="fc-legend">
-          <span class="lead"><i class="fc-key home"></i> Brazil 64% · most likely</span>
-          <span><i class="fc-key draw"></i> Draw 22%</span>
-          <span><i class="fc-key away"></i> Serbia 14%</span>
-        </div>
+        <svg class="wp-chart" viewBox="0 0 680 172" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Win probability before kickoff versus now (64th minute): Brazil up from 64% to 78%, draw down from 22% to 14%, Serbia down from 14% to 8%. Brazil is now well above the 50% line.">
+          <!-- 50% favourite threshold -->
+          <line x1="360" y1="22" x2="360" y2="154" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 4" opacity="0.4"></line>
+          <text x="360" y="14" text-anchor="middle" font-size="10" fill="var(--text-muted)">50% · favourite</text>
 
-        <p class="fc-subhead">What drove this forecast</p>
-        <p class="fc-intro">These are the signals the model would have weighed before kickoff. The lean shows which side each favoured and why.</p>
+          <!-- Brazil: 64 → 78 -->
+          <line x1="120" y1="42" x2="600" y2="42" stroke="rgba(255,255,255,0.07)" stroke-width="2" stroke-linecap="round"></line>
+          <line x1="427" y1="42" x2="494" y2="42" stroke="var(--accent-bright)" stroke-width="4" stroke-linecap="round" opacity="0.55"></line>
+          <circle cx="427" cy="42" r="5" fill="var(--accent-bright)" opacity="0.4"></circle>
+          <circle cx="494" cy="42" r="6.5" fill="var(--accent-bright)"></circle>
+          <text x="104" y="46" text-anchor="end" font-size="13" font-weight="800" fill="var(--accent-bright)">Brazil</text>
+          <text x="427" y="31" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">64%</text>
+          <text x="494" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent-bright)">78%</text>
+          <text x="624" y="46" text-anchor="start" font-size="12" font-weight="800" fill="var(--status-live)">▲ 14</text>
+
+          <!-- Draw: 22 → 14 -->
+          <line x1="120" y1="88" x2="600" y2="88" stroke="rgba(255,255,255,0.07)" stroke-width="2" stroke-linecap="round"></line>
+          <line x1="187" y1="88" x2="226" y2="88" stroke="var(--status-draw)" stroke-width="4" stroke-linecap="round" opacity="0.55"></line>
+          <circle cx="226" cy="88" r="5" fill="var(--status-draw)" opacity="0.4"></circle>
+          <circle cx="187" cy="88" r="6.5" fill="var(--status-draw)"></circle>
+          <text x="104" y="92" text-anchor="end" font-size="13" font-weight="800" fill="var(--status-draw)">Draw</text>
+          <text x="226" y="77" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">22%</text>
+          <text x="187" y="77" text-anchor="middle" font-size="13" font-weight="800" fill="var(--status-draw)">14%</text>
+          <text x="624" y="92" text-anchor="start" font-size="12" font-weight="800" fill="var(--text-muted)">▼ 8</text>
+
+          <!-- Serbia: 14 → 8 -->
+          <line x1="120" y1="134" x2="600" y2="134" stroke="rgba(255,255,255,0.07)" stroke-width="2" stroke-linecap="round"></line>
+          <line x1="158" y1="134" x2="187" y2="134" stroke="var(--text-secondary)" stroke-width="4" stroke-linecap="round" opacity="0.5"></line>
+          <circle cx="187" cy="134" r="5" fill="var(--text-secondary)" opacity="0.4"></circle>
+          <circle cx="158" cy="134" r="6.5" fill="var(--text-secondary)"></circle>
+          <text x="104" y="138" text-anchor="end" font-size="13" font-weight="800" fill="var(--text-secondary)">Serbia</text>
+          <text x="187" y="123" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">14%</text>
+          <text x="158" y="123" text-anchor="middle" font-size="13" font-weight="800" fill="var(--text-secondary)">8%</text>
+          <text x="624" y="138" text-anchor="start" font-size="12" font-weight="800" fill="var(--text-muted)">▼ 6</text>
+        </svg>
+        <p class="fc-note" style="margin-top:var(--space-2)">Faded dot = before kickoff, solid dot = now (64'). Brazil's 2–1 lead has pushed it clear of the 50% favourite line; the draw and Serbia have both fallen back. Pre-match is a model preview; live is computed in Python.</p>
+      </section>
+
+      <!-- Visualization: how the live odds have swung across the match -->
+      <section class="forecast-card" aria-label="How the win probability has moved during the match" style="margin-bottom:var(--space-6)">
+        <div class="fc-head">
+          <h2 class="fc-title">How the odds have swung</h2>
+          <span class="fc-tag" style="color:var(--status-live)">Brazil win % · live</span>
+        </div>
+        <svg class="wp-chart" viewBox="0 0 680 210" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Brazil win probability over time: 64% at kickoff, dropping to 33% after Serbia's 23rd-minute goal, recovering to about 52% at the 51st-minute equaliser, then rising to 78% after Brazil's 64th-minute goal.">
+          <!-- gridlines -->
+          <line x1="44" y1="20" x2="44" y2="178" stroke="var(--border-subtle, rgba(255,255,255,0.08))" stroke-width="1"></line>
+          <line x1="44" y1="178" x2="664" y2="178" stroke="var(--border-subtle, rgba(255,255,255,0.08))" stroke-width="1"></line>
+          <line x1="44" y1="99" x2="664" y2="99" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"></line>
+          <!-- y labels -->
+          <text x="36" y="24" text-anchor="end" font-size="10.5" fill="var(--text-muted)">100</text>
+          <text x="36" y="103" text-anchor="end" font-size="10.5" fill="var(--text-muted)">50</text>
+          <text x="36" y="181" text-anchor="end" font-size="10.5" fill="var(--text-muted)">0</text>
+          <!-- 'yet to play' region (now → full time) fills the trailing space with meaning -->
+          <rect x="485" y="20" width="179" height="158" fill="rgba(255,255,255,0.035)"></rect>
+          <text x="574" y="34" text-anchor="middle" font-size="10" fill="var(--text-muted)">~31' to play</text>
+          <!-- gradient area under the Brazil win% line -->
+          <defs>
+            <linearGradient id="wpFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent-bright)" stop-opacity="0.34"></stop>
+              <stop offset="100%" stop-color="var(--accent-bright)" stop-opacity="0.02"></stop>
+            </linearGradient>
+          </defs>
+          <path d="M44,77 L196,85 L202,126 L388,134 L395,96 L478,93 L485,55 L485,178 L44,178 Z" fill="url(#wpFill)"></path>
+          <!-- the win% line -->
+          <polyline points="44,77 196,85 202,126 388,134 395,96 478,93 485,55" fill="none" stroke="var(--accent-bright)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+          <!-- now marker -->
+          <line x1="485" y1="20" x2="485" y2="178" stroke="var(--status-live)" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"></line>
+          <!-- start + event dots -->
+          <circle cx="44" cy="77" r="3" fill="var(--accent-bright)"></circle>
+          <circle cx="202" cy="126" r="4.5" fill="#FF5A5A" stroke="#06231A" stroke-width="1"></circle>
+          <circle cx="395" cy="96" r="4.5" fill="#2BD37E" stroke="#06231A" stroke-width="1"></circle>
+          <circle cx="485" cy="55" r="11" fill="#2BD37E" opacity="0.18"></circle>
+          <circle cx="485" cy="55" r="5.5" fill="#2BD37E" stroke="#06231A" stroke-width="1.5"></circle>
+          <!-- value callouts: KO baseline + prominent current KPI -->
+          <text x="48" y="68" font-size="11" font-weight="800" fill="var(--text-secondary)">64%</text>
+          <text x="485" y="40" text-anchor="middle" font-size="18" font-weight="800" fill="var(--accent-bright)">78%</text>
+          <!-- x-axis event ticks -->
+          <text x="44"  y="196" text-anchor="start"  font-size="10.5" fill="var(--text-muted)">KO</text>
+          <text x="202" y="196" text-anchor="middle" font-size="10.5" fill="#FF5A5A" font-weight="700">23' Mitrović</text>
+          <text x="395" y="196" text-anchor="middle" font-size="10.5" fill="#2BD37E" font-weight="700">51' Vinícius</text>
+          <text x="485" y="196" text-anchor="middle" font-size="10.5" fill="var(--status-live)" font-weight="700">64' Rodrygo · now</text>
+        </svg>
+        <!-- what's feeding the live number (honest about the simple model) -->
+        <div class="wp-inputs">
+          <span class="wp-chip">Score <strong>2–1</strong></span>
+          <span class="wp-chip"><strong>64'</strong> played</span>
+          <span class="wp-chip"><strong>~31'</strong> to play</span>
+          <span class="wp-chip"><strong>0</strong> red cards</span>
+          <span class="wp-chip">Pre-match prior · <strong>light weight</strong></span>
+        </div>
+        <p class="fc-note">Computed in Python from the live score and minutes remaining (<strong>not an LLM</strong>); it jumps on each goal and decays toward the current result as the clock runs down. Illustrative model estimate — not betting advice.</p>
+      </section>
+
+      <!-- Pre-match factors — kept, clearly scoped to the pre-kickoff forecast -->
+      <h2 class="section-title">What drove the pre-match forecast</h2>
+      <section class="forecast-card" aria-label="Signals behind the pre-match forecast">
+        <p class="fc-intro" style="margin-top:0">The signals the model weighed before kickoff — the lean shows which side each favoured and why.</p>
         <ul class="fc-factors">
           <li class="fc-factor">
             <span class="ff-name">Recent form</span>
@@ -123,8 +244,7 @@
             <span class="ff-why">Neutral venue (SoFi Stadium); identical rest days since matchday 2.</span>
           </li>
         </ul>
-
-        <p class="fc-note">Illustrative figures only — <strong>not produced by any model yet</strong>. A data-driven prediction engine is on the project roadmap; until it ships, these pre-match percentages and factor weightings are placeholders shown to demonstrate the forecast layout.</p>
+        <p class="fc-note">The pre-match split is a <strong>model preview</strong>; the live model above is what updates during play.</p>
       </section>
 
       <!-- Key moments so far (in-progress) -->

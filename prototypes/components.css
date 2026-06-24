@@ -1274,7 +1274,8 @@ a.next-match:hover {
 }
 .nm-countdown-wrap .countdown { margin-top: 0; gap: var(--space-2); }
 /* Visible link affordance — the whole banner is a link to the match preview */
-.next-match .nm-cta {
+.next-match .nm-cta,
+.live-card .nm-cta {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1292,7 +1293,8 @@ a.next-match:hover {
   width: fit-content;
 }
 a.next-match { text-align: center; }
-a.next-match:hover .nm-cta {
+a.next-match:hover .nm-cta,
+.live-card .nm-cta:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.4);
 }
@@ -1400,6 +1402,97 @@ a.next-match.is-live:hover {
 }
 .nm-wl-tag.win { color: var(--status-live); background: rgba(43, 211, 126, 0.16); }
 .nm-wl-tag.lose { color: var(--text-muted); background: rgba(107, 122, 158, 0.18); }
+
+/* Stake line on the live hero — mirrors the card .lc-stake so single + multi live read as one family. */
+.next-match .nm-stake {
+  margin: var(--space-3) auto 0;
+  max-width: 460px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.82);
+}
+.next-match .nm-stake::before { content: '→ '; color: var(--status-live); font-weight: 800; }
+
+/* ---- LIVE board: multiple concurrent in-progress matches as equal compact cards.
+   Deliberately quieter than the single .is-live hero (border + faint glow, no full
+   green wash) so 2+ live cards don't become a wall of green. ---- */
+.live-board-section { margin-bottom: var(--space-8); }
+.live-board-title { display: flex; align-items: center; gap: var(--space-2); }
+.live-board-title .lb-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--status-live);
+  box-shadow: 0 0 10px rgba(43, 211, 126, 0.7);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.live-board-title .lb-count { color: var(--status-live); }
+
+.live-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.live-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-radius: var(--radius-card);
+  background:
+    radial-gradient(125% 130% at 50% 4%, rgba(43, 211, 126, 0.26) 0%, transparent 56%),
+    linear-gradient(135deg, #0e5a39 0%, #0a3a2a 36%, var(--surface) 100%);
+  border: 1px solid var(--status-live);
+  box-shadow: 0 16px 40px -16px rgba(43, 211, 126, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.lc-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.lc-clock { font-size: 14px; padding: 4px 11px; }
+
+.lc-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+.lc-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.lc-side:first-child { justify-content: flex-end; }
+.lc-side .lc-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-side.lose { opacity: 0.5; }
+
+.lc-score {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.lc-sc { font-size: 24px; font-weight: 800; line-height: 1; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.lc-sc.win { color: var(--status-live); text-shadow: 0 0 14px rgba(43, 211, 126, 0.4); }
+.lc-sc.lose { opacity: 0.55; }
+.lc-sc-sep { font-size: 16px; font-weight: 700; color: rgba(255, 255, 255, 0.4); }
+
+.lc-stake {
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.82);
+}
+.lc-stake::before { content: '→ '; color: var(--status-live); font-weight: 800; }
+
+/* Card shares the hero's action row (.nm-actions) — same View / Watch / Share buttons. */
+.live-card .nm-actions { margin-top: var(--space-2); }
 
 .next-two {
   display: grid;
@@ -1950,6 +2043,54 @@ table.standings tbody > tr:nth-child(n+6) { animation-delay: 0.28s; }
 .fc-key.draw { background: var(--status-draw); }
 .fc-key.away { background: var(--text-muted); }
 .fc-note { margin: var(--space-4) 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+
+/* What fans are saying — curated social discussion. Solid card (not the dashed
+   experimental forecast card) so it reads as a distinct, factual-provenance
+   block: real public comments, linked to source — not a model prediction. */
+.social-highlights {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  margin-top: var(--space-6);
+}
+.sh-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-3); }
+.sh-title { margin: 0; font-size: 18px; font-weight: 800; color: var(--text-primary); }
+.sh-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(107, 122, 158, 0.16);
+  border: 1px solid rgba(107, 122, 158, 0.4);
+  color: var(--text-secondary);
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.sh-intro { margin: 0 0 var(--space-4); font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+.sh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+.sh-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-input);
+  padding: var(--space-4);
+  display: flex; flex-direction: column; gap: var(--space-2);
+}
+.sh-text { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-primary); overflow-wrap: anywhere; }
+.sh-why {
+  align-self: flex-start;
+  font-size: 11px; font-weight: 700; padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary); background: rgba(107, 122, 158, 0.18);
+}
+.sh-link { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; text-decoration: none; }
+.sh-link:hover .sh-viewsrc, .sh-link:focus-visible .sh-viewsrc { text-decoration: underline; }
+.sh-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-size: 12px; color: var(--text-muted); }
+.sh-source { font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; font-size: 11px; }
+.sh-source.reddit { color: #FF4500; }
+.sh-source.bluesky { color: var(--accent-bright); }
+.sh-author { color: var(--text-secondary); overflow-wrap: anywhere; }
+.sh-date { color: var(--text-muted); }
+.sh-viewsrc { font-size: 12px; font-weight: 700; color: var(--accent-bright); white-space: nowrap; }
+.sh-note { margin: var(--space-4) 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
 
 /* Forecast factor breakdown — "what drives this forecast" */
 .fc-subhead { margin: var(--space-6) 0 var(--space-1); font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-primary); }
