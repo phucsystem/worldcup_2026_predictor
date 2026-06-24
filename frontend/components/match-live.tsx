@@ -84,7 +84,7 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
           variant="live"
           eyebrowLabel={`Live now · ${label}`}
           events={fixture.events}
-          meta={fixture.group_name ?? "Live"}
+          meta={fixture.group_name ?? fixture.stage ?? null}
         />
         <div className="nm-live-clock-wrap">
           <span className="nm-live-clock" aria-hidden="true">

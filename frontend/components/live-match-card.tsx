@@ -77,25 +77,21 @@ export default function LiveMatchCard({ initial }: Props) {
       : "LIVE";
 
   return (
-    <>
-      <Link
-        className="next-match is-live"
-        data-flag-bg
-        href={`/match/${fixture.fixture_id}`}
-        aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}. View match analysis.`}
-      >
-        <MatchBanner
-          fixture={fixture}
-          variant="live"
-          eyebrowLabel={`Live now · ${label}`}
-          events={fixture.events}
-          meta={fixture.group_name ?? "Live"}
-        />
-        <div className="nm-live-clock-wrap">
-          <span className="nm-live-clock" aria-hidden="true">{clock}</span>
-        </div>
-        <span className="nm-cta">Match analysis →</span>
-      </Link>
+    <section
+      className="next-match is-live"
+      data-flag-bg
+      aria-label={`Live now: ${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}, ${fixture.away_team ?? "TBD"} ${fixture.away_score ?? 0}, ${label}.`}
+    >
+      <MatchBanner
+        fixture={fixture}
+        variant="live"
+        eyebrowLabel={`Live now · ${label}`}
+        events={fixture.events}
+        meta={fixture.group_name ?? fixture.stage ?? null}
+      />
+      <div className="nm-live-clock-wrap">
+        <span className="nm-live-clock" aria-hidden="true">{clock}</span>
+      </div>
       <div className="nm-actions">
         <a
           className="nm-watch"
@@ -112,6 +108,13 @@ export default function LiveMatchCard({ initial }: Props) {
           shareTitle={`${fixture.home_team ?? "TBD"} ${fixture.home_score ?? 0}–${fixture.away_score ?? 0} ${fixture.away_team ?? "TBD"}`}
         />
       </div>
-    </>
+      <Link
+        className="nm-cta"
+        href={`/match/${fixture.fixture_id}`}
+        aria-label={`View ${fixture.home_team ?? "this match"} v ${fixture.away_team ?? ""} match analysis`}
+      >
+        Match analysis →
+      </Link>
+    </section>
   );
 }
