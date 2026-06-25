@@ -578,12 +578,16 @@ def backfill_social_highlights(session_factory, matches: list) -> int:
     from app.social.news import NewsSource
     from app.social.reddit import RedditSource
     from app.social.select import generate_social_highlights
-
-    sources = [s for s in (RedditSource(), BlueskySource(), NewsSource()) if s.available()]
-    if not sources or not settings.DEEPSEEK_API_KEY:
-        return 0
+    from app.social.x_ingest import load_x_candidates
 
     now = datetime.now(tz=timezone.utc)
+    sources = [s for s in (RedditSource(), BlueskySource(), NewsSource()) if s.available()]
+    # X posts are pre-collected out-of-band (paid API), keyed by fixture id.
+    x_by_fixture = load_x_candidates(
+        settings.SOCIAL_X_CANDIDATES_FILE, now=now, max_age_hours=settings.SOCIAL_X_MAX_AGE_HOURS
+    )
+    if (not sources and not x_by_fixture) or not settings.DEEPSEEK_API_KEY:
+        return 0
     needing = set(select_fixtures_needing_social(matches, now))
     if not needing:
         return 0
@@ -594,7 +598,7 @@ def backfill_social_highlights(session_factory, matches: list) -> int:
     for m in matches:
         if m.fixture_id not in needing or not m.home_team or not m.away_team:
             continue
-        candidates = []
+        candidates = list(x_by_fixture.get(m.fixture_id, []))  # pre-collected X posts
         for src in sources:
             try:
                 candidates.extend(src.fetch(m.home_team, m.away_team, since))
