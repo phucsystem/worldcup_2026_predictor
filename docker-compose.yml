@@ -100,6 +100,9 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://wc:wc@postgres:5432/worldcup
       API_FOOTBALL_KEY: ${API_FOOTBALL_KEY:-}
+      # Needed for the in-play AI "Live read" (the agent is gated on this key);
+      # without it the poller still computes the Python win-prob, just no read.
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
       API_FOOTBALL_LEAGUE: ${API_FOOTBALL_LEAGUE:-1}
       API_FOOTBALL_SEASON: ${API_FOOTBALL_SEASON:-2026}
       LIVE_POLL_SECONDS: ${LIVE_POLL_SECONDS:-120}

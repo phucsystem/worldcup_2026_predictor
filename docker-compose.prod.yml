@@ -28,6 +28,13 @@ services:
     volumes:
       - ./social-data:/app/social-data:ro
 
+  # Same GHCR backend image as scheduler/backend. Without this override the poller
+  # falls back to the base compose `build:` and runs a stale VM-local image that
+  # `docker compose pull` never updates — so backend fixes never reach the live
+  # poll path. Pinning it here makes `pull && up -d` redeploy it like the rest.
+  live_poller:
+    image: ghcr.io/phucsystem/wc2026-backend:latest
+
   frontend:
     image: ghcr.io/phucsystem/wc2026-frontend:latest
     restart: unless-stopped
