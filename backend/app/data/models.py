@@ -30,6 +30,17 @@ class Match(BaseModel):
     # distinguish group-stage matches (which count toward group tables) from
     # knockout matches, and persisted so the knockout bracket can group by round.
     stage: Optional[str] = None
+    # Hybrid live win-probability (Python base + bounded AI adjustment) and the
+    # live-read narrative, populated on the live-poll path for in-play group-stage
+    # matches; None until then. live_winprob_json is the final split (recomputed
+    # every poll); live_winprob_adj_json is the agent's stored bounded delta;
+    # live_winprob_history_json is the swing-chart series; live_read_* is the AI read.
+    live_winprob_json: Optional[dict] = None
+    live_winprob_adj_json: Optional[dict] = None
+    live_winprob_history_json: Optional[list] = None
+    live_read_text: Optional[str] = None
+    live_read_model: Optional[str] = None
+    live_read_sig: Optional[str] = None
 
 
 class StandingRow(BaseModel):

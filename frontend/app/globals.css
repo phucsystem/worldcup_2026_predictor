@@ -2406,3 +2406,31 @@ tr.log-detail-row > td {
 @media (prefers-reduced-motion: reduce) {
   .mascot-av.idle svg, .fb-fab .mascot-av, .fb-fab .fab-ping, .fb-thanks .mascot-av, .fb-panel, .fb-msg, .fb-toast { animation: none !important; }
 }
+
+/* --- Live match analysis: elevated live read + win-probability charts --- */
+.live-read {
+  position: relative;
+  margin-bottom: var(--space-6);
+  padding: var(--space-5, 20px);
+  border-radius: var(--radius-input);
+  background: linear-gradient(180deg, rgba(43, 211, 126, 0.10), rgba(43, 211, 126, 0.03));
+  border: 1px solid rgba(43, 211, 126, 0.22);
+  border-left: 3px solid var(--status-live);
+}
+.live-read .an-eyebrow { display: inline-flex; align-items: center; gap: 7px; color: var(--status-live); }
+.live-read p { margin: var(--space-2) 0 0; font-size: 16px; line-height: 1.65; color: var(--text-primary); }
+.lr-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--status-live);
+  box-shadow: 0 0 0 0 rgba(43, 211, 126, 0.5);
+  animation: lrPulse 1.6s ease-out infinite;
+}
+@keyframes lrPulse {
+  70% { box-shadow: 0 0 0 7px rgba(43, 211, 126, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(43, 211, 126, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .lr-dot { animation: none; } }
+
+.wp-inputs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0 0; }
+.wp-chip { font-size: 12px; font-weight: 700; color: var(--text-secondary); background: rgba(107, 122, 158, 0.14); border-radius: 999px; padding: 4px 11px; }
+.wp-chip strong { color: var(--text-primary); }
+.wp-chart { width: 100%; height: auto; display: block; margin-top: var(--space-1); }

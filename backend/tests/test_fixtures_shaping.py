@@ -5,6 +5,8 @@ Unit tests for the pure shaping functions in app.api.fixtures — no DB, no netw
 from datetime import datetime, timezone
 
 from app.api.fixtures import (
+    _safe_live_winprob,
+    _safe_live_winprob_history,
     is_knockout_stage,
     is_live_status,
     shape_knockout,
@@ -180,3 +182,41 @@ class TestShapeKnockout:
     def test_empty_bracket(self):
         out = shape_knockout([], LOGOS)
         assert out.rounds == []
+
+
+class TestSafeLiveWinProb:
+    def test_valid_blob_maps(self):
+        wp = _safe_live_winprob({"home": 55, "draw": 25, "away": 20})
+        assert wp is not None
+        assert (wp.home, wp.draw, wp.away) == (55, 25, 20)
+
+    def test_none_and_empty_degrade_to_none(self):
+        assert _safe_live_winprob(None) is None
+        assert _safe_live_winprob({}) is None
+
+    def test_malformed_blob_degrades_to_none(self):
+        assert _safe_live_winprob({"home": 55}) is None          # missing keys
+        assert _safe_live_winprob("not-a-dict") is None
+
+
+class TestSafeLiveWinProbHistory:
+    def _point(self, **kw):
+        base = {"minute": 30, "home_pct": 50, "draw_pct": 30, "away_pct": 20,
+                "home_score": 1, "away_score": 0, "label": "Goal · Brazil"}
+        base.update(kw)
+        return base
+
+    def test_valid_points_map(self):
+        pts = _safe_live_winprob_history([self._point(minute=0, label="KO"), self._point()])
+        assert len(pts) == 2
+        assert pts[0].label == "KO"
+        assert pts[1].minute == 30
+
+    def test_non_list_degrades_to_empty(self):
+        assert _safe_live_winprob_history(None) == []
+        assert _safe_live_winprob_history({"minute": 1}) == []
+
+    def test_malformed_point_dropped_rest_kept(self):
+        pts = _safe_live_winprob_history([{"minute": 5}, self._point()])
+        assert len(pts) == 1  # the malformed point is dropped, the good one kept
+        assert pts[0].minute == 30

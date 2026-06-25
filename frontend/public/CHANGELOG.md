@@ -4,6 +4,8 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 
 ## 25 Jun 2026
 
+- **Added** — Live match pages now carry an AI "Live read" — a short, present-tense take on the game that refreshes after each goal, red card, or half — plus a live win-probability that shifts with the clock. The number is a calibrated Python model (score + time remaining) sharpened by a bounded AI adjustment for live context (xG, momentum, red cards), so it stays sane and updates every poll.
+- **Added** — A win-probability comparison (before kickoff → now) and a swing chart that plots how the home side's chances have moved across the match, annotated with the goals. Without the AI key the win-probability still renders from the Python model alone.
 - **Added** — When several matches are live at the same time (like the simultaneous final group-stage kickoffs), the home page now shows them all together in a side-by-side live board — each card with its live score, match clock, and what's at stake. A single live match keeps the larger spotlight banner.
 - **Internal** — Added an `infra/set-admin-password.sh` helper to set the production admin password directly on the VM via Azure CLI (no SSH), prompting for the value so it never lands in shell history or logs.
 

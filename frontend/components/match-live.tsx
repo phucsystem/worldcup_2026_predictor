@@ -6,22 +6,29 @@ import MatchTimeline from "@/components/match-timeline";
 import Goalscorers from "@/components/goalscorers";
 import MatchStats from "@/components/match-stats";
 import MatchBanner from "@/components/match-banner";
+import LiveWinProb from "@/components/live-winprob";
+import LiveWinProbChart from "@/components/live-winprob-chart";
 import { liveMinute } from "@/lib/live";
 import { eventKey, freshEventKeys } from "@/lib/match";
 
 interface Props {
   initial: FixtureDetail;
-  forecastSlot: ReactNode;
   formSlot: ReactNode;
   stakesSlot: ReactNode;
   teamStatusSlot: ReactNode;
+}
+
+function countReds(events: FixtureDetail["events"]): number {
+  return events.filter(
+    (e) => (e.type ?? "").toLowerCase() === "card" && (e.detail ?? "").toLowerCase().includes("red"),
+  ).length;
 }
 
 const POLL_MS = 30_000;
 const TICK_MS = 1_000;
 const SHORT_FROZEN: Record<string, string> = { HT: "HT", BT: "BREAK", P: "PENS" };
 
-export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot, teamStatusSlot }: Props) {
+export default function MatchLive({ initial, formSlot, stakesSlot, teamStatusSlot }: Props) {
   const [fixture, setFixture] = useState<FixtureDetail>(initial);
   const [nowMs, setNowMs] = useState<number>(() => {
     const t = initial.updated_at ? Date.parse(initial.updated_at) : NaN;
@@ -69,6 +76,10 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
   const code = (fixture.status ?? "").toUpperCase();
   const clock = frozen ? (SHORT_FROZEN[code] ?? label) : minute != null ? `${minute}'` : "LIVE";
 
+  const homeTeam = fixture.home_team ?? "Home";
+  const awayTeam = fixture.away_team ?? "Away";
+  const history = fixture.live_winprob_history ?? [];
+
   return (
     <>
       <section
@@ -94,7 +105,65 @@ export default function MatchLive({ initial, forecastSlot, formSlot, stakesSlot,
         />
       </section>
 
-      {forecastSlot}
+      {fixture.live_read ? (
+        <div className="live-read">
+          <span className="an-eyebrow"><span className="lr-dot" aria-hidden="true" /> Live read</span>
+          <p>{fixture.live_read}</p>
+        </div>
+      ) : null}
+
+      {fixture.live_winprob ? (
+        <>
+          <h2 className="section-title">
+            Win probability{" "}
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--status-live)", verticalAlign: "middle" }}>· live</span>
+          </h2>
+          <LiveWinProb
+            forecast={fixture.forecast}
+            live={fixture.live_winprob}
+            homeTeam={homeTeam}
+            awayTeam={awayTeam}
+            minute={minute}
+          />
+        </>
+      ) : null}
+
+      {history.length >= 2 ? (
+        <LiveWinProbChart
+          history={history}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+          homeScore={fixture.home_score}
+          awayScore={fixture.away_score}
+          minute={minute}
+          redCards={countReds(fixture.events)}
+        />
+      ) : null}
+
+      {fixture.forecast && fixture.forecast.factors.length > 0 ? (
+        <>
+          <h2 className="section-title">What drove the pre-match forecast</h2>
+          <section className="forecast-card" aria-label="Signals behind the pre-match forecast">
+            <p className="fc-intro" style={{ marginTop: 0 }}>
+              The signals the model weighed before kickoff — the lean shows which side each favoured and why.
+            </p>
+            <ul className="fc-factors">
+              {fixture.forecast.factors.map((f) => (
+                <li className="fc-factor" key={f.name}>
+                  <span className="ff-name">{f.name}</span>
+                  <span className={`ff-lean ${f.lean}`}>
+                    {f.lean === "home" ? `Favours ${homeTeam}` : f.lean === "away" ? `Edge ${awayTeam}` : "Even"}
+                  </span>
+                  <span className="ff-why">{f.why}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="fc-note">
+              The pre-match split is a <strong>model preview</strong>; the live model above is what updates during play.
+            </p>
+          </section>
+        </>
+      ) : null}
 
       {fixture.events.length > 0 ? (
         <>

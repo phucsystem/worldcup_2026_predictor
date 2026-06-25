@@ -154,19 +154,37 @@ def run(target_date: date) -> int:
 
 
 def collect_live(session_factory, client: APIFootballClient) -> int:
-    """Lightweight refresh of in-play matches: fetch ?live=all and upsert only
-    score/status/elapsed (+ events) for fixtures we already track. No standings
-    recompute, no LLM, no prune. Returns the number of live matches upserted.
+    """Lightweight refresh of in-play matches: fetch ?live=all and upsert
+    score/status/elapsed (+ events + live statistics) for fixtures we already
+    track, plus the hybrid live win-probability. No standings recompute, no prune.
+    Returns the number of live matches upserted.
 
     `?live=all` is league-agnostic, so results are intersected with stored
     fixture_ids to avoid persisting other competitions' live games.
+
+    Win-prob (group-stage only): every poll computes the Python base and re-applies
+    the last stored bounded adjustment — pure, no LLM. The agent that *sets* that
+    adjustment + the live read runs only on a significant-event signature change
+    (goal / red / status / ~15' bucket), and is gated on DEEPSEEK_API_KEY.
     """
     live = client.get_fixtures(live=True)
     if not live:
         return 0
     with session_factory() as session:
-        known = {fid for (fid,) in session.execute(select(matches_table.c.fixture_id)).all()}
-        ours = [m for m in live if m.fixture_id in known]
+        stored = {
+            r["fixture_id"]: r
+            for r in session.execute(
+                select(
+                    matches_table.c.fixture_id,
+                    matches_table.c.group_name,
+                    matches_table.c.forecast_json,
+                    matches_table.c.live_winprob_adj_json,
+                    matches_table.c.live_winprob_history_json,
+                    matches_table.c.live_read_sig,
+                )
+            ).mappings().all()
+        }
+        ours = [m for m in live if m.fixture_id in stored]
         # Attach the live event feed (incl. final events at FT) so the match page
         # timeline updates on the poll. A failed events fetch must not abort the
         # score/status upsert, so it is per-fixture guarded.
@@ -182,10 +200,156 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
                 m.statistics = client.get_fixture_statistics(m.fixture_id) or None
             except Exception as exc:
                 log.warning("Live statistics fetch failed for %s: %s", m.fixture_id, exc)
+            # Hybrid win-prob + live read. Fully guarded so a failure here never
+            # drops the score/events/stats upsert that precedes it.
+            try:
+                _update_live_winprob(session, m, stored.get(m.fixture_id))
+            except Exception as exc:
+                log.warning("Live win-prob update failed for %s: %s", m.fixture_id, exc)
         if ours:
             upsert_matches(session, ours)
     log.info("Live refresh: %d in-play (%d ours) upserted", len(live), len(ours))
     return len(ours)
+
+
+# Max win-prob history points kept per match (events + a point every ~15' stays
+# well under this for a single match).
+_WINPROB_HISTORY_CAP = 30
+
+
+def _update_live_winprob(session, m, stored) -> None:
+    """Compute the hybrid live win-prob for one in-play match and stage it on `m`
+    for the upsert. Group-stage only (knockout has no prior/qualification, matching
+    the forecast boundary). The Python base + stored adjustment recompute every poll
+    (no LLM); the agent (Phase 3) refreshes the adjustment + read only on a
+    significant-event signature change."""
+    from app.api.fixtures import is_live_status, normalize_events
+    from app.pipeline.winprob import (
+        apply_adjustment,
+        compute_base,
+        live_read_signature,
+    )
+
+    group_name = (stored or {}).get("group_name")
+    if not group_name or not is_live_status(m.status):
+        return  # knockout / not actually in play → no win-prob
+
+    events = normalize_events(m.events, m.home_team, m.away_team)
+    home_red = sum(
+        1 for e in events
+        if (e.type or "").lower() == "card" and "red" in (e.detail or "").lower() and e.side == "home"
+    )
+    away_red = sum(
+        1 for e in events
+        if (e.type or "").lower() == "card" and "red" in (e.detail or "").lower() and e.side == "away"
+    )
+    minute = m.elapsed or 0
+    base = compute_base(
+        m.home_score or 0, m.away_score or 0, minute,
+        prior=(stored or {}).get("forecast_json"),
+        home_red=home_red, away_red=away_red,
+    )
+
+    new_sig = live_read_signature(events, m.status, minute)
+    stored_sig = (stored or {}).get("live_read_sig")
+    stored_adj = (stored or {}).get("live_winprob_adj_json")
+    sig_changed = new_sig != stored_sig
+
+    # On a significant-event signature change, the agent refreshes the bounded
+    # adjustment + the live read in ONE call (gated on DEEPSEEK_API_KEY). On any
+    # other poll the stored adjustment is simply re-applied — pure, no LLM.
+    effective_adj = stored_adj
+    if sig_changed and settings.DEEPSEEK_API_KEY:
+        agent_result = _run_live_agent(session, m, base, events, group_name, minute)
+        if agent_result is not None:
+            payload, model = agent_result
+            m.live_winprob_adj_json = payload["adjustment"]
+            m.live_read_text = payload["read"]
+            m.live_read_model = model
+            m.live_read_sig = new_sig
+            effective_adj = m.live_winprob_adj_json
+
+    m.live_winprob_json = apply_adjustment(base, effective_adj)
+
+    # Append one history point per significant-event change (not per poll).
+    if sig_changed:
+        history = list((stored or {}).get("live_winprob_history_json") or [])
+        if not history:
+            # Seed a kickoff point from the pre-match forecast. If the poller first
+            # observes a match already in play (e.g. process restart mid-match) the
+            # series simply starts from this KO anchor — an accepted approximation
+            # of the early swing, not a reconstruction of it.
+            prior = (stored or {}).get("forecast_json") or {}
+            history.append({
+                "minute": 0,
+                "home_score": 0,
+                "away_score": 0,
+                "home_pct": prior.get("home_pct", base["home"]),
+                "draw_pct": prior.get("draw_pct", base["draw"]),
+                "away_pct": prior.get("away_pct", base["away"]),
+                "label": "KO",
+            })
+        prev_minute = history[-1]["minute"] if history else 0
+        history.append({
+            "minute": minute,
+            "home_score": m.home_score or 0,
+            "away_score": m.away_score or 0,
+            "home_pct": m.live_winprob_json["home"],
+            "draw_pct": m.live_winprob_json["draw"],
+            "away_pct": m.live_winprob_json["away"],
+            "label": _history_label(events, minute, prev_minute),
+        })
+        m.live_winprob_history_json = history[-_WINPROB_HISTORY_CAP:]
+
+
+def _run_live_agent(session, m, base, events, group_name, minute):
+    """Build the agent fact bundle (signals + standings) and run the one DeepSeek
+    call. Returns (payload, model) or None (keep-last-good). Standings are read from
+    the latest snapshot; absent rows simply mean the signals omit form/qualification."""
+    from app.data.repository import latest_standings_for_group
+    from app.pipeline.live_winprob_agent import build_agent_facts, generate_live_winprob
+    from app.pipeline.winprob import extract_signals
+
+    rows = latest_standings_for_group(session, group_name)
+    home_row = next((r for r in rows if r.team == m.home_team), None)
+    away_row = next((r for r in rows if r.team == m.away_team), None)
+    signals = extract_signals(
+        statistics=m.statistics, events=events,
+        home_team=m.home_team, away_team=m.away_team,
+        home_row=home_row, away_row=away_row,
+    )
+    qualification = {
+        k: v for k, v in (
+            ("home", getattr(home_row, "qualification", None)),
+            ("away", getattr(away_row, "qualification", None)),
+        ) if v
+    }
+    facts = build_agent_facts(
+        home_team=m.home_team, away_team=m.away_team,
+        home_score=m.home_score, away_score=m.away_score,
+        minute=minute, status=m.status, base=base, signals=signals,
+        events=events, qualification=qualification or None,
+    )
+    return generate_live_winprob(facts)
+
+
+def _history_label(events, minute, prev_minute) -> str:
+    """Label for a new history point. If a goal or red card occurred since the last
+    recorded point, name it ("Goal · Brazil"); otherwise this is a periodic-bucket
+    or status refresh, so label it with the minute ("64'")."""
+    def latest_since(kind_check):
+        candidates = [e for e in events if kind_check(e) and (e.minute or 0) > prev_minute]
+        return max(candidates, key=lambda e: e.minute or 0) if candidates else None
+
+    goal = latest_since(lambda e: (e.type or "").lower() == "goal")
+    if goal:
+        return f"Goal · {goal.team}" if goal.team else "Goal"
+    red = latest_since(
+        lambda e: (e.type or "").lower() == "card" and "red" in (e.detail or "").lower()
+    )
+    if red:
+        return f"Red · {red.team}" if red.team else "Red card"
+    return f"{minute}'"
 
 
 def backfill_finished_events(session_factory, client: APIFootballClient, matches: list) -> int:

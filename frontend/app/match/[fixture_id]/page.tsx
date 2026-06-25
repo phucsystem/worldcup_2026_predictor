@@ -102,7 +102,6 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
         {state === "live" ? (
           <MatchLive
             initial={fixture}
-            forecastSlot={forecastCard}
             formSlot={formCompare}
             stakesSlot={stakes}
             teamStatusSlot={teamStatus}
@@ -172,6 +171,12 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
             <span>Data: API-Football</span>
             {fixture.verdict_model ? <span>· verdict: {fixture.verdict_model}</span> : null}
             {forecast?.model ? <span>· forecast: {forecast.model}</span> : null}
+            {state === "live" && fixture.live_winprob ? (
+              <span>· live win prob: Python base + AI adjustment (bounded)</span>
+            ) : null}
+            {state === "live" && fixture.live_read_model ? (
+              <span>· live read: {fixture.live_read_model}</span>
+            ) : null}
             {updatedAt ? <span>· Updated {updatedAt} AEST</span> : null}
           </p>
         </footer>

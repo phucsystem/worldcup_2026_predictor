@@ -6,15 +6,41 @@ Phase F live statistics) without a Postgres dependency.
 """
 
 import pytest
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.data import collect
+from app.data import repository as repo
+from app.data.models import Match
 
 
 class FakeMatch:
-    def __init__(self, fixture_id):
+    def __init__(self, fixture_id, *, status="2H", home_team="France", away_team="Spain",
+                 home_score=1, away_score=0, elapsed=60):
         self.fixture_id = fixture_id
+        self.status = status
+        self.home_team = home_team
+        self.away_team = away_team
+        self.home_score = home_score
+        self.away_score = away_score
+        self.elapsed = elapsed
         self.events = None
         self.statistics = None
+        self.live_winprob_json = None
+        self.live_winprob_adj_json = None
+        self.live_winprob_history_json = None
+        self.live_read_text = None
+        self.live_read_model = None
+        self.live_read_sig = None
+
+
+class FakeMappings:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def all(self):
+        return self._rows
 
 
 class FakeResult:
@@ -24,13 +50,17 @@ class FakeResult:
     def all(self):
         return self._rows
 
+    def mappings(self):
+        return FakeMappings(self._rows)
+
 
 class FakeSession:
-    """Stands in for a SQLAlchemy session context manager. `execute(...).all()`
-    returns the known fixture-id rows collect_live intersects live results with."""
+    """Stands in for a SQLAlchemy session context manager. `execute(...).mappings()
+    .all()` returns the stored fixture rows collect_live intersects live results
+    with (a mapping per fixture carrying group_name + win-prob state)."""
 
-    def __init__(self, known_ids):
-        self._known = known_ids
+    def __init__(self, stored_rows):
+        self._rows = stored_rows
 
     def __enter__(self):
         return self
@@ -39,11 +69,30 @@ class FakeSession:
         return False
 
     def execute(self, _stmt):
-        return FakeResult([(fid,) for fid in self._known])
+        return FakeResult(self._rows)
+
+
+def _stored_row(fixture_id, *, group_name=None, forecast_json=None, adj=None,
+                history=None, sig=None):
+    return {
+        "fixture_id": fixture_id,
+        "group_name": group_name,
+        "forecast_json": forecast_json,
+        "live_winprob_adj_json": adj,
+        "live_winprob_history_json": history,
+        "live_read_sig": sig,
+    }
 
 
 def _factory(known_ids):
-    return lambda: FakeSession(known_ids)
+    """Stored rows for the given ids with no group_name (win-prob skipped) — keeps
+    the statistics/events tests focused on the fetch behaviour."""
+    rows = [_stored_row(fid) for fid in known_ids]
+    return lambda: FakeSession(rows)
+
+
+def _factory_rows(rows):
+    return lambda: FakeSession(rows)
 
 
 class FakeClient:
@@ -110,3 +159,181 @@ class TestCollectLiveStatistics:
         assert n == 0
         assert client.stats_calls == []
         assert "rows" not in captured_upsert  # upsert never called
+
+
+def _raw_goal(minute, team):
+    return {"time": {"elapsed": minute}, "type": "Goal", "detail": "Normal Goal",
+            "team": {"name": team}, "player": {"name": "X"}}
+
+
+class TestCollectLiveWinProb:
+    @pytest.fixture(autouse=True)
+    def _no_llm(self, monkeypatch):
+        # Phase 2 path is pure (no LLM): the agent only sets the adjustment, which
+        # these tests exercise via a pre-stored adj, not a live agent call.
+        monkeypatch.setattr(collect.settings, "DEEPSEEK_API_KEY", "")
+
+    def test_group_stage_in_play_stores_base_with_no_adjustment(self, captured_upsert):
+        from app.pipeline.winprob import apply_adjustment, compute_base
+
+        m = FakeMatch(101, status="2H", home_team="France", away_team="Spain",
+                      home_score=1, away_score=0, elapsed=60)
+        client = FakeClient(live=[m], events=[_raw_goal(30, "France")], stats=None)
+        rows = [_stored_row(101, group_name="A")]
+        collect.collect_live(_factory_rows(rows), client)
+
+        stored = captured_upsert["rows"][0]
+        expected = apply_adjustment(compute_base(1, 0, 60, prior=None), None)
+        assert stored.live_winprob_json == expected  # final == base (no stored adj, no LLM)
+        # History seeded with a KO point and one event point.
+        assert stored.live_winprob_history_json[0]["label"] == "KO"
+        assert stored.live_winprob_history_json[-1]["label"] == "Goal · France"
+        assert stored.live_winprob_history_json[-1]["minute"] == 60
+
+    def test_knockout_match_skips_winprob(self, captured_upsert):
+        m = FakeMatch(101, status="2H")
+        client = FakeClient(live=[m], events=[_raw_goal(30, "France")])
+        rows = [_stored_row(101, group_name=None)]  # knockout → no group
+        collect.collect_live(_factory_rows(rows), client)
+        assert captured_upsert["rows"][0].live_winprob_json is None
+
+    def test_stored_adjustment_is_reapplied_each_poll(self, captured_upsert):
+        from app.pipeline.winprob import apply_adjustment, compute_base
+
+        m = FakeMatch(101, status="2H", home_score=1, away_score=0, elapsed=60)
+        adj = {"home": 8, "draw": -4, "away": -4}
+        client = FakeClient(live=[m], events=[_raw_goal(30, "France")])
+        rows = [_stored_row(101, group_name="A", adj=adj)]
+        collect.collect_live(_factory_rows(rows), client)
+
+        expected = apply_adjustment(compute_base(1, 0, 60), adj)
+        assert captured_upsert["rows"][0].live_winprob_json == expected
+
+    def test_history_not_appended_when_signature_unchanged(self, captured_upsert):
+        from app.pipeline.winprob import live_read_signature
+        from app.api.fixtures import normalize_events
+
+        events = [_raw_goal(30, "France")]
+        norm = normalize_events(events, "France", "Spain")
+        sig = live_read_signature(norm, "2H", 60)
+        existing_history = [{"minute": 0, "home_score": 0, "away_score": 0,
+                             "home_pct": 40, "draw_pct": 30, "away_pct": 30, "label": "KO"}]
+        m = FakeMatch(101, status="2H", home_score=1, away_score=0, elapsed=60)
+        client = FakeClient(live=[m], events=events)
+        rows = [_stored_row(101, group_name="A", sig=sig, history=existing_history)]
+        collect.collect_live(_factory_rows(rows), client)
+
+        stored = captured_upsert["rows"][0]
+        assert stored.live_winprob_json is not None       # win-prob still recomputed
+        assert stored.live_winprob_history_json is None    # but history not touched
+
+
+class TestCollectLiveAgentGating:
+    """The agent runs only on a significant-event signature change, and only when
+    DEEPSEEK_API_KEY is set. Gating lives in collect_live; the agent itself is faked."""
+
+    @pytest.fixture
+    def fake_agent(self, monkeypatch):
+        calls = []
+
+        def fake_run(_session, m, base, events, group_name, minute):
+            calls.append(m.fixture_id)
+            return ({"adjustment": {"home": 5, "draw": -2, "away": -3},
+                     "read": "Live read."}, "deepseek-chat")
+
+        monkeypatch.setattr(collect, "_run_live_agent", fake_run)
+        monkeypatch.setattr(collect.settings, "DEEPSEEK_API_KEY", "test-key")
+        return calls
+
+    def test_agent_called_on_sig_change_and_writes_adj_and_read(self, captured_upsert, fake_agent):
+        m = FakeMatch(101, status="2H", home_score=1, away_score=0, elapsed=60)
+        client = FakeClient(live=[m], events=[_raw_goal(30, "France")])
+        rows = [_stored_row(101, group_name="A", sig=None)]  # no stored sig → changed
+        collect.collect_live(_factory_rows(rows), client)
+
+        assert fake_agent == [101]
+        stored = captured_upsert["rows"][0]
+        assert stored.live_winprob_adj_json == {"home": 5, "draw": -2, "away": -3}
+        assert stored.live_read_text == "Live read."
+        assert stored.live_read_model == "deepseek-chat"
+        assert stored.live_read_sig is not None
+
+    def test_agent_not_called_when_signature_unchanged(self, captured_upsert, fake_agent):
+        from app.api.fixtures import normalize_events
+        from app.pipeline.winprob import live_read_signature
+
+        events = [_raw_goal(30, "France")]
+        sig = live_read_signature(normalize_events(events, "France", "Spain"), "2H", 60)
+        m = FakeMatch(101, status="2H", home_score=1, away_score=0, elapsed=60)
+        client = FakeClient(live=[m], events=events)
+        rows = [_stored_row(101, group_name="A", sig=sig)]
+        collect.collect_live(_factory_rows(rows), client)
+        assert fake_agent == []  # signature unchanged → no agent call
+
+    def test_agent_skipped_without_api_key(self, captured_upsert, monkeypatch):
+        monkeypatch.setattr(collect.settings, "DEEPSEEK_API_KEY", "")
+        ran = []
+        monkeypatch.setattr(collect, "_run_live_agent", lambda *a: ran.append(1))
+        m = FakeMatch(101, status="2H", home_score=1, away_score=0, elapsed=60)
+        client = FakeClient(live=[m], events=[_raw_goal(30, "France")])
+        rows = [_stored_row(101, group_name="A", sig=None)]
+        collect.collect_live(_factory_rows(rows), client)
+        assert ran == []  # no key → agent skipped, base still renders
+        assert captured_upsert["rows"][0].live_winprob_json is not None
+
+
+@pytest.fixture
+def sqlite_session():
+    engine = sa.create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool,
+    )
+    repo.matches_table.create(bind=engine)
+    s = sessionmaker(bind=engine)()
+    yield s
+    s.close()
+
+
+def _match(fixture_id, **kw):
+    base = dict(
+        fixture_id=fixture_id, group_name="A", home_team="France", away_team="Spain",
+        home_score=1, away_score=0, status="2H", kickoff_utc=None,
+    )
+    base.update(kw)
+    return Match(**base)
+
+
+class TestUpsertLiveWinProbColumns:
+    def test_winprob_and_read_round_trip(self, sqlite_session):
+        repo.upsert_matches(sqlite_session, [_match(
+            1,
+            live_winprob_json={"home": 55, "draw": 25, "away": 20},
+            live_winprob_adj_json={"home": 5, "draw": -2, "away": -3},
+            live_winprob_history_json=[{"minute": 0, "label": "KO"}],
+            live_read_text="France lead through an early goal.",
+            live_read_model="deepseek-chat",
+            live_read_sig="2H|goals=1|reds=0|bucket=4",
+        )])
+        row = sqlite_session.execute(
+            sa.select(repo.matches_table).where(repo.matches_table.c.fixture_id == 1)
+        ).mappings().first()
+        assert row["live_winprob_json"] == {"home": 55, "draw": 25, "away": 20}
+        assert row["live_read_text"] == "France lead through an early goal."
+        assert row["live_read_sig"] == "2H|goals=1|reds=0|bucket=4"
+
+    def test_winprob_overwrites_but_read_is_keep_last_good(self, sqlite_session):
+        repo.upsert_matches(sqlite_session, [_match(
+            1,
+            live_winprob_json={"home": 55, "draw": 25, "away": 20},
+            live_read_text="Early read.",
+            live_read_model="deepseek-chat",
+            live_read_sig="sig-1",
+        )])
+        # A later poll recomputes the win-prob but carries no new read (no sig change).
+        repo.upsert_matches(sqlite_session, [_match(
+            1, live_winprob_json={"home": 60, "draw": 22, "away": 18},
+        )])
+        row = sqlite_session.execute(
+            sa.select(repo.matches_table).where(repo.matches_table.c.fixture_id == 1)
+        ).mappings().first()
+        assert row["live_winprob_json"] == {"home": 60, "draw": 22, "away": 18}  # overwritten
+        assert row["live_read_text"] == "Early read."  # keep-last-good, not clobbered
