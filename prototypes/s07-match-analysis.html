@@ -5,7 +5,8 @@
          live read, win-probability comparison (pre-match forecast vs live model, side by
          side) + a win-probability swing chart annotated with the goals, pre-match factors,
          key moments so far, live stats, standings impact.
-         The live win probability is Python-computed (not an LLM) and shifts each poll.
+         The live win probability is a Python base model (score + time) adjusted by an AI agent
+         for live context (events, xG, team status), bounded + re-normalised; it shifts each poll.
          The forecast-vs-result conclusion is intentionally absent until full time.
          Distinct from S-02 (editorial daily brief); links back to it for context.
   Source: brainstorm 2026-06-20 (add match analysis pages)
@@ -31,21 +32,7 @@
     @keyframes lrPulse { 70% { box-shadow: 0 0 0 7px rgba(43, 211, 126, 0); } 100% { box-shadow: 0 0 0 0 rgba(43, 211, 126, 0); } }
     @media (prefers-reduced-motion: reduce) { .lr-dot { animation: none; } }
 
-    /* Win-probability: one comparison card with an internal divider (calmer than two boxes) */
-    .wp-compare { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
-    .wp-side-live { padding-left: var(--space-5); border-left: 1px solid rgba(255, 255, 255, 0.10); }
-    @media (max-width: 760px) {
-      .wp-compare { grid-template-columns: 1fr; }
-      .wp-side-live { padding-left: 0; padding-top: var(--space-4); border-left: none; border-top: 1px solid rgba(255, 255, 255, 0.10); }
-    }
-    .wp-side-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-3);
-      font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
-    .wp-side-live .wp-side-head { color: var(--status-live); }
-    .wp-side-tag { font-size: 10.5px; font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
-    .wp-side-live .wp-side-tag { color: var(--status-live); }
-    .wp-delta { font-size: 12px; font-weight: 800; margin-left: 4px; }
-    .wp-up { color: var(--status-live); }
-    .wp-down { color: var(--text-muted); }
+    /* Win-probability swing chart + model-input chips */
     .wp-inputs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0 0; }
     .wp-chip { font-size: 12px; font-weight: 700; color: var(--text-secondary); background: rgba(107, 122, 158, 0.14); border-radius: 999px; padding: 4px 11px; }
     .wp-chip strong { color: var(--text-primary); }
@@ -117,44 +104,59 @@
       <section class="forecast-card" aria-label="Win probability — pre-match forecast vs live model" style="margin-bottom:var(--space-6)">
         <div class="fc-head">
           <h2 class="fc-title">Before kickoff → now</h2>
-          <span class="fc-tag"><span class="wp-dot-key"><span class="wp-dot ghost"></span> before</span> <span class="wp-dot-key"><span class="wp-dot solid"></span> now · 64'</span></span>
+          <span class="fc-tag" style="color:var(--status-live)">Live · 64'</span>
         </div>
-        <svg class="wp-chart" viewBox="0 0 680 172" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Win probability before kickoff versus now (64th minute): Brazil up from 64% to 78%, draw down from 22% to 14%, Serbia down from 14% to 8%. Brazil is now well above the 50% line.">
+        <svg class="wp-chart" viewBox="0 0 680 180" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Win probability before kickoff versus now (64th minute) on a 0 to 100 percent scale: Brazil up from 64% to 78%, draw down from 22% to 14%, Serbia down from 14% to 8%. Brazil is now well clear of the 50% favourite line.">
+          <!-- scale gridlines 0–100% -->
+          <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+            <line x1="120" y1="26" x2="120" y2="150"></line>
+            <line x1="240" y1="26" x2="240" y2="150"></line>
+            <line x1="480" y1="26" x2="480" y2="150"></line>
+            <line x1="600" y1="26" x2="600" y2="150"></line>
+          </g>
           <!-- 50% favourite threshold -->
-          <line x1="360" y1="22" x2="360" y2="154" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 4" opacity="0.4"></line>
+          <line x1="360" y1="22" x2="360" y2="150" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="3 4" opacity="0.55"></line>
           <text x="360" y="14" text-anchor="middle" font-size="10" fill="var(--text-muted)">50% · favourite</text>
+          <!-- x-axis labels -->
+          <g font-size="9.5" fill="var(--text-muted)" text-anchor="middle">
+            <text x="120" y="168">0</text>
+            <text x="240" y="168">25</text>
+            <text x="360" y="168">50</text>
+            <text x="480" y="168">75</text>
+            <text x="600" y="168">100%</text>
+          </g>
 
-          <!-- Brazil: 64 → 78 -->
-          <line x1="120" y1="42" x2="600" y2="42" stroke="rgba(255,255,255,0.07)" stroke-width="2" stroke-linecap="round"></line>
-          <line x1="427" y1="42" x2="494" y2="42" stroke="var(--accent-bright)" stroke-width="4" stroke-linecap="round" opacity="0.55"></line>
-          <circle cx="427" cy="42" r="5" fill="var(--accent-bright)" opacity="0.4"></circle>
-          <circle cx="494" cy="42" r="6.5" fill="var(--accent-bright)"></circle>
-          <text x="104" y="46" text-anchor="end" font-size="13" font-weight="800" fill="var(--accent-bright)">Brazil</text>
-          <text x="427" y="31" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">64%</text>
-          <text x="494" y="31" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent-bright)">78%</text>
-          <text x="624" y="46" text-anchor="start" font-size="12" font-weight="800" fill="var(--status-live)">▲ 14</text>
+          <!-- Brazil: 64 → 78 (blue) -->
+          <line x1="120" y1="44" x2="600" y2="44" stroke="rgba(255,255,255,0.05)" stroke-width="2" stroke-linecap="round"></line>
+          <line x1="427" y1="44" x2="494" y2="44" stroke="var(--accent-bright)" stroke-width="4" stroke-linecap="round" opacity="0.6"></line>
+          <circle cx="427" cy="44" r="5" fill="var(--accent-bright)" opacity="0.45"></circle>
+          <circle cx="494" cy="44" r="6.5" fill="var(--accent-bright)"></circle>
+          <text x="104" y="48" text-anchor="end" font-size="13" font-weight="800" fill="var(--accent-bright)">Brazil</text>
+          <text x="427" y="33" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">64%</text>
+          <text x="494" y="33" text-anchor="middle" font-size="13" font-weight="800" fill="var(--accent-bright)">78%</text>
+          <text x="626" y="48" text-anchor="start" font-size="12" font-weight="800" fill="var(--status-live)">▲ 14</text>
 
-          <!-- Draw: 22 → 14 -->
-          <line x1="120" y1="88" x2="600" y2="88" stroke="rgba(255,255,255,0.07)" stroke-width="2" stroke-linecap="round"></line>
-          <line x1="187" y1="88" x2="226" y2="88" stroke="var(--status-draw)" stroke-width="4" stroke-linecap="round" opacity="0.55"></line>
-          <circle cx="226" cy="88" r="5" fill="var(--status-draw)" opacity="0.4"></circle>
-          <circle cx="187" cy="88" r="6.5" fill="var(--status-draw)"></circle>
-          <text x="104" y="92" text-anchor="end" font-size="13" font-weight="800" fill="var(--status-draw)">Draw</text>
-          <text x="226" y="77" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">22%</text>
-          <text x="187" y="77" text-anchor="middle" font-size="13" font-weight="800" fill="var(--status-draw)">14%</text>
-          <text x="624" y="92" text-anchor="start" font-size="12" font-weight="800" fill="var(--text-muted)">▼ 8</text>
+          <!-- Draw: 22 → 14 (amber) -->
+          <line x1="120" y1="90" x2="600" y2="90" stroke="rgba(255,255,255,0.05)" stroke-width="2" stroke-linecap="round"></line>
+          <line x1="187" y1="90" x2="226" y2="90" stroke="var(--status-draw)" stroke-width="4" stroke-linecap="round" opacity="0.6"></line>
+          <circle cx="226" cy="90" r="5" fill="var(--status-draw)" opacity="0.45"></circle>
+          <circle cx="187" cy="90" r="6.5" fill="var(--status-draw)"></circle>
+          <text x="104" y="94" text-anchor="end" font-size="13" font-weight="800" fill="var(--status-draw)">Draw</text>
+          <text x="226" y="79" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">22%</text>
+          <text x="187" y="79" text-anchor="middle" font-size="13" font-weight="800" fill="var(--status-draw)">14%</text>
+          <text x="626" y="94" text-anchor="start" font-size="12" font-weight="800" fill="var(--text-muted)">▼ 8</text>
 
-          <!-- Serbia: 14 → 8 -->
-          <line x1="120" y1="134" x2="600" y2="134" stroke="rgba(255,255,255,0.07)" stroke-width="2" stroke-linecap="round"></line>
-          <line x1="158" y1="134" x2="187" y2="134" stroke="var(--text-secondary)" stroke-width="4" stroke-linecap="round" opacity="0.5"></line>
-          <circle cx="187" cy="134" r="5" fill="var(--text-secondary)" opacity="0.4"></circle>
-          <circle cx="158" cy="134" r="6.5" fill="var(--text-secondary)"></circle>
-          <text x="104" y="138" text-anchor="end" font-size="13" font-weight="800" fill="var(--text-secondary)">Serbia</text>
-          <text x="187" y="123" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">14%</text>
-          <text x="158" y="123" text-anchor="middle" font-size="13" font-weight="800" fill="var(--text-secondary)">8%</text>
-          <text x="624" y="138" text-anchor="start" font-size="12" font-weight="800" fill="var(--text-muted)">▼ 6</text>
+          <!-- Serbia: 14 → 8 (coral) -->
+          <line x1="120" y1="136" x2="600" y2="136" stroke="rgba(255,255,255,0.05)" stroke-width="2" stroke-linecap="round"></line>
+          <line x1="158" y1="136" x2="187" y2="136" stroke="#FF6B7A" stroke-width="4" stroke-linecap="round" opacity="0.55"></line>
+          <circle cx="187" cy="136" r="5" fill="#FF6B7A" opacity="0.45"></circle>
+          <circle cx="158" cy="136" r="6.5" fill="#FF6B7A"></circle>
+          <text x="104" y="140" text-anchor="end" font-size="13" font-weight="800" fill="#FF6B7A">Serbia</text>
+          <text x="187" y="125" text-anchor="middle" font-size="10.5" fill="var(--text-muted)">14%</text>
+          <text x="158" y="125" text-anchor="middle" font-size="13" font-weight="800" fill="#FF6B7A">8%</text>
+          <text x="626" y="140" text-anchor="start" font-size="12" font-weight="800" fill="var(--text-muted)">▼ 6</text>
         </svg>
-        <p class="fc-note" style="margin-top:var(--space-2)">Faded dot = before kickoff, solid dot = now (64'). Brazil's 2–1 lead has pushed it clear of the 50% favourite line; the draw and Serbia have both fallen back. Pre-match is a model preview; live is computed in Python.</p>
+        <p class="fc-note" style="margin-top:var(--space-2)">Faded dot = before kickoff, solid dot = now (64'). Brazil's 2–1 lead has pushed it clear of the 50% favourite line; the draw and Serbia have both fallen back. Pre-match is a model preview; live is a Python base model adjusted by AI for in-game context.</p>
       </section>
 
       <!-- Visualization: how the live odds have swung across the match -->
@@ -210,7 +212,7 @@
           <span class="wp-chip"><strong>0</strong> red cards</span>
           <span class="wp-chip">Pre-match prior · <strong>light weight</strong></span>
         </div>
-        <p class="fc-note">Computed in Python from the live score and minutes remaining (<strong>not an LLM</strong>); it jumps on each goal and decays toward the current result as the clock runs down. Illustrative model estimate — not betting advice.</p>
+        <p class="fc-note">A <strong>Python base model</strong> (score + minutes remaining) <strong>adjusted by an AI agent</strong> for live context — in-game events, live xG/shots, and team status — then bounded and re-normalised. It shifts each poll and on every goal. Illustrative estimate — not betting advice.</p>
       </section>
 
       <!-- Pre-match factors — kept, clearly scoped to the pre-kickoff forecast -->
@@ -357,6 +359,8 @@
         <span>narrative: deepseek</span>
         <span>·</span>
         <span>stats &amp; standings computed in Python (not LLM)</span>
+        <span>·</span>
+        <span>live win prob: Python base + AI adjustment (bounded)</span>
         <span>·</span>
         <span>source: FIFA official match data</span>
       </div>
