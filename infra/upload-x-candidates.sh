@@ -38,8 +38,9 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres
   psql -U wc -d worldcup -tAc "SELECT COALESCE(json_agg(json_build_object('fixture_id',fixture_id,'home_team',home_team,'away_team',away_team)),'[]') FROM matches WHERE status NOT IN ('FT','AET','PEN') AND group_name IS NOT NULL AND kickoff_utc BETWEEN now() AND now() + interval '$LOOKAHEAD_HOURS hours';"
 EOF
 )
-  # run-command wraps stdout with status banners; emit only the JSON line.
-  _run "$REMOTE" | grep -E '^\[' || { echo "No fixtures returned." >&2; exit 1; }
+  # run-command wraps output with [stdout]/[stderr] banner lines (which also start
+  # with '['), so match only a JSON array line — '[{...}]' or '[]' — not the banners.
+  _run "$REMOTE" | grep -E '^\[(\{|\])' || { echo "No fixtures returned." >&2; exit 1; }
   exit 0
 fi
 

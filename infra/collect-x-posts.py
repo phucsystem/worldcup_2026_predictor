@@ -15,9 +15,8 @@ WHY THIS EXISTS: X's API is paid, so this drives a real browser session instead.
 
 SETUP (once):
     pip install playwright
-    playwright install chromium
-  Then log into x.com in the dedicated profile dir the first run opens
-  (--profile, default ./.x-profile), so the session cookie persists.
+    playwright install chromium          # installs the browser binary; opens nothing
+    python3 infra/collect-x-posts.py --login   # opens X, sign in, press Enter to save session
 
 RUN:
     # fixtures.json: [{"fixture_id":123,"home_team":"Brazil","away_team":"Serbia"}, ...]
@@ -92,10 +91,12 @@ def _extract_posts(page, limit: int) -> list[dict]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Collect X posts for upcoming fixtures.")
-    ap.add_argument("--fixtures", required=True, help="JSON file: [{fixture_id, home_team, away_team}]")
+    ap.add_argument("--fixtures", help="JSON file: [{fixture_id, home_team, away_team}] (omit with --login)")
     ap.add_argument("--out", default="x_candidates.json")
     ap.add_argument("--profile", default="./.x-profile", help="Persistent Chrome profile dir (log into X here once)")
     ap.add_argument("--headed", action="store_true", help="Show the browser (needed for first-time login / challenges)")
+    ap.add_argument("--login", action="store_true",
+                    help="Open a browser to X and wait while you sign in, saving the session to --profile. No fixtures needed.")
     args = ap.parse_args()
 
     try:
@@ -104,7 +105,34 @@ def main() -> int:
         print("Playwright not installed. Run: pip install playwright && playwright install chromium", file=sys.stderr)
         return 1
 
-    fixtures = json.loads(Path(args.fixtures).read_text(encoding="utf-8"))
+    if args.login:
+        # Open X headed and block until the user has signed in; the persistent
+        # context writes the session into --profile for later headless runs.
+        with sync_playwright() as p:
+            ctx = p.chromium.launch_persistent_context(args.profile, headless=False)
+            page = ctx.pages[0] if ctx.pages else ctx.new_page()
+            page.goto("https://x.com/login", timeout=NAV_TIMEOUT_MS)
+            print(f"\nA browser window opened. Log into X, then press Enter here.\n"
+                  f"(Your session is saved to {args.profile} for future runs.)", file=sys.stderr)
+            try:
+                input()
+            except EOFError:
+                time.sleep(60)  # no stdin (e.g. piped) — give time to log in, then close
+            ctx.close()
+        print("Login session saved.", file=sys.stderr)
+        return 0
+
+    if not args.fixtures:
+        print("--fixtures is required (or use --login first). See --help.", file=sys.stderr)
+        return 1
+    try:
+        fixtures = json.loads(Path(args.fixtures).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Could not parse {args.fixtures} as JSON: {exc}\n"
+              f"If you built it with --fetch-fixtures, regenerate it (the helper now strips\n"
+              f"the az [stdout]/[stderr] banner lines):\n"
+              f"  ./infra/upload-x-candidates.sh --fetch-fixtures > {args.fixtures}", file=sys.stderr)
+        return 1
     if not isinstance(fixtures, list) or not fixtures:
         print("fixtures file must be a non-empty JSON list", file=sys.stderr)
         return 1
