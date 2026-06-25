@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Mascot, { type MascotKind } from "@/components/mascot";
 
@@ -21,6 +21,10 @@ const FOLLOW_UP: Record<Topic, string> = {
 
 const TRIO: MascotKind[] = ["moose", "jaguar", "eagle"];
 
+// Auto-open the panel once per visitor, a beat after the page settles.
+const AUTO_OPEN_KEY = "wc2026:feedback-auto-opened";
+const AUTO_OPEN_DELAY_MS = 1200;
+
 export default function FeedbackWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -28,6 +32,35 @@ export default function FeedbackWidget() {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+
+  // Auto-open once per visitor, after the page has fully loaded, so newcomers
+  // notice the feedback channel. Persisted in localStorage so it never re-nags on
+  // later visits/navigations; skipped on admin pages.
+  useEffect(() => {
+    if (pathname?.startsWith("/admin")) return;
+    try {
+      if (localStorage.getItem(AUTO_OPEN_KEY)) return;
+    } catch {
+      return; // storage blocked (private mode) — don't auto-open rather than nag every load
+    }
+    let timer: ReturnType<typeof setTimeout>;
+    const reveal = () => {
+      timer = setTimeout(() => {
+        setOpen(true);
+        try {
+          localStorage.setItem(AUTO_OPEN_KEY, "1");
+        } catch {
+          /* best-effort */
+        }
+      }, AUTO_OPEN_DELAY_MS);
+    };
+    if (document.readyState === "complete") reveal();
+    else window.addEventListener("load", reveal, { once: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("load", reveal);
+    };
+  }, [pathname]);
 
   // Public surface only — never on the admin pages.
   if (pathname?.startsWith("/admin")) return null;
