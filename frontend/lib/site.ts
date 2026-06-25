@@ -3,6 +3,8 @@
 export const SITE = {
   /** Public domain shown on share images. No protocol. */
   domain: "wc2026.phucsystemlabs.com",
+  /** Canonical origin with protocol — drives metadataBase, sitemap and robots. */
+  url: "https://wc2026.phucsystemlabs.com",
   /** Brand name for titles, aria labels, share text. */
   brandName: "WC26 Intelligence",
   /** Share-image wordmark lockup: primary + accent halves and the subline. */

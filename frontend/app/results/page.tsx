@@ -6,6 +6,13 @@ import EmptyState from "@/components/empty-state";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: import("next").Metadata = {
+  title: "Results",
+  description:
+    "Every completed 2026 World Cup result with scores, groups and how each match compared to our pre-match forecast.",
+  alternates: { canonical: "/results" },
+};
+
 export default async function ResultsPage() {
   const rows = resultRowsFromResults(await getAllResults());
 

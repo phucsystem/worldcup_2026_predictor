@@ -4,6 +4,13 @@ import { TimezoneNote } from "@/components/local-time";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: import("next").Metadata = {
+  title: "Fixtures & Schedule",
+  description:
+    "The full 2026 World Cup fixture list and knockout bracket — upcoming kickoffs shown in your local time.",
+  alternates: { canonical: "/fixtures" },
+};
+
 export default async function FixturesPage() {
   const [upcoming, knockout] = await Promise.all([getUpcomingFixtures(), getKnockout()]);
 

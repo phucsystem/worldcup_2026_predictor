@@ -93,6 +93,12 @@ function renderInline(text: string): ReactNode[] {
   return nodes;
 }
 
+export const metadata: import("next").Metadata = {
+  title: "Changelog",
+  description: "What's new in WC26 Intelligence — recent features, fixes and updates.",
+  alternates: { canonical: "/changelog" },
+};
+
 export default async function ChangelogPage() {
   const markdown = await loadChangelog();
 

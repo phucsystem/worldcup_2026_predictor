@@ -15,6 +15,13 @@ function formatMonthYear(d: string) {
   });
 }
 
+export const metadata: import("next").Metadata = {
+  title: "Daily Brief Archive",
+  description:
+    "Browse past daily World Cup 2026 intelligence briefs — storylines, power rankings and qualification scenarios, day by day.",
+  alternates: { canonical: "/archive" },
+};
+
 export default async function ArchivePage() {
   const briefs = await listBriefs();
 

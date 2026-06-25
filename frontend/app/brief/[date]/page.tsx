@@ -7,6 +7,26 @@ import BriefHeroArt from "@/components/brief-hero-art";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ date: string }>;
+}): Promise<import("next").Metadata> {
+  const { date } = await params;
+  const brief = await getBrief(date);
+  if (!brief) return {};
+  const title = brief.title ?? `World Cup 2026 Daily Brief · ${date}`;
+  const description =
+    brief.summary ?? `World Cup 2026 intelligence brief for ${date} — storylines, standings and forecasts.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `/brief/${date}` },
+    openGraph: { title, description, type: "article" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
 export default async function BriefPage({ params }: { params: Promise<{ date: string }> }) {
   const { date } = await params;
   const brief = await getBrief(date);

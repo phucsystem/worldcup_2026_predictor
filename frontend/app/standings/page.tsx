@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { getStandings } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "Group Standings",
+  description:
+    "Live Group A–L standings for the 2026 World Cup — points, goal difference, form and qualification scenarios for all 48 teams.",
+  alternates: { canonical: "/standings" },
+};
 import StandingsTable from "@/components/standings-table";
 import EmptyState from "@/components/empty-state";
 

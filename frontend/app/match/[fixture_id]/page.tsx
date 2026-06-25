@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getFixture, getStandings } from "@/lib/api";
+import { SITE } from "@/lib/site";
 import { matchState } from "@/lib/match";
 import NextMatchCard from "@/components/next-match-card";
 import MatchHeroFinal from "@/components/match-hero-final";
@@ -86,8 +87,35 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
     />
   );
 
+  const matchName = `${homeTeam} vs ${awayTeam}`;
+  const matchUrl = `${SITE.url}/match/${fixture.fixture_id}`;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SportsEvent",
+        name: `${matchName} — World Cup 2026`,
+        sport: "Association football",
+        url: matchUrl,
+        ...(fixture.kickoff_utc ? { startDate: fixture.kickoff_utc } : {}),
+        competitor: [homeTeam, awayTeam].map((name) => ({ "@type": "SportsTeam", name })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: SITE.url },
+          { "@type": "ListItem", position: 2, name: matchName, item: matchUrl },
+        ],
+      },
+    ],
+  };
+
   return (
     <div className="px-6 py-8" style={{ maxWidth: "960px", margin: "0 auto" }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <nav aria-label="Breadcrumb">
         <Link
           href="/"
