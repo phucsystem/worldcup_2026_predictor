@@ -161,6 +161,7 @@ jobs:
           uv run alembic -c db/alembic.ini upgrade head
           uv run python -m app.data.seed_openfootball
           uv run python -m app.data.seed_e2e_fixture
+          uv run python -m app.data.seed_social_fixture
 
       - name: Start backend
         working-directory: backend

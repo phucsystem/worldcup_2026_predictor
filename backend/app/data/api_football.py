@@ -208,6 +208,33 @@ class APIFootballClient(DataSource):
             )
         return scorers
 
+    def get_injuries(self) -> dict[int, list[dict]]:
+        """All league+season injuries (1 API call), grouped by the fixture each
+        player misses. Each record is {player, team, reason, type} where `type` is
+        "Missing Fixture" (ruled out) or "Questionable" (doubtful). Returns {} when
+        the plan returns none. Raises on a plan/quota error (caller guards it)."""
+        data = self._get(
+            "/injuries",
+            {"league": self._league_id, "season": self._season},
+        )
+        by_fixture: dict[int, list[dict]] = {}
+        for entry in data.get("response", []):
+            fixture_id = (entry.get("fixture") or {}).get("id")
+            player = entry.get("player") or {}
+            name = player.get("name")
+            team = (entry.get("team") or {}).get("name")
+            if not fixture_id or not name or not team:
+                continue
+            by_fixture.setdefault(fixture_id, []).append(
+                {
+                    "player": name,
+                    "team": team,
+                    "reason": player.get("reason"),
+                    "type": player.get("type"),
+                }
+            )
+        return by_fixture
+
     def get_standings(self) -> list[StandingRow]:
         rows: list[StandingRow] = []
         for league_block in self._standings_response().get("response", []):

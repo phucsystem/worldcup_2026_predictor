@@ -36,6 +36,8 @@ matches_table = sa.Table(
     sa.Column("verdict_model", sa.String),
     sa.Column("forecast_json", sa.JSON),
     sa.Column("forecast_model", sa.String),
+    sa.Column("social_json", sa.JSON),
+    sa.Column("social_model", sa.String),
     sa.Column("stage", sa.String),
     sa.Column("live_winprob_json", sa.JSON),
     sa.Column("live_winprob_adj_json", sa.JSON),
@@ -43,6 +45,7 @@ matches_table = sa.Table(
     sa.Column("live_read_text", sa.Text),
     sa.Column("live_read_model", sa.String),
     sa.Column("live_read_sig", sa.String),
+    sa.Column("injuries_json", sa.JSON),
     sa.Column("updated_at", sa.DateTime(timezone=True)),
 )
 
@@ -254,6 +257,13 @@ def upsert_matches(session: Session, matches: list[Match]) -> None:
             set_["forecast_json"] = m.forecast_json
             values["forecast_model"] = m.forecast_model
             set_["forecast_model"] = m.forecast_model
+        # Same clobber-guard for social highlights: only overwrite when this
+        # payload carries them, so an empty/failed daily curation keeps last-good.
+        if m.social_json:
+            values["social_json"] = m.social_json
+            set_["social_json"] = m.social_json
+            values["social_model"] = m.social_model
+            set_["social_model"] = m.social_model
         # Live win-prob final split + history are recomputed every poll (like the
         # live statistics_json path), so they overwrite whenever the payload carries
         # them. The agent's bounded adjustment + the live-read fields are keep-last-
@@ -274,6 +284,12 @@ def upsert_matches(session: Session, matches: list[Match]) -> None:
             set_["live_read_model"] = m.live_read_model
             values["live_read_sig"] = m.live_read_sig
             set_["live_read_sig"] = m.live_read_sig
+        # Injuries are refreshed each collect for upcoming fixtures, so overwrite
+        # whenever the payload carries them (incl. an empty list, to clear a
+        # recovered player). Left untouched when None (e.g. finished fixtures).
+        if m.injuries_json is not None:
+            values["injuries_json"] = m.injuries_json
+            set_["injuries_json"] = m.injuries_json
         stmt = (
             pg_insert(matches_table)
             .values(**values)

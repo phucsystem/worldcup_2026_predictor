@@ -2,7 +2,7 @@
 
 **Project:** World Cup 2026 Intelligence  
 **Scope:** High-level component diagram, data flow, and API surface  
-**Reference:** `docs/diagrams/architecture.svg` (see also: `architecture.drawio` for edits)
+**Reference:** `docs/diagrams/architecture.svg` (component topology; `architecture.drawio` to edit) · `docs/diagrams/pipelines.svg` (pipeline orchestration, §2.3)
 
 ---
 
@@ -106,11 +106,60 @@ GET /health                              # Backend healthcheck
 
 ---
 
-### 2.3 Pipeline (LangGraph)
+### 2.3 Intelligence Pipelines & Orchestration
+
+The backend runs **three cooperating pipelines** plus a standalone real-time
+poller. They share one Postgres DB and are coordinated by `run_pipeline()`
+(`backend/app/pipeline/run.py`) — the entry the scheduler invokes once a day.
+
+| Pipeline | File | Engine | Produces |
+|----------|------|--------|----------|
+| **Collector** (ingestion) | `data/collect.py` | Pure Python + API-Football | matches, standings, teams, top scorers |
+| **Analysis** (per-match) | `pipeline/verdict.py`, `pipeline/forecast.py`, `social/` | DeepSeek | verdicts, forecasts, fan-discussion highlights |
+| **Agent** (daily brief) | `pipeline/graph.py` (LangGraph) | DeepSeek | tournament storylines → editorial article |
+| **Live Poller** *(out-of-band)* | `pipeline/live_poller.py` | API-Football `?live=all` | in-play score / elapsed / status |
+
+**How they work together** — the daily orchestration (`run_pipeline`):
+
+```mermaid
+flowchart TB
+    Sched["<b>Scheduler / Job</b> · scheduler_entry.py<br/>fires at 07:00 AEST (DST-guarded)"] --> RP
+
+    subgraph RP["run_pipeline(target_date) · pipeline/run.py"]
+      direction TB
+      Prune["Prune old app_logs"]
+      Collect["<b>① Collector pipeline</b> · collect.py run()<br/>fetch + compute + 5 analysis backfills<br/><i>non-fatal: proceeds on stale DB data if the API is down</i>"]
+      Graph["<b>② Agent pipeline</b> · LangGraph<br/>collector → analyst → editor"]
+      Merge["<b>merge_intelligence()</b><br/>graft deterministic scenario rows onto the LLM's group_scenarios"]
+      Publish["<b>Publish</b><br/>upsert articles (last-good kept on failure)<br/>insert agent_runs (timings · tokens · cost)"]
+      Prune --> Collect --> Graph --> Merge --> Publish
+    end
+
+    Poller["<b>Live Poller</b> (separate process)<br/>polls only inside the kickoff window"] -.->|score / elapsed| DB[("PostgreSQL")]
+    Collect --> DB
+    Publish --> DB
+```
+
+`run_pipeline` runs the collector **first** so the brief reasons over fresh
+data, then invokes the LangGraph agent, then merges the deterministic scenario
+rows the LLM cannot be trusted to compute, and only publishes after the editor
+succeeds — a failed run leaves the previous day's brief intact (keep-last-good).
+
+> **Publish-grade asset:** `docs/diagrams/pipelines.svg` (PNG: `docs/diagrams/pipelines.png`)
+> renders this orchestration for embedding outside Markdown.
+
+![Daily intelligence pipeline orchestration](diagrams/pipelines.svg)
+
+#### 2.3.1 Agent pipeline (LangGraph daily brief)
 
 **Role:** Deterministic + LLM-driven intelligence generation.
 
 **File:** `backend/app/pipeline/graph.py` (StateGraph)
+
+> The agent pipeline's first node (`collector_node`, `pipeline/nodes_collector.py`)
+> re-reads the freshly-collected DB rows and computes the brief's facts — it is
+> distinct from the ingestion collector (`data/collect.py`) that `run_pipeline`
+> executes just before the graph.
 
 **Nodes:**
 
@@ -174,11 +223,72 @@ flowchart LR
 
 **Persistence:** On success, insert into `articles` table (upsert on brief_date); also persist to `agent_runs` (timing, tokens, cost).
 
-**Per-Match Verdicts:** As a separate operation (not part of the daily brief pipeline), the daily collect also:
-- Fetches API-Football statistics (possession, shots, xG, corners) once per finished match (guarded to avoid re-fetching)
-- Generates a 1-2 sentence per-match verdict via `backend/app/pipeline/verdict.py` using DeepSeek (skipped if no DEEPSEEK_API_KEY)
-- Stores both in `matches.statistics_json` and `matches.verdict_text` / `matches.verdict_model` (keep-last-good strategy: failed generations never overwrite)
-- Frontend renders these on `/match/[fixture_id]` when present
+#### 2.3.2 Collector pipeline & analysis backfills
+
+`data/collect.py run(date)` is the **ingestion + enrichment** pipeline. It first
+fetches and persists the structural data (teams, fixtures, group tables,
+qualification, top scorers), then runs a chain of **independent, fully-guarded
+analysis backfills** — each wrapped so a single failure logs a warning and never
+aborts the rest:
+
+```mermaid
+flowchart TB
+    Fetch["<b>Fetch + compute</b> (pure Python)<br/>teams · fixtures · group tables · qualification<br/>→ upsert matches · standings · teams · top_scorers"]
+    Fetch --> E["backfill_finished_events<br/><i>goal events</i>"]
+    E --> S["backfill_finished_statistics<br/><i>possession · shots · xG · corners</i>"]
+    S --> V["backfill_finished_verdicts<br/><b>DeepSeek</b> · 1–2 sentence match verdict"]
+    V --> F["backfill_forecasts<br/><b>DeepSeek</b> · pre-kickoff win/draw/win split + factors"]
+    F --> H["backfill_social_highlights<br/>Reddit / Bluesky → <b>DeepSeek</b> curation"]
+
+    classDef llm fill:#0e3a2a,stroke:#2BD37E,color:#fff;
+    class V,F,H llm;
+```
+
+| Backfill | Module | LLM? | Guard | Persists to |
+|----------|--------|------|-------|-------------|
+| Events | `data/collect.py` | no | once-only (finished, missing events) | `matches.events_json` |
+| Statistics | `data/api_football.py` | no | once-only | `matches.statistics_json` |
+| Verdict | `pipeline/verdict.py` | DeepSeek | once-only · keep-last-good | `matches.verdict_text` / `verdict_model` |
+| Forecast | `pipeline/forecast.py` | DeepSeek | once per group-stage fixture | forecast columns |
+| Social highlights | `social/select.py` (+ `reddit.py`, `bluesky.py`) | DeepSeek | daily refresh, upcoming matches | social-highlights store |
+
+Each enrichment degrades gracefully: a missing `DEEPSEEK_API_KEY` or social
+credentials simply no-ops that step. The frontend renders whatever is present
+on `/match/[fixture_id]` (verdict, statistics, forecast) and on upcoming-match
+pages (fan-discussion highlights). Verdict/statistics/forecast use a
+**keep-last-good** strategy — a failed generation never overwrites a stored value.
+
+#### 2.3.3 Extending the pipeline for new features
+
+The architecture is built so a new per-match (or per-day) enrichment is **one
+additive step**, not a rewrite:
+
+```mermaid
+flowchart LR
+    Need{New feature?} --> A["Per-match enrichment<br/>→ add backfill_&lt;feature&gt;() to collect.py"]
+    Need --> B["Brief insight<br/>→ extend analyst/editor schema + collector facts"]
+    Need --> C["Real-time signal<br/>→ add to live poller (collect_live)"]
+    A --> Surface["Surface it<br/>FastAPI field/route → frontend read"]
+    B --> Surface
+    C --> Surface
+```
+
+1. **New per-match enrichment** → add a `backfill_<feature>(session_factory, …)`
+   to `collect.py` and call it at the end of `run()` inside its own
+   `try/except`. Persist via a new column/table, and follow the **once-only
+   guard** + **keep-last-good** convention so reruns are idempotent and a bad
+   LLM response never clobbers a good one.
+2. **New brief insight** → extend the analyst/editor JSON schema
+   (`pipeline/prompts.py` + node parsing); if it needs grounding numbers, add
+   the deterministic facts to the collector node and thread them through
+   `merge_intelligence()`.
+3. **New real-time signal** → it belongs in the live poller (`collect_live`),
+   not the daily collect, if it must update inside the kickoff window.
+4. **Surface it** → add a FastAPI field/route, then read it in the frontend.
+
+**Invariants any new step must preserve:** never abort the parent run on
+failure (log + continue), keep external calls idempotent/guarded, and write
+through keep-last-good so the public site always shows a coherent snapshot.
 
 ---
 
@@ -192,10 +302,12 @@ flowchart LR
 |--------|------|---------|
 | `api_football.py` | data/ | APIFootballClient + pure parsers; includes `/fixtures/statistics` call |
 | `standings_math.py` | data/ | Pure functions: group tables, H2H, best-thirds, qualification |
-| `collect.py` | data/ | CLI: fetch → assign → compute → upsert DB; includes `backfill_finished_statistics` and `backfill_finished_verdicts` |
+| `collect.py` | data/ | CLI + ingestion pipeline: fetch → assign → compute → upsert, then the guarded analysis backfill chain (see §2.3.2) |
 | `repository.py` | data/ | SQLAlchemy Core upserts (matches, standings, teams) |
 | `deepseek.py` | data/ | ChatOpenAI wrapper, cost/token tracking |
-| `verdict.py` | pipeline/ | Per-match verdict generation: builds fact bundle (score, scorers, standings) + LLM call (DeepSeek) |
+| `verdict.py` | pipeline/ | Per-match verdict: fact bundle (score, scorers, standings) + DeepSeek call |
+| `forecast.py` | pipeline/ | Per-fixture pre-kickoff forecast: win/draw/win split + driving factors (DeepSeek) |
+| `select.py`, `reddit.py`, `bluesky.py` | social/ | Fan-discussion highlights: free Reddit/Bluesky fetch → DeepSeek curation |
 
 **Standings Math (Pure Functions):**
 - `compute_group_table(matches: list[Match]) -> list[TeamRow]` — 3/1/0 pts, GD, GF

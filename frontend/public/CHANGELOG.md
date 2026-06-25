@@ -4,14 +4,19 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 
 ## 25 Jun 2026
 
+- **Added** — The upcoming-match discussion panel now blends in **news reporting** alongside fan posts and is retitled "What people are saying." News headlines come from RSS/Atom feeds listed in an editable config file, are matched to the two teams, and pass through the same AI relevance + safety curation as the social posts (with a link back to each source). The forecast is still untouched — opinion and reporting never feed the model.
+- **Added** — The match-page "Team status" panel now highlights each flagged player's reason at a glance: a red-card or second-yellow ban, a single yellow (one booking away), and — new — who's injured or doubtful, with the specific knock (e.g. "Calf Injury") shown. Injuries come straight from the official feed; suspensions already counted from cards are never double-listed.
+- **Fixed** — The home "Upcoming" strip no longer truncates team names (e.g. "Türkiye vs USA" was clipping to "Tür"); cards now size to their content, wrap cleanly, and sit centered.
 - **Improved** — Sharing any page now produces a proper link preview (title, description, and image) on social and chat, and the site is far easier for search engines to find: every section and match page has a unique, descriptive title, plus a sitemap and robots file so pages get discovered and indexed.
 - **Added** — Live match pages now carry an AI "Live read" — a short, present-tense take on the game that refreshes after each goal, red card, or half — plus a live win-probability that shifts with the clock. The number is a calibrated Python model (score + time remaining) sharpened by a bounded AI adjustment for live context (xG, momentum, red cards), so it stays sane and updates every poll.
 - **Added** — A win-probability comparison (before kickoff → now) and a swing chart that plots how the home side's chances have moved across the match, annotated with the goals. Without the AI key the win-probability still renders from the Python model alone.
 - **Added** — When several matches are live at the same time (like the simultaneous final group-stage kickoffs), the home page now shows them all together in a side-by-side live board — each card with its live score, match clock, and what's at stake. A single live match keeps the larger spotlight banner.
+- **Improved** — The home "Up next" strip now lists every upcoming game across the next two match days (up to six) instead of only the next two, so a busy day's fixtures are all visible at a glance.
 - **Internal** — Added an `infra/set-admin-password.sh` helper to set the production admin password directly on the VM via Azure CLI (no SSH), prompting for the value so it never lands in shell history or logs.
 
 ## 24 Jun 2026
 
+- **Added** — A "What fans are saying" panel on upcoming match pages: highlights of public fan discussion from Reddit and Bluesky, auto-curated for insight and shown alongside the forecast (with a link back to each source). The forecast itself is unchanged — fan opinion never feeds the model.
 - **Improved** — The match hero banner now looks and behaves consistently across preview, live, and finished pages: the leading team is highlighted during a live match and after full time, with win/loss tags shown only once the result is final.
 - **Added** — Upcoming match heroes (home and match pages) now show a glanceable win-probability bar, and sharing an upcoming match copies a forecast image — matchup, probability split, and kickoff — instead of a blank 0–0 scoreline.
 - **Improved** — The home "Latest Results" section now shows every match from the last three result days instead of just the most recent eight, so a busy match day is never cut off.

@@ -25,6 +25,7 @@ fi
 
 echo "› Seeding e2e fixture into ${DATABASE_URL%%\?*}"
 ( cd ../backend && DATABASE_URL="$DATABASE_URL" uv run python -m app.data.seed_e2e_fixture )
+( cd ../backend && DATABASE_URL="$DATABASE_URL" uv run python -m app.data.seed_social_fixture )
 
 echo "› Running Robot suites against ${BASE_URL}"
 "${VENV}/bin/robot" --variable BASE_URL:"${BASE_URL}" --outputdir results suites/

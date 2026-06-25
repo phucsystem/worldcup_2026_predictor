@@ -14,6 +14,7 @@ import QualificationStakes from "@/components/qualification-stakes";
 import TeamStatusSection from "@/components/team-status";
 import ForecastCard from "@/components/forecast-card";
 import ForecastOutcome from "@/components/forecast-outcome";
+import SocialHighlights from "@/components/social-highlights";
 import MatchLive from "@/components/match-live";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +74,8 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
   const forecastCard = forecast ? (
     <ForecastCard forecast={forecast} homeTeam={homeTeam} awayTeam={awayTeam} />
   ) : null;
+
+  const socialHighlights = <SocialHighlights highlights={fixture.social_highlights ?? []} />;
   const formCompare = (
     <FormCompare
       home={{ team: fixture.home_team, logo: homeRow?.logo ?? fixture.home_logo, results: homeRow?.recent_results ?? [] }}
@@ -181,6 +184,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
           <>
             <NextMatchCard fixture={fixture} forecast={fixture.forecast} linked={false} />
             {forecastCard}
+            {socialHighlights}
             {formCompare}
             {teamStatus}
             {stakes}

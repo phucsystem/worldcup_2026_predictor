@@ -105,7 +105,75 @@
         </div>
       </section>
 
-      <!-- Up next: highlighted upcoming matches (leads the page) -->
+      <!-- LIVE board — multiple concurrent in-progress matches.
+           One live match uses the single .is-live hero above; when 2+ run at once
+           (group-stage final matchday kicks off both group matches simultaneously)
+           the page switches to equal compact cards (auto-fit grid: 2-up desktop,
+           1-up mobile) so it never becomes a wall of green. -->
+      <section class="live-board-section" data-cjx-entrance aria-label="Matches in progress">
+        <h2 class="section-title live-board-title">
+          <span class="lb-dot" aria-hidden="true"></span> Live now · <span class="lb-count">2</span> matches
+        </h2>
+        <div class="live-board">
+          <div class="live-card" aria-label="Live: Switzerland 1, Cameroon 0, 67 minutes played, Group G">
+            <div class="lc-head">
+              <span class="group-pill">Group G</span>
+              <span class="nm-live-clock lc-clock" data-live-min="67" aria-hidden="true"><span class="lc-min">67</span><span class="lc-tick">'</span></span>
+            </div>
+            <div class="lc-body">
+              <span class="lc-side win"><span class="flag" data-flag="ch" data-code="SUI"></span><span class="lc-name">Switzerland</span></span>
+              <span class="lc-score" aria-hidden="true"><span class="lc-sc win">1</span><span class="lc-sc-sep">–</span><span class="lc-sc lose">0</span></span>
+              <span class="lc-side lose"><span class="lc-name">Cameroon</span><span class="flag" data-flag="cm" data-code="CMR"></span></span>
+            </div>
+            <p class="lc-stake">Win sends Switzerland top of Group G</p>
+            <div class="nm-actions">
+              <a class="nm-cta" href="s07-match-analysis.html" aria-label="View Switzerland v Cameroon live analysis">View match analysis →</a>
+              <a class="nm-watch" href="https://www.sbs.com.au/sport/football" target="_blank" rel="noopener noreferrer" aria-label="Watch Switzerland v Cameroon live on SBS (opens in a new tab)"><span class="nw-dot" aria-hidden="true"></span> Watch live</a>
+              <span class="share-result">
+                <button class="share-result-btn" type="button" aria-label="Share live score"><span class="share-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> Share</button>
+              </span>
+            </div>
+          </div>
+          <div class="live-card" aria-label="Live: Brazil 2, Serbia 1, 71 minutes played, Group G">
+            <div class="lc-head">
+              <span class="group-pill">Group G</span>
+              <span class="nm-live-clock lc-clock" data-live-min="71" aria-hidden="true"><span class="lc-min">71</span><span class="lc-tick">'</span></span>
+            </div>
+            <div class="lc-body">
+              <span class="lc-side win"><span class="flag" data-flag="br" data-code="BRA"></span><span class="lc-name">Brazil</span></span>
+              <span class="lc-score" aria-hidden="true"><span class="lc-sc win">2</span><span class="lc-sc-sep">–</span><span class="lc-sc lose">1</span></span>
+              <span class="lc-side lose"><span class="lc-name">Serbia</span><span class="flag" data-flag="rs" data-code="SRB"></span></span>
+            </div>
+            <p class="lc-stake">Brazil seal top spot; Serbia need a goal to survive</p>
+            <div class="nm-actions">
+              <a class="nm-cta" href="s07-match-analysis.html" aria-label="View Brazil v Serbia live analysis">View match analysis →</a>
+              <a class="nm-watch" href="https://www.sbs.com.au/sport/football" target="_blank" rel="noopener noreferrer" aria-label="Watch Brazil v Serbia live on SBS (opens in a new tab)"><span class="nw-dot" aria-hidden="true"></span> Watch live</a>
+              <span class="share-result">
+                <button class="share-result-btn" type="button" aria-label="Share live score"><span class="share-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> Share</button>
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Up next — IN-PROGRESS variant (single tracked match that has kicked off) -->
+      <h2 class="section-title">Up next · in-progress variant</h2>
+      <a class="next-match is-live" href="s07-match-analysis.html" aria-label="Live now: Switzerland 1, Cameroon 0, second half, 67 minutes played. View live match analysis.">
+        <span class="nm-eyebrow"><span class="dot"></span> Live now · 2nd half</span>
+        <div class="nm-body">
+          <span class="nm-side win"><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span>
+          <span class="nm-score" aria-hidden="true"><span class="nm-sc win">1</span><span class="nm-sc-sep">–</span><span class="nm-sc lose">0</span></span>
+          <span class="nm-side lose">Cameroon <span class="flag" data-flag="cm" data-code="CMR"></span></span>
+        </div>
+        <div class="nm-meta">Group G · MetLife Stadium</div>
+        <p class="nm-stake">Win sends Switzerland top of Group G</p>
+        <div class="nm-live-clock-wrap">
+          <span class="nm-live-clock" data-live-min="67" aria-hidden="true"><span class="lc-min">67</span><span class="lc-tick">'</span></span>
+        </div>
+        <span class="nm-cta">View match analysis →</span>
+      </a>
+
+      <!-- Up next: highlighted upcoming match (countdown banner) -->
       <h2 class="section-title">Up next</h2>
       <a class="next-match" href="s08-match-preview.html" aria-label="Next match: Switzerland vs Cameroon, kicks off today 20:00 AEST. View match preview.">
         <span class="nm-eyebrow"><span class="dot"></span> Next kickoff</span>
@@ -118,22 +186,6 @@
         <div class="nm-countdown-wrap">
           <span class="nm-cd-label">Kicks off in</span>
           <div class="countdown" data-countdown data-offset-min="237" aria-label="Time until kickoff"></div>
-        </div>
-        <span class="nm-cta">View match analysis →</span>
-      </a>
-
-      <!-- Up next — IN-PROGRESS variant (shown when the tracked match has kicked off) -->
-      <h2 class="section-title">Up next · in-progress variant</h2>
-      <a class="next-match is-live" href="s07-match-analysis.html" aria-label="Live now: Switzerland 1, Cameroon 0, second half, 67 minutes played. View live match analysis.">
-        <span class="nm-eyebrow"><span class="dot"></span> Live now · 2nd half</span>
-        <div class="nm-body">
-          <span class="nm-side"><span class="flag" data-flag="ch" data-code="SUI"></span> Switzerland</span>
-          <span class="nm-score" aria-hidden="true"><span class="nm-sc">1</span><span class="nm-sc-sep">–</span><span class="nm-sc">0</span></span>
-          <span class="nm-side">Cameroon <span class="flag" data-flag="cm" data-code="CMR"></span></span>
-        </div>
-        <div class="nm-meta">Group G · MetLife Stadium</div>
-        <div class="nm-live-clock-wrap">
-          <span class="nm-live-clock" data-live-min="67" aria-hidden="true"><span class="lc-min">67</span><span class="lc-tick">'</span></span>
         </div>
         <span class="nm-cta">View match analysis →</span>
       </a>

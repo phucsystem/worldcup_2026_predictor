@@ -59,3 +59,11 @@ ck_plans/
 # ---- Claude tooling ----
 .claude/
 .antigravitycli/
+# Gemini CLI settings (contains user-specific config)
+.gemini/
+.opencode/
+
+# ---- X (Twitter) collection — local-only scratch & login session (never commit) ----
+.x-profile/
+fixtures.json
+x_candidates.json

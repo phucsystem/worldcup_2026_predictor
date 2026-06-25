@@ -215,3 +215,12 @@ When a doc graduates from working notes to something the public/contributors sho
 
 - **Live (public domain):** https://wc2026.phucsystemlabs.com — single Azure VM, `docker-compose` behind Caddy (auto TLS via Let's Encrypt).
 - Deploy is automatic: push to `main` → CI builds/pushes images to GHCR → SSH deploy to the VM (`docker compose pull && up -d`). Verify a change is live with `curl -s https://wc2026.phucsystemlabs.com/CHANGELOG.md | head -5`.
+
+---
+
+## ENVIRONMENT VARIABLES
+
+- **Whenever you introduce a new environment variable, add it to `.env.example`** with a short comment (what it's for, whether it's required or optional, and any default). `.env.example` is the single source of truth contributors copy from — an undocumented var is invisible.
+- Secrets/keys go in `.env` (gitignored) and are documented as empty/placeholder entries in `.env.example`. Never commit real values.
+- Tunable, non-secret settings live in `backend/app/config.py` with sensible defaults; surface them in `.env.example` only when they're commonly overridden.
+- If the var is needed at runtime in a container, also wire it through the relevant service in `docker-compose.yml` (and `docker-compose.prod.yml` for production).

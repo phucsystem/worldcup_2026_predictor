@@ -1,0 +1,8 @@
+{
+  "_comment": "RSS/Atom feeds for the news social source. Edit freely. Each entry: {name, url}. Entries with a non-http(s) url are ignored. Override the path with SOCIAL_NEWS_FEEDS_FILE to change feeds without a rebuild.",
+  "feeds": [
+    { "name": "BBC Sport — Football", "url": "https://feeds.bbci.co.uk/sport/football/rss.xml" },
+    { "name": "The Guardian — Football", "url": "https://www.theguardian.com/football/rss" },
+    { "name": "Sky Sports — Football", "url": "https://www.skysports.com/rss/12040" }
+  ]
+}

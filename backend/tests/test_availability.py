@@ -5,12 +5,17 @@ never appear suspended two matches running for the same accumulation.
 """
 
 from app.data.availability import (
+    build_injured,
     build_team_status,
     compute_match_objective,
     compute_suspensions,
     last_match_contributors,
 )
 from app.data.models import StandingRow
+
+
+def _injury(team, player, reason, type_="Missing Fixture"):
+    return {"team": team, "player": player, "reason": reason, "type": type_}
 
 
 # ---------------------------------------------------------------------------
@@ -210,3 +215,50 @@ class TestBuildTeamStatus:
     def test_none_when_nothing_to_show(self):
         # Unknown group (empty objective) + no card history → nothing to render.
         assert build_team_status({}, "Ghost", [], key_names=set()) is None
+
+    def test_injuries_populate_injured_list(self):
+        tables = _12_complete_groups()
+        injuries = [
+            _injury("A1", "Hurt Guy", "Calf Injury"),
+            _injury("A1", "Maybe Guy", "Knock", type_="Questionable"),
+            _injury("B1", "Other Team Guy", "Illness"),  # wrong team, ignored
+        ]
+        status = build_team_status(tables, "A1", [], key_names=set(), injury_records=injuries)
+        assert [(p.player, p.status, p.reason) for p in status.injured] == [
+            ("Hurt Guy", "injured", "Calf Injury"),
+            ("Maybe Guy", "doubtful", "Knock"),
+        ]
+
+    def test_only_injuries_present_still_renders(self):
+        # No objective, no cards — an injury alone is enough to render the panel.
+        status = build_team_status({}, "Solo", [], key_names=set(),
+                                   injury_records=[_injury("Solo", "Hurt", "Sprain")])
+        assert status is not None
+        assert [p.player for p in status.injured] == ["Hurt"]
+
+
+class TestBuildInjured:
+    def test_suspension_reasons_filtered_out(self):
+        # The /injuries feed lists bans as missing-fixture rows; the card replay
+        # already owns those, so they must not re-appear in the injured list.
+        recs = [
+            _injury("A1", "Banned Red", "Red Card"),
+            _injury("A1", "Banned Yellow", "Yellow card suspension"),
+            _injury("A1", "Genuinely Hurt", "Hamstring"),
+        ]
+        injured = build_injured(recs, "A1", key_names=set())
+        assert [p.player for p in injured] == ["Genuinely Hurt"]
+
+    def test_excludes_already_flagged_players(self):
+        recs = [_injury("A1", "Double Listed", "Muscle bruise")]
+        injured = build_injured(recs, "A1", key_names=set(), exclude={"Double Listed"})
+        assert injured == []
+
+    def test_dedupes_within_feed_and_marks_key_player(self):
+        recs = [
+            _injury("A1", "Star", "Knock"),
+            _injury("A1", "Star", "Knock"),  # duplicate row
+        ]
+        injured = build_injured(recs, "A1", key_names={"Star"})
+        assert len(injured) == 1
+        assert injured[0].key_player is True

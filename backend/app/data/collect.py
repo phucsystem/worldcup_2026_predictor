@@ -31,6 +31,10 @@ from app.data.standings_math import compute_group_table, apply_position_deltas, 
 
 log = logging.getLogger(__name__)
 
+# Mirror of repository._FINISHED_STATUSES; kept local to avoid importing the API
+# layer into the collector. Used to skip injury attachment on finished fixtures.
+_FINISHED_FIXTURE_STATUSES = {"FT", "AET", "PEN"}
+
 
 def _parse_date(val: str) -> date:
     return date.fromisoformat(val)
@@ -84,6 +88,27 @@ def run(target_date: date) -> int:
             row.qualification = qual_map.get(row.team)
 
     snapshot_rows = [row for rows in group_tables.values() for row in rows]
+
+    # Injuries: one league+season API call, attached per fixture so the team-status
+    # panel can show who is out / doubtful. Fully guarded — a plan without injury
+    # access must never abort the collect. We set the list for every NON-finished
+    # fixture (empty when none) so a recovered player clears rather than lingering;
+    # finished fixtures are left untouched (team status isn't rendered for them).
+    try:
+        injuries_by_fixture = client.get_injuries()
+    except Exception as exc:
+        injuries_by_fixture = None
+        log.warning("Injuries fetch skipped: %s", exc)
+    if injuries_by_fixture is not None:
+        attached = 0
+        for m in matches:
+            if (m.status or "").strip().upper() in _FINISHED_FIXTURE_STATUSES:
+                continue
+            recs = injuries_by_fixture.get(m.fixture_id) or []
+            m.injuries_json = {"players": recs}
+            if recs:
+                attached += 1
+        log.info("Attached injuries to %d upcoming fixtures", attached)
 
     with session_factory() as session:
         try:
@@ -148,6 +173,14 @@ def run(target_date: date) -> int:
         backfill_forecasts(session_factory, matches, group_tables)
     except Exception as exc:
         log.warning("Forecast backfill skipped: %s", exc)
+
+    # Daily-refreshed fan-discussion highlights for upcoming group-stage matches
+    # (free Reddit/Bluesky → DeepSeek curation). Runs last, fully guarded, and
+    # no-ops without social creds or a DeepSeek key — never blocks the collect.
+    try:
+        backfill_social_highlights(session_factory, matches)
+    except Exception as exc:
+        log.warning("Social highlights backfill skipped: %s", exc)
 
     log.info("Collection complete for %s", target_date)
     return 0
@@ -526,6 +559,66 @@ def backfill_forecasts(session_factory, matches: list, group_tables: dict) -> in
         with session_factory() as session:
             upsert_matches(session, to_store)
     log.info("Backfilled forecasts for %d matches", len(to_store))
+    return len(to_store)
+
+
+def backfill_social_highlights(session_factory, matches: list) -> int:
+    """Collect + curate fan-discussion highlights for upcoming group-stage matches
+    in the near-kickoff window. Unlike the once-only forecast backfill this REFRESHES
+    daily (select_fixtures_needing_social keeps already-populated fixtures), bounded
+    to SOCIAL_MAX_FIXTURES_PER_RUN to cap the daily fan-out. Keep-last-good: an empty/
+    failed curation never overwrites stored highlights. Any failure is logged and
+    skipped — never aborts the collect. Skipped entirely when no social source is
+    available or no DEEPSEEK_API_KEY. Returns the count stored."""
+    from datetime import datetime, timezone
+
+    from app.api.fixtures import select_fixtures_needing_social
+    from app.social import dedupe, pretrim
+    from app.social.bluesky import BlueskySource
+    from app.social.news import NewsSource
+    from app.social.reddit import RedditSource
+    from app.social.select import generate_social_highlights
+    from app.social.x_ingest import load_x_candidates
+
+    now = datetime.now(tz=timezone.utc)
+    sources = [s for s in (RedditSource(), BlueskySource(), NewsSource()) if s.available()]
+    # X posts are pre-collected out-of-band (paid API), keyed by fixture id.
+    x_by_fixture = load_x_candidates(
+        settings.SOCIAL_X_CANDIDATES_FILE, now=now, max_age_hours=settings.SOCIAL_X_MAX_AGE_HOURS
+    )
+    if (not sources and not x_by_fixture) or not settings.DEEPSEEK_API_KEY:
+        return 0
+    needing = set(select_fixtures_needing_social(matches, now))
+    if not needing:
+        return 0
+
+    from datetime import timedelta
+    since = now - timedelta(hours=settings.SOCIAL_LOOKBACK_HOURS)
+    to_store = []
+    for m in matches:
+        if m.fixture_id not in needing or not m.home_team or not m.away_team:
+            continue
+        candidates = list(x_by_fixture.get(m.fixture_id, []))  # pre-collected X posts
+        for src in sources:
+            try:
+                candidates.extend(src.fetch(m.home_team, m.away_team, since))
+            except Exception as exc:  # noqa: BLE001 — one source down ≠ skip the fixture
+                log.warning("Social source %s failed for %s: %s", src.name, m.fixture_id, exc)
+        candidates = pretrim(dedupe(candidates), settings.SOCIAL_CANDIDATE_CAP)
+        if not candidates:
+            continue
+        try:
+            result = generate_social_highlights(m.home_team, m.away_team, candidates)
+        except Exception as exc:  # noqa: BLE001 — keep-last-good on failure
+            log.warning("Social curation failed for %s: %s", m.fixture_id, exc)
+            continue
+        if result:
+            m.social_json, m.social_model = result
+            to_store.append(m)
+    if to_store:
+        with session_factory() as session:
+            upsert_matches(session, to_store)
+    log.info("Backfilled social highlights for %d matches", len(to_store))
     return len(to_store)
 
 

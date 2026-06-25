@@ -110,6 +110,43 @@ def compute_suspensions(
     return statuses
 
 
+def build_injured(
+    injury_records: Sequence[dict], team: str, *, key_names: set[str], exclude: set[str] = frozenset()
+) -> list[PlayerStatus]:
+    """`team`'s injured/doubtful players for this fixture from stored API-Football
+    /injuries records. `type` "Missing Fixture" → ruled out (status "injured");
+    anything else (e.g. "Questionable") → status "doubtful". `reason` carries the
+    API reason text (e.g. "Calf Injury"). Records for the other side are ignored.
+
+    The /injuries feed also lists SUSPENSIONS (reasons like "Red Card" or "Yellow
+    card suspension") as missing-fixture rows; those are skipped here because the
+    card-event replay already covers bans — surfacing them again would double-list
+    the player. `exclude` drops anyone already flagged (suspended / at risk)."""
+    statuses: list[PlayerStatus] = []
+    seen: set[str] = set()
+    for rec in injury_records or []:
+        if (rec.get("team") or "") != team:
+            continue
+        player = rec.get("player")
+        if not player or player in seen or player in exclude:
+            continue
+        reason = rec.get("reason") or ""
+        low = reason.lower()
+        if "card" in low or "suspen" in low:
+            continue  # a ban, not an injury — owned by the card-replay logic
+        seen.add(player)
+        ruled_out = (rec.get("type") or "") == "Missing Fixture"
+        statuses.append(
+            PlayerStatus(
+                player=player,
+                reason=rec.get("reason") or ("Injured" if ruled_out else "Doubtful"),
+                status="injured" if ruled_out else "doubtful",
+                key_player=player in key_names,
+            )
+        )
+    return statuses
+
+
 def last_match_contributors(team_matches_in_order: Sequence[dict], team: str) -> set[str]:
     """Names who scored or assisted for `team` in their most recent finished
     match — used to emphasise key players. Own goals are excluded (the scorer
@@ -137,6 +174,7 @@ def build_team_status(
     team_matches_in_order: Sequence[dict],
     *,
     key_names: set[str],
+    injury_records: Sequence[dict] = (),
 ) -> Optional[TeamStatus]:
     """Assemble a `TeamStatus` for one side, or None when there is nothing to
     show (no objective and no flagged players) — keeps the response clean."""
@@ -144,11 +182,14 @@ def build_team_status(
     players = compute_suspensions(team_matches_in_order, team, key_names=key_names)
     unavailable = [p for p in players if p.status == "suspended"]
     at_risk = [p for p in players if p.status == "at_risk"]
-    if not objective and not unavailable and not at_risk:
+    flagged = {p.player for p in players}
+    injured = build_injured(injury_records, team, key_names=key_names, exclude=flagged)
+    if not objective and not unavailable and not at_risk and not injured:
         return None
     return TeamStatus(
         objective=objective,
         objective_css=css,
         unavailable=unavailable,
         at_risk=at_risk,
+        injured=injured,
     )

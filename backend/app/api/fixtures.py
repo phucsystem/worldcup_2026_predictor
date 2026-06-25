@@ -7,7 +7,7 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import select
 
 from app.config import settings
@@ -113,6 +113,18 @@ class MatchForecast(BaseModel):
     model: Optional[str] = None
 
 
+class SocialHighlight(BaseModel):
+    # One curated fan comment. All fields originate from the fetched source post
+    # (app.social); the model only selects which candidates surface + the `why`
+    # tag. `url` is always an http(s) link back to the source for attribution.
+    source: str          # "reddit" | "bluesky"
+    url: str
+    author: str
+    posted_at: Optional[str] = None
+    text: str
+    why: Optional[str] = None
+
+
 class MatchLiveWinProb(BaseModel):
     # Final hybrid live win/draw/loss split (Python base + bounded AI adjustment),
     # recomputed every poll for an in-play group-stage match. None until then.
@@ -139,6 +151,10 @@ class FixtureDetail(FixtureRow):
     verdict: Optional[str] = None
     verdict_model: Optional[str] = None
     forecast: Optional[MatchForecast] = None
+    # Curated fan-discussion highlights for an upcoming fixture; empty list when
+    # none stored. `social_model` names the producing model.
+    social_highlights: list[SocialHighlight] = []
+    social_model: Optional[str] = None
     # Hybrid live win-prob + swing-chart history + AI live read, populated on the
     # live-poll path for in-play group-stage matches; null/empty otherwise. The
     # internal stored adjustment (live_winprob_adj_json) is NOT exposed — the client
@@ -373,6 +389,27 @@ def select_fixtures_needing_forecast(matches, existing: set[int]) -> list[int]:
     ]
 
 
+def select_fixtures_needing_social(matches, now: datetime) -> list[int]:
+    """Fixture ids for upcoming group-stage matches whose social highlights should
+    be (re)collected. Unlike the once-only forecast selector this is REFRESH-AWARE:
+    it deliberately does NOT exclude fixtures that already have highlights, so buzz
+    re-curates daily as kickoff approaches. Bounded to keep the daily fan-out sane:
+    only non-finished group-stage fixtures kicking off within
+    SOCIAL_LOOKAHEAD_HOURS, sorted by nearest kickoff, capped at
+    SOCIAL_MAX_FIXTURES_PER_RUN. Pure: `now` is passed in, not read from the clock."""
+    horizon = now + timedelta(hours=settings.SOCIAL_LOOKAHEAD_HOURS)
+    upcoming = [
+        m
+        for m in matches
+        if m.group_name
+        and (m.status or "").strip().upper() not in FINISHED_STATUSES
+        and m.kickoff_utc is not None
+        and now <= m.kickoff_utc <= horizon
+    ]
+    upcoming.sort(key=lambda m: m.kickoff_utc)
+    return [m.fixture_id for m in upcoming[: settings.SOCIAL_MAX_FIXTURES_PER_RUN]]
+
+
 def _enrich(row: dict, logos: dict[str, str]) -> FixtureRow:
     return FixtureRow(
         fixture_id=row["fixture_id"],
@@ -503,11 +540,15 @@ def _key_names_by_team(session) -> dict[str, set[str]]:
 
 
 def _team_statuses(
-    session, home_team: Optional[str], away_team: Optional[str]
+    session,
+    home_team: Optional[str],
+    away_team: Optional[str],
+    injury_records: list[dict],
 ) -> tuple[Optional[TeamStatus], Optional[TeamStatus]]:
     """Build (home_status, away_status) for a non-finished fixture. Each side
-    gets its objective (from live group tables) and availability (replayed from
-    its prior group matches), with key players emphasised."""
+    gets its objective (from live group tables), availability (suspensions replayed
+    from its prior group matches), and injured/doubtful players (from this fixture's
+    stored /injuries records), with key players emphasised."""
     group_tables = _all_group_tables(session)
     top_scorers = _key_names_by_team(session)
 
@@ -516,7 +557,9 @@ def _team_statuses(
             return None
         prior = finished_group_matches_for_team(session, team)
         key_names = top_scorers.get(team, set()) | last_match_contributors(prior, team)
-        return build_team_status(group_tables, team, prior, key_names=key_names)
+        return build_team_status(
+            group_tables, team, prior, key_names=key_names, injury_records=injury_records
+        )
 
     return side(home_team), side(away_team)
 
@@ -612,16 +655,21 @@ def get_fixture(fixture_id: int):
         verdict_model = row.verdict_model
         forecast_json = row.forecast_json
         forecast_model = row.forecast_model
+        social_json = row.social_json
+        social_model = row.social_model
         live_winprob_json = row.live_winprob_json
         live_winprob_history_json = row.live_winprob_history_json
         live_read_text = row.live_read_text
         live_read_model = row.live_read_model
+        injuries_json = row.injuries_json
         home_team, away_team = row.home_team, row.away_team
         # Objective + availability are a pre-match aid: compute them for
         # preview/live fixtures only, never for a finished result.
         is_finished = (row.status or "").strip().upper() in FINISHED_STATUSES
+        injury_records = (injuries_json or {}).get("players") if isinstance(injuries_json, dict) else None
         home_status, away_status = (
-            (None, None) if is_finished else _team_statuses(session, home_team, away_team)
+            (None, None) if is_finished
+            else _team_statuses(session, home_team, away_team, injury_records or [])
         )
     finally:
         session.close()
@@ -629,6 +677,16 @@ def get_fixture(fixture_id: int):
     events = normalize_events(events_json, home_team, away_team)
     statistics = normalize_statistics(statistics_json, home_team, away_team)
     forecast = MatchForecast(**forecast_json, model=forecast_model) if forecast_json else None
+    # Blobs are LLM-produced from the social backfill; tolerate a malformed item
+    # by dropping it rather than 500-ing the whole fixture (degrade the panel, not
+    # the page). `social_json` may be absent or not the expected dict shape.
+    raw_highlights = (social_json or {}).get("highlights") if isinstance(social_json, dict) else None
+    social_highlights = []
+    for h in raw_highlights or []:
+        try:
+            social_highlights.append(SocialHighlight(**h))
+        except (TypeError, ValidationError):
+            continue
     live_winprob = _safe_live_winprob(live_winprob_json)
     live_winprob_history = _safe_live_winprob_history(live_winprob_history_json)
     return FixtureDetail(
@@ -638,6 +696,8 @@ def get_fixture(fixture_id: int):
         verdict=verdict_text,
         verdict_model=verdict_model,
         forecast=forecast,
+        social_highlights=social_highlights,
+        social_model=social_model if social_highlights else None,
         live_winprob=live_winprob,
         live_winprob_history=live_winprob_history,
         live_read=live_read_text,

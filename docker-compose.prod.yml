@@ -22,6 +22,11 @@ services:
     environment:
       SCHEDULER_INTERVAL_SECONDS: ${SCHEDULER_INTERVAL_SECONDS:-21600}
       LANGSMITH_ENV: ${LANGSMITH_ENV:-prod}
+      # X posts are collected off-box (paid API) and dropped here by
+      # infra/upload-x-candidates.sh; the daily collect reads + curates them.
+      SOCIAL_X_CANDIDATES_FILE: /app/social-data/x_candidates.json
+    volumes:
+      - ./social-data:/app/social-data:ro
 
   frontend:
     image: ghcr.io/phucsystem/wc2026-frontend:latest

@@ -143,8 +143,9 @@ export interface MatchStat {
 // Mirrors backend app.data.models.PlayerStatus / TeamStatus.
 export interface PlayerStatus {
   player: string;
-  reason: string; // "red-card" | "yellow-accumulation" | "one-yellow"
-  status: "suspended" | "at_risk";
+  // cards: "red-card" | "yellow-accumulation" | "one-yellow"; injuries: free text
+  reason: string;
+  status: "suspended" | "at_risk" | "injured" | "doubtful";
   key_player: boolean;
 }
 
@@ -153,6 +154,17 @@ export interface TeamStatus {
   objective_css: string; // "qualified" | "out" | "contention"
   unavailable: PlayerStatus[];
   at_risk: PlayerStatus[];
+  injured: PlayerStatus[];
+}
+
+// Mirrors backend app.api.fixtures.SocialHighlight — one curated fan comment.
+export interface SocialHighlight {
+  source: string; // "reddit" | "bluesky"
+  url: string;
+  author: string;
+  posted_at: string | null;
+  text: string;
+  why: string | null;
 }
 
 // Mirrors backend app.api.fixtures.MatchLiveWinProb — the final hybrid live split.
@@ -179,6 +191,8 @@ export interface FixtureDetail extends FixtureRow {
   verdict: string | null;
   verdict_model: string | null;
   forecast: Forecast | null;
+  social_highlights: SocialHighlight[];
+  social_model: string | null;
   live_winprob?: LiveWinProb | null;
   live_winprob_history?: LiveWinProbPoint[];
   live_read?: string | null;
