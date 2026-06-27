@@ -16,6 +16,7 @@ import ResultChips from "@/components/result-chip";
 import EmptyState from "@/components/empty-state";
 import SummaryPanel from "@/components/summary-panel";
 import NextMatchCard from "@/components/next-match-card";
+import NextKickoffRefresher from "@/components/next-kickoff-refresher";
 import LiveMatchCard from "@/components/live-match-card";
 import LiveBoard from "@/components/live-board";
 import ResultsWidget from "@/components/results-widget";
@@ -27,14 +28,17 @@ import LocalTime from "@/components/local-time";
 
 export const dynamic = "force-dynamic";
 
-// The "Today" heading is the editorial brief day, which is anchored to the
-// publishing timezone (not the viewer's). Computed per request so a
+// Publishing timezone the brief day is anchored to (not the viewer's). Matches
+// the backend's day bucketing in app/api/fixtures.py so day keys line up.
+const BRIEF_TZ = "Australia/Melbourne";
+
+// The "Today" heading is the editorial brief day. Computed per request so a
 // long-running server never serves a stale date.
 function todayLabel(): string {
   return (
     "Today · " +
     new Date().toLocaleDateString("en-AU", {
-      timeZone: "Australia/Melbourne",
+      timeZone: BRIEF_TZ,
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -136,13 +140,17 @@ export default async function HomePage() {
   const stakeMap = stakesByFixtureId(latest?.intelligence);
   const scenarios = scenariosForDisplay(latest?.intelligence);
 
-  // Upcoming fixtures from the next two days after the featured up-next,
-  // capped at six so the strip stays scannable.
-  const nextFixtures: Fixture[] = upcoming.days
-    .slice(0, 2)
-    .flatMap((d) => d.fixtures)
-    .filter((f) => f.fixture_id !== upNext?.fixture_id)
-    .slice(0, 6);
+  // Show every game on today's matchday (brief timezone — same day keys the
+  // backend buckets by); if nothing is left today, fall back to the next
+  // matchday. The fixture already featured in the hero (the live match, or the
+  // up-next card) is dropped so it isn't listed twice.
+  const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: BRIEF_TZ });
+  const matchday =
+    upcoming.days.find((d) => d.date === todayKey) ?? upcoming.days[0] ?? null;
+  const heroFixtureId = liveMatch ? null : upNext?.fixture_id;
+  const nextFixtures: Fixture[] = (matchday?.fixtures ?? []).filter(
+    (f) => f.fixture_id !== heroFixtureId,
+  );
 
   return (
     <div className="home-shell">
@@ -160,11 +168,14 @@ export default async function HomePage() {
             <LiveMatchCard initial={liveDetail ?? liveMatch} />
           ) : (
             upNext && (
-              <NextMatchCard
-                fixture={upNext}
-                forecast={upNextDetail?.forecast}
-                stakeText={stakeMap.get(upNext.fixture_id)}
-              />
+              <>
+                <NextMatchCard
+                  fixture={upNext}
+                  forecast={upNextDetail?.forecast}
+                  stakeText={stakeMap.get(upNext.fixture_id)}
+                />
+                <NextKickoffRefresher />
+              </>
             )
           )}
           <CompactFixtureStrip fixtures={nextFixtures} />

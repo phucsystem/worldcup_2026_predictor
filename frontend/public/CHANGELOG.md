@@ -2,6 +2,11 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first, grouped by release date.
 
+## 28 Jun 2026
+
+- **Changed** — The home "Up next" strip now shows every game from today's matchday (or the next match day, if today has none) instead of spilling the next two days together — so "today's games" means exactly that.
+- **Fixed** — An open home page now switches a match from "Up next" to the live view on its own the moment it kicks off, instead of leaving a started game shown as upcoming with a stuck countdown until you reload.
+
 ## 26 Jun 2026
 
 - **Fixed** — The live win-probability and AI "Live read" now actually reach production: the live-score service wasn't being updated on deploy (so it ran old code), and it lacked the key the AI read needs. Both are corrected, so in-play insights show and keep refreshing.
