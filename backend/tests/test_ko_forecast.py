@@ -284,3 +284,35 @@ class TestBackfillForecastsKo:
         )
         assert count == 1
         assert stored[0].forecast_kind == "group"
+
+    def test_existing_forecast_skipped_unless_forced(self, monkeypatch):
+        # A KO match that already has a stored forecast: skipped normally,
+        # regenerated when its id is in force_ids (the "refresh upcoming" path).
+        parsed = _good_forecast()
+        monkeypatch.setattr("app.config.settings.DEEPSEEK_API_KEY", "k")
+        monkeypatch.setattr("app.llm.deepseek.make_structured_client",
+                            lambda schema: _FakeClient(parsed=parsed))
+        stored = []
+        monkeypatch.setattr(collect, "upsert_matches", lambda s, ms: stored.extend(ms))
+
+        class _FakeExec:
+            def all(self):
+                return [(99, {"home_pct": 40, "draw_pct": 30, "away_pct": 30})]
+        class _FakeSession:
+            def execute(self, _stmt):
+                return _FakeExec()
+            def __enter__(self): return self
+            def __exit__(self, *a): pass
+
+        # Without force: existing forecast → skipped.
+        count = collect.backfill_forecasts(
+            lambda: _FakeSession(), [_ko_match(99)], _group_tables(),
+        )
+        assert count == 0 and stored == []
+
+        # With force: regenerated despite existing forecast.
+        count = collect.backfill_forecasts(
+            lambda: _FakeSession(), [_ko_match(99)], _group_tables(), force_ids={99},
+        )
+        assert count == 1
+        assert stored[0].forecast_kind == "ko"

@@ -610,7 +610,9 @@ def _signals_or_none(signals: dict) -> dict | None:
     return None
 
 
-def backfill_forecasts(session_factory, matches: list, group_tables: dict) -> int:
+def backfill_forecasts(
+    session_factory, matches: list, group_tables: dict, force_ids: set | None = None
+) -> int:
     """Generate + store a pre-kickoff forecast for group-stage and knockout matches
     that have none yet. Keep-last-good: a failed/empty generation never overwrites a
     stored forecast. Any failure is logged and skipped — never aborts the collect.
@@ -641,11 +643,17 @@ def backfill_forecasts(session_factory, matches: list, group_tables: dict) -> in
     # Group-stage candidates (have group_name) + knockout candidates (no group_name).
     # select_fixtures_needing_forecast only returns group-stage matches, so we build
     # the KO candidate list separately.
-    group_needing = set(select_fixtures_needing_forecast(matches, existing))
+    # force_ids are regenerated even if a forecast already exists (e.g. a manual
+    # "refresh upcoming" run after a model change). keep-last-good still protects
+    # them: a failed generation never overwrites the stored forecast.
+    force_ids = force_ids or set()
+    group_needing = set(select_fixtures_needing_forecast(matches, existing)) | {
+        m.fixture_id for m in matches if m.group_name and m.fixture_id in force_ids
+    }
     ko_needing = {
         m.fixture_id
         for m in matches
-        if m.fixture_id not in existing and not m.group_name
+        if not m.group_name and (m.fixture_id not in existing or m.fixture_id in force_ids)
     }
 
     if not group_needing and not ko_needing:
@@ -796,16 +804,80 @@ def backfill_social_highlights(session_factory, matches: list) -> int:
     return len(to_store)
 
 
+def refresh_upcoming_forecasts() -> int:
+    """Re-forecast every upcoming (not-yet-played) match with the current model.
+
+    Loads matches + group tables from the DB only — NO API-Football calls — and
+    force-regenerates forecasts for upcoming fixtures so a model change (new
+    signals, tuned prompt) is reflected without waiting for the daily collect or
+    clearing rows by hand. Played matches are never touched; keep-last-good means
+    a failed generation leaves the existing forecast intact."""
+    from datetime import datetime, timezone
+
+    from app.data.models import Match
+    from app.data.standings_math import compute_group_table, qualification_status
+
+    if not settings.DEEPSEEK_API_KEY:
+        log.error("DEEPSEEK_API_KEY not set — cannot refresh forecasts")
+        return 1
+
+    session_factory = make_session_factory()
+    cols = [
+        "fixture_id", "group_name", "home_team", "away_team", "home_score",
+        "away_score", "status", "kickoff_utc", "stage", "injuries_json",
+        "forecast_json", "forecast_model", "forecast_kind",
+    ]
+    with session_factory() as session:
+        rows = session.execute(select(matches_table)).mappings().all()
+    matches = [Match(**{c: r.get(c) for c in cols}) for r in rows]
+
+    now = datetime.now(tz=timezone.utc)
+    force_ids = {
+        m.fixture_id
+        for m in matches
+        if (m.status or "").strip().upper() not in _FINISHED_FIXTURE_STATUSES
+        and m.kickoff_utc is not None
+        and m.kickoff_utc >= now
+    }
+    log.info("Refreshing forecasts for %d upcoming matches", len(force_ids))
+
+    by_group: dict[str, list] = defaultdict(list)
+    for m in matches:
+        if m.group_name:
+            by_group[m.group_name].append(m)
+    group_tables = {g: compute_group_table(ms) for g, ms in by_group.items()}
+    qual = qualification_status(group_tables)
+    for grp_rows in group_tables.values():
+        for row in grp_rows:
+            row.qualification = qual.get(row.team)
+
+    n = backfill_forecasts(session_factory, matches, group_tables, force_ids=force_ids)
+    log.info("Refreshed %d upcoming forecasts", n)
+    return 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Collect WC 2026 data for a date")
-    parser.add_argument("--date", required=True, type=_parse_date, help="YYYY-MM-DD")
+    parser.add_argument("--date", type=_parse_date, help="YYYY-MM-DD")
+    parser.add_argument(
+        "--refresh-upcoming-forecasts",
+        action="store_true",
+        help="Re-forecast upcoming matches with the current model (no API fetch); "
+        "ignores --date",
+    )
     args = parser.parse_args()
+    if not args.refresh_upcoming_forecasts and args.date is None:
+        parser.error("--date is required unless --refresh-upcoming-forecasts is set")
 
     from app.logging_config import configure_logging, stop_logging
 
     configure_logging()
     try:
-        rc = run(args.date)
+        rc = (
+            refresh_upcoming_forecasts()
+            if args.refresh_upcoming_forecasts
+            else run(args.date)
+        )
     finally:
         stop_logging()  # flush before this short-lived process exits
     sys.exit(rc)
