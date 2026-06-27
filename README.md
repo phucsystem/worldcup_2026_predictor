@@ -16,6 +16,8 @@ Hourly AI-generated FIFA WC 2026 intelligence pipeline.
 
 A **scheduler** container runs a **LangGraph** pipeline (`Collector → Analyst → Editor`) on an interval. The Collector pulls fixtures/standings from **API-Football** and computes all tables, position deltas, and best-thirds qualification deterministically in `standings_math` (unit-tested); the **DeepSeek** LLM only narrates the pre-computed facts. Results persist to **PostgreSQL**; the article is published only after the Editor succeeds (keep-last-good). A read-only **FastAPI** serves briefs/standings to the **Next.js 16 SSR** dashboard.
 
+Per-match **win/draw/win forecasts** (group + knockout) are produced by the same DeepSeek model from a deterministic fact bundle enriched with FIFA ranking, form, strike rate, injuries, top scorers, and marquee players. See [`docs/forecast-algorithm.md`](docs/forecast-algorithm.md) for the full algorithm, inputs, and accuracy measurement.
+
 Pipeline runs are observable two ways: every run records timings, tokens, and cost to the `agent_runs` table (surfaced at `/logs`), and — when `LANGSMITH_TRACING` is enabled — full LLM traces stream to **LangSmith** for live monitoring. Tracing is off by default; see [`docs/deployment-guide.md`](docs/deployment-guide.md) §6.5.
 
 The whole stack runs as one `docker-compose` deployment on a single Azure VM behind Caddy (TLS). See [docs/deployment.md](docs/deployment.md).

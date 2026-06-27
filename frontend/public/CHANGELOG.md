@@ -8,6 +8,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 - **Improved** — Forecasts now weigh far more than the league table: world ranking, scoring rate, recent form, key absences (injuries/suspensions), and standout players — including famous names who haven't scored yet — for sharper, better-reasoned predictions.
 - **Improved** — Forecasts no longer shy away from calling draws when teams are evenly matched, fixing a bias that previously missed too many drawn games.
 - **Improved** — Forecasts for upcoming games can now be refreshed on demand, so prediction changes show up without waiting for the next daily update.
+- **Docs** — Added an engineering write-up of the forecast algorithm (inputs, signals, prompts, and accuracy measurement) for contributors.
 - **Changed** — The home "Up next" strip now shows every game from today's matchday (or the next match day, if today has none) instead of spilling the next two days together — so "today's games" means exactly that.
 - **Fixed** — An open home page now switches a match from "Up next" to the live view on its own the moment it kicks off, instead of leaving a started game shown as upcoming with a stuck countdown until you reload.
 
