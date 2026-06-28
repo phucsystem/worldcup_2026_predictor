@@ -48,6 +48,53 @@ LIVE_STATUSES = {"1H", "HT", "2H", "ET", "BT", "P", "LIVE"}
 # collect path.
 FINISHED_STATUSES = {"FT", "AET", "PEN"}
 
+# ---------------------------------------------------------------------------
+# WC 2026 knockout bracket map. The feed exposes no match number and no
+# pairing, so Round-of-32 ties are anchored by team-set and every later round
+# is derived from this fixed tree. Match numbers follow FIFA's published
+# schedule (R32 = 73–88, R16 = 89–96, QF = 97–100, SF = 101–102, Final = 104).
+# ---------------------------------------------------------------------------
+
+# Match number -> the two team names of that Round-of-32 tie (exact feed names).
+R32_MATCH_TEAMS: dict[int, frozenset] = {
+    73: frozenset({"South Africa", "Canada"}),
+    74: frozenset({"Germany", "Paraguay"}),
+    75: frozenset({"Netherlands", "Morocco"}),
+    76: frozenset({"Brazil", "Japan"}),
+    77: frozenset({"France", "Sweden"}),
+    78: frozenset({"Ivory Coast", "Norway"}),
+    79: frozenset({"Mexico", "Ecuador"}),
+    80: frozenset({"England", "Congo DR"}),
+    81: frozenset({"USA", "Bosnia & Herzegovina"}),
+    82: frozenset({"Belgium", "Senegal"}),
+    83: frozenset({"Portugal", "Croatia"}),
+    84: frozenset({"Spain", "Austria"}),
+    85: frozenset({"Switzerland", "Algeria"}),
+    86: frozenset({"Argentina", "Cape Verde Islands"}),
+    87: frozenset({"Colombia", "Ghana"}),
+    88: frozenset({"Australia", "Egypt"}),
+}
+
+# Later-round match number -> (feeder match A, feeder match B). The winners of
+# A and B become the home/away of this tie.
+KNOCKOUT_FEEDERS: dict[int, tuple] = {
+    89: (74, 77), 90: (73, 75), 91: (76, 78), 92: (79, 80),
+    93: (83, 84), 94: (81, 82), 95: (86, 88), 96: (85, 87),
+    97: (89, 90), 98: (93, 94), 99: (91, 92), 100: (95, 96),
+    101: (97, 98), 102: (99, 100),
+    104: (101, 102),
+}
+
+# Round label -> ordered match numbers, laid out so each adjacent pair feeds the
+# next round's tie (the frontend draws connectors by adjacency).
+KNOCKOUT_ROUND_SLOTS: list = [
+    ("Round of 32", [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87]),
+    ("Round of 16", [89, 90, 93, 94, 91, 92, 95, 96]),
+    ("Quarter-finals", [97, 98, 99, 100]),
+    ("Semi-finals", [101, 102]),
+    ("Final", [104]),
+]
+
 
 def _get_session():
     global _engine
@@ -527,27 +574,87 @@ def shape_live(rows: list[dict], logos: dict[str, str]) -> list[FixtureRow]:
     return live
 
 
-def shape_knockout(rows: list[dict], logos: dict[str, str]) -> KnockoutBracket:
-    """Assemble knockout matches into bracket rounds in canonical order. Empty
-    when no knockout matches exist yet."""
-    by_round: dict[str, list[FixtureRow]] = {}
-    order: list[str] = []
-    for r in rows:
-        stage = r.get("stage")
-        if not is_knockout_stage(stage):
-            continue
-        label = stage.strip()
-        if label not in by_round:
-            by_round[label] = []
-            order.append(label)
-        by_round[label].append(_enrich(r, logos))
+def _is_finished(status: Optional[str]) -> bool:
+    return bool(status) and status.strip().upper() in FINISHED_STATUSES
 
-    order.sort(key=lambda name: _KNOCKOUT_ORDER_INDEX.get(name.lower(), len(KNOCKOUT_ROUND_ORDER)))
-    for ties in by_round.values():
-        ties.sort(key=lambda f: (f.kickoff_utc is None, f.kickoff_utc))
-    return KnockoutBracket(
-        rounds=[KnockoutRound(round=name, ties=by_round[name]) for name in order]
+
+def _winner_team(tie: Optional[FixtureRow]) -> Optional[str]:
+    """Winning team of a finished tie by score; None if the tie is unplayed,
+    in-play, or level (a penalty-shootout result isn't derivable from the
+    90/120-minute score, so we leave the next slot TBD rather than guess)."""
+    if tie is None or not _is_finished(tie.status):
+        return None
+    if tie.home_score is None or tie.away_score is None:
+        return None
+    if tie.home_score > tie.away_score:
+        return tie.home_team
+    if tie.away_score > tie.home_score:
+        return tie.away_team
+    return None
+
+
+def _placeholder_tie(
+    match_no: int, label: str, home: Optional[str], away: Optional[str],
+    logos: dict[str, str],
+) -> FixtureRow:
+    """A synthesized (not-yet-played / not-in-feed) tie. The negative fixture_id
+    marks it as derived so the frontend renders it without a match-analysis link."""
+    return FixtureRow(
+        fixture_id=-match_no,
+        home_team=home,
+        away_team=away,
+        home_logo=logos.get(home) if home else None,
+        away_logo=logos.get(away) if away else None,
+        stage=label,
     )
+
+
+def build_full_bracket(rows: list[dict], logos: dict[str, str]) -> KnockoutBracket:
+    """Full end-to-end bracket: real Round-of-32 ties from the feed anchored to
+    the FIFA bracket map by team-set, with every later round synthesized and
+    winners propagated as ties finish. A real feed fixture for a later round
+    overrides its synthesized slot (self-healing once the feed publishes it).
+    Empty until any knockout tie exists."""
+    ko_rows = [r for r in rows if is_knockout_stage(r.get("stage"))]
+    if not ko_rows:
+        return KnockoutBracket(rounds=[])
+
+    by_teams: dict[frozenset, dict] = {
+        frozenset({r.get("home_team"), r.get("away_team")}): r for r in ko_rows
+    }
+    label_by_match = {m: lbl for lbl, ms in KNOCKOUT_ROUND_SLOTS for m in ms}
+    slot: dict[int, FixtureRow] = {}
+
+    # Round of 32 (73–88): real feed tie matched by team-set, else TBD placeholder.
+    for n, teams in R32_MATCH_TEAMS.items():
+        feed = by_teams.get(teams)
+        slot[n] = _enrich(feed, logos) if feed is not None else _placeholder_tie(
+            n, "Round of 32", None, None, logos
+        )
+
+    # Later rounds (89–104): propagate winners up the fixed tree; prefer a real
+    # feed fixture for a slot when its two resolved teams already exist in the feed.
+    for n in range(89, 105):
+        if n not in KNOCKOUT_FEEDERS:
+            continue
+        a, b = KNOCKOUT_FEEDERS[n]
+        home = _winner_team(slot.get(a))
+        away = _winner_team(slot.get(b))
+        feed = by_teams.get(frozenset({home, away})) if home and away else None
+        slot[n] = _enrich(feed, logos) if feed is not None else _placeholder_tie(
+            n, label_by_match.get(n, ""), home, away, logos
+        )
+
+    rounds = [
+        KnockoutRound(round=label, ties=[slot[n] for n in slots if n in slot])
+        for label, slots in KNOCKOUT_ROUND_SLOTS
+    ]
+    return KnockoutBracket(rounds=[r for r in rounds if r.ties])
+
+
+def shape_knockout(rows: list[dict], logos: dict[str, str]) -> KnockoutBracket:
+    """Public entry: the full end-to-end knockout bracket (see build_full_bracket)."""
+    return build_full_bracket(rows, logos)
 
 
 # ---------------------------------------------------------------------------

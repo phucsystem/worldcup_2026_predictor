@@ -5,6 +5,7 @@ Unit tests for the pure shaping functions in app.api.fixtures — no DB, no netw
 from datetime import datetime, timezone
 
 from app.api.fixtures import (
+    R32_MATCH_TEAMS,
     _safe_live_winprob,
     _safe_live_winprob_history,
     is_knockout_stage,
@@ -146,49 +147,89 @@ class TestShapeLive:
 # shape_knockout
 # ---------------------------------------------------------------------------
 
+# Build the 16 real Round-of-32 feed rows from the bracket map. `overrides`
+# (keyed by match number) lets a test set a finished score on specific ties.
+def _r32_rows(overrides=None):
+    overrides = overrides or {}
+    rows = []
+    for n, teams in sorted(R32_MATCH_TEAMS.items()):
+        home, away = sorted(teams)
+        ov = overrides.get(n, {})
+        rows.append(_match(
+            1000 + n, ov.get("home", home), ov.get("away", away),
+            _dt(2026, 6, 28), stage="Round of 32",
+            hs=ov.get("hs"), as_=ov.get("as_"), status=ov.get("status", "NS"),
+        ))
+    return rows
+
+
+def _round(out, label):
+    return next(r for r in out.rounds if r.round == label)
+
+
 class TestShapeKnockout:
-    def test_orders_rounds_canonically(self):
-        rows = [
-            _match(1, "A", "B", _dt(2026, 7, 10), stage="Final"),
-            _match(2, "C", "D", _dt(2026, 7, 1), stage="Round of 16"),
-            _match(3, "E", "F", _dt(2026, 7, 5), stage="Semi-finals"),
-            _match(4, "G", "H", _dt(2026, 6, 28), stage="Round of 32"),
-        ]
-        out = shape_knockout(rows, LOGOS)
-        assert [r.round for r in out.rounds] == [
-            "Round of 32",
-            "Round of 16",
-            "Semi-finals",
-            "Final",
-        ]
-
-    def test_groups_multiple_ties_per_round_sorted_by_kickoff(self):
-        rows = [
-            _match(1, "A", "B", _dt(2026, 7, 1, 18), stage="Round of 16"),
-            _match(2, "C", "D", _dt(2026, 7, 1, 12), stage="Round of 16"),
-        ]
-        out = shape_knockout(rows, LOGOS)
-        assert len(out.rounds) == 1
-        assert [t.fixture_id for t in out.rounds[0].ties] == [2, 1]
-
-    def test_ignores_non_knockout_rows(self):
-        rows = [
-            _match(1, "A", "B", _dt(2026, 6, 12), stage="Group Stage - 1", group="Group A"),
-            _match(2, "C", "D", _dt(2026, 7, 1), stage="Round of 16"),
-        ]
-        out = shape_knockout(rows, LOGOS)
-        assert len(out.rounds) == 1
-        assert out.rounds[0].round == "Round of 16"
-
-    def test_carries_scores_for_completed_ties(self):
-        rows = [_match(1, "France", "Brazil", _dt(2026, 7, 1), stage="Final", hs=2, as_=1, status="FT")]
-        out = shape_knockout(rows, LOGOS)
-        tie = out.rounds[0].ties[0]
-        assert tie.home_score == 2 and tie.away_score == 1
-
     def test_empty_bracket(self):
-        out = shape_knockout([], LOGOS)
-        assert out.rounds == []
+        assert shape_knockout([], LOGOS).rounds == []
+
+    def test_group_rows_only_yield_empty_bracket(self):
+        rows = [_match(1, "A", "B", _dt(2026, 6, 12), stage="Group Stage - 1", group="Group A")]
+        assert shape_knockout(rows, LOGOS).rounds == []
+
+    def test_full_skeleton_from_r32(self):
+        out = shape_knockout(_r32_rows(), LOGOS)
+        assert [r.round for r in out.rounds] == [
+            "Round of 32", "Round of 16", "Quarter-finals", "Semi-finals", "Final",
+        ]
+        assert [len(r.ties) for r in out.rounds] == [16, 8, 4, 2, 1]
+
+    def test_later_rounds_are_tbd_until_played(self):
+        out = shape_knockout(_r32_rows(), LOGOS)
+        r16 = _round(out, "Round of 16")
+        assert all(t.home_team is None and t.away_team is None for t in r16.ties)
+        # Synthesized ties carry a negative id (no match page).
+        assert all(t.fixture_id < 0 for t in r16.ties)
+
+    def test_partial_r32_still_full_skeleton(self):
+        # Only match 73 present; the rest of R32 are TBD placeholders.
+        rows = [_match(173, "South Africa", "Canada", _dt(2026, 6, 28), stage="Round of 32")]
+        out = shape_knockout(rows, LOGOS)
+        assert [len(r.ties) for r in out.rounds] == [16, 8, 4, 2, 1]
+
+    def test_winner_propagates_into_next_round(self):
+        # Match 73 finished (Canada beats South Africa); R16 #90 is fed by 73 & 75.
+        out = shape_knockout(
+            _r32_rows({73: {"home": "South Africa", "away": "Canada", "hs": 0, "as_": 1, "status": "FT"}}),
+            LOGOS,
+        )
+        r16 = _round(out, "Round of 16")
+        slot90 = r16.ties[1]  # R16 order = [89, 90, 93, 94, ...]
+        assert slot90.home_team == "Canada"   # winner of match 73
+        assert slot90.away_team is None        # match 75 not played yet
+
+    def test_level_tie_leaves_next_slot_tbd(self):
+        # Drawn after extra time → penalties; winner not derivable from score.
+        out = shape_knockout(
+            _r32_rows({73: {"home": "South Africa", "away": "Canada", "hs": 1, "as_": 1, "status": "PEN"}}),
+            LOGOS,
+        )
+        slot90 = _round(out, "Round of 16").ties[1]
+        assert slot90.home_team is None
+
+    def test_feed_fixture_overrides_synthesized_slot(self):
+        # Both feeders of R16 #90 decided → a real feed R16 fixture for those two
+        # teams replaces the synthesized placeholder (real id + scores).
+        rows = _r32_rows({
+            73: {"home": "South Africa", "away": "Canada", "hs": 0, "as_": 1, "status": "FT"},
+            75: {"home": "Netherlands", "away": "Morocco", "hs": 1, "as_": 0, "status": "FT"},
+        })
+        rows.append(_match(
+            5000, "Canada", "Netherlands", _dt(2026, 7, 5), stage="Round of 16",
+            hs=2, as_=1, status="FT",
+        ))
+        out = shape_knockout(rows, LOGOS)
+        slot90 = _round(out, "Round of 16").ties[1]
+        assert slot90.fixture_id == 5000
+        assert slot90.home_score == 2 and slot90.away_score == 1
 
 
 class TestSafeLiveWinProb:

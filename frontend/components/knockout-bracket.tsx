@@ -25,6 +25,8 @@ const KB_CSS = `
 .kb-v{position:absolute;border-left:2px solid #1E3157}
 .kb-card{display:block;width:208px;background:#0A1B3D;border:1px solid #1E3157;border-radius:12px;padding:10px 12px;text-decoration:none;transition:border-color .15s,background .15s}
 .kb-card:hover{border-color:#2D6BF6;background:#0D2249}
+.kb-card-static{cursor:default}
+.kb-card-static:hover{border-color:#1E3157;background:#0A1B3D}
 .kb-chead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 .kb-time{font-size:11px;color:#6B7A9E;white-space:nowrap}
 .kb-badge{font-size:10px;font-weight:700;color:#A9B6D4;background:#13294F;border-radius:6px;padding:1px 6px;white-space:nowrap}
@@ -73,12 +75,8 @@ function TieCard({ tie }: { tie: FixtureRow }) {
     st !== "preview" && tie.home_score != null && tie.away_score != null;
   const homeWon = showScore && (tie.home_score as number) > (tie.away_score as number);
   const awayWon = showScore && (tie.away_score as number) > (tie.home_score as number);
-  return (
-    <Link
-      href={`/match/${tie.fixture_id}`}
-      className="kb-card"
-      aria-label={`Match analysis: ${tie.home_team ?? "TBD"} vs ${tie.away_team ?? "TBD"}`}
-    >
+  const body = (
+    <>
       <div className="kb-chead">
         <LocalTime iso={tie.kickoff_utc} mode="dayTime" className="kb-time" />
         {statusBadge(tie.status)}
@@ -96,6 +94,21 @@ function TieCard({ tie }: { tie: FixtureRow }) {
         score={showScore ? tie.away_score : null}
         winner={awayWon}
       />
+    </>
+  );
+
+  // Synthesized/placeholder ties (later rounds not yet in the feed) carry a
+  // negative id and have no match page — render them as a plain card.
+  if (tie.fixture_id <= 0) {
+    return <div className="kb-card kb-card-static">{body}</div>;
+  }
+  return (
+    <Link
+      href={`/match/${tie.fixture_id}`}
+      className="kb-card"
+      aria-label={`Match analysis: ${tie.home_team ?? "TBD"} vs ${tie.away_team ?? "TBD"}`}
+    >
+      {body}
     </Link>
   );
 }

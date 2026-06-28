@@ -4,7 +4,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 
 ## 29 Jun 2026
 
-- **New** — A dedicated **Knockout** page in the top navigation shows the full Round of 32 → Final bracket as a connected tree, with kickoff times, live scores and results. The bracket is no longer duplicated inside Standings and Fixtures.
+- **New** — A dedicated **Knockout** page in the top navigation shows the full Round of 32 → Final bracket as a connected tree. Every round is visible from the start — later rounds shown as placeholders — and winners advance into the next round automatically as each game finishes, so you can follow the path to the Final end to end. The bracket is no longer duplicated inside Standings and Fixtures.
 
 ## 28 Jun 2026
 
