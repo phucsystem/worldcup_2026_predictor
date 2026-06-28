@@ -113,15 +113,33 @@ function TieCard({ tie }: { tie: FixtureRow }) {
   );
 }
 
+// Winning team of a finished tie, by score; null if undecided or level (a
+// penalty result isn't derivable from the score). Drives winner-path highlight.
+function winnerOf(tie: FixtureRow | undefined): string | null {
+  if (!tie || matchState(tie.status) !== "finished") return null;
+  if (tie.home_score == null || tie.away_score == null) return null;
+  if (tie.home_score > tie.away_score) return tie.home_team;
+  if (tie.away_score > tie.home_score) return tie.away_team;
+  return null;
+}
+
+const PATH_HI = "#4D8BFF"; // a winner has advanced along this edge
+const PATH_BASE = "#1E3157";
+
 // One connector cell joins two feeder cards (centred at 25%/75% of the cell) to
-// the single next-round card (centred at 50%).
-function ConnectorCell() {
+// the single next-round card (centred at 50%). An edge lights up once its feeder
+// tie is decided, so the winner's path through the bracket is highlighted.
+function ConnectorCell({ topWon, botWon }: { topWon: boolean; botWon: boolean }) {
+  const top = topWon ? PATH_HI : PATH_BASE;
+  const bot = botWon ? PATH_HI : PATH_BASE;
+  const junction = topWon || botWon ? PATH_HI : PATH_BASE;
   return (
     <div className="kb-cell kb-conn-cell">
-      <span className="kb-h" style={{ top: "25%", left: 0, width: "50%" }} />
-      <span className="kb-h" style={{ top: "75%", left: 0, width: "50%" }} />
-      <span className="kb-v" style={{ left: "50%", top: "25%", height: "50%" }} />
-      <span className="kb-h" style={{ top: "50%", left: "50%", width: "50%" }} />
+      <span className="kb-h" style={{ top: "25%", left: 0, width: "50%", borderTopColor: top }} />
+      <span className="kb-h" style={{ top: "75%", left: 0, width: "50%", borderTopColor: bot }} />
+      <span className="kb-v" style={{ left: "50%", top: "25%", height: "25%", borderLeftColor: top }} />
+      <span className="kb-v" style={{ left: "50%", top: "50%", height: "25%", borderLeftColor: bot }} />
+      <span className="kb-h" style={{ top: "50%", left: "50%", width: "50%", borderTopColor: junction }} />
     </div>
   );
 }
@@ -164,8 +182,12 @@ export default function KnockoutBracket({ bracket }: { bracket: Bracket }) {
                 <div className="kb-round kb-conn">
                   <div className="kb-title">&nbsp;</div>
                   <div className="kb-body">
-                    {next.ties.map((t) => (
-                      <ConnectorCell key={t.fixture_id} />
+                    {next.ties.map((t, j) => (
+                      <ConnectorCell
+                        key={t.fixture_id}
+                        topWon={winnerOf(round.ties[2 * j]) != null}
+                        botWon={winnerOf(round.ties[2 * j + 1]) != null}
+                      />
                     ))}
                   </div>
                 </div>
