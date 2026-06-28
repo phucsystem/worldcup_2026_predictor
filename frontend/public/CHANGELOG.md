@@ -2,6 +2,10 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first, grouped by release date.
 
+## 29 Jun 2026
+
+- **New** — The Standings page now has a working Knockout tab that unlocks automatically once the knockout bracket is set, showing the Round of 16 → Final bracket alongside the group tables.
+
 ## 28 Jun 2026
 
 - **Fixed** — Finished matches now switch from "live" to the final result on their own within a couple of minutes, instead of staying stuck on "live" until the next daily refresh.
