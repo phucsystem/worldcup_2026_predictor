@@ -73,7 +73,7 @@ class FakeSession:
 
 
 def _stored_row(fixture_id, *, group_name=None, forecast_json=None, adj=None,
-                history=None, sig=None):
+                history=None, sig=None, status=None, kickoff_utc=None):
     return {
         "fixture_id": fixture_id,
         "group_name": group_name,
@@ -81,6 +81,8 @@ def _stored_row(fixture_id, *, group_name=None, forecast_json=None, adj=None,
         "live_winprob_adj_json": adj,
         "live_winprob_history_json": history,
         "live_read_sig": sig,
+        "status": status,
+        "kickoff_utc": kickoff_utc,
     }
 
 
@@ -96,16 +98,21 @@ def _factory_rows(rows):
 
 
 class FakeClient:
-    def __init__(self, live, events=None, stats=None, stats_exc=False):
+    def __init__(self, live, events=None, stats=None, stats_exc=False, full=None):
         self._live = live
+        self._full = full  # returned when get_fixtures(live=False) is called
         self._events = events if events is not None else [{"type": "Goal"}]
         self._stats = stats if stats is not None else [{"team": {"name": "France"}}]
         self._stats_exc = stats_exc
         self.events_calls = []
         self.stats_calls = []
+        self.full_fetch_calls = 0
 
     def get_fixtures(self, live=False):
-        return self._live
+        if live:
+            return self._live
+        self.full_fetch_calls += 1
+        return self._full if self._full is not None else []
 
     def get_events(self, fixture_id):
         self.events_calls.append(fixture_id)
@@ -357,3 +364,61 @@ class TestUpsertLiveWinProbColumns:
             sa.select(repo.matches_table).where(repo.matches_table.c.fixture_id == 1)
         ).mappings().first()
         assert row["group_name"] == "B"
+
+
+def _factory_with_status(rows_with_status):
+    """Session factory whose stored rows include `status` (and optionally `kickoff_utc`).
+    Used by finalize-on-drop tests."""
+    return lambda: FakeSession(rows_with_status)
+
+
+class TestFinalizeOnDrop:
+    """When a match we have stored as in-play disappears from ?live=all,
+    collect_live must fetch the full fixture set once and upsert the real
+    final status so the match stops showing as 'live' until the daily collect."""
+
+    def test_stuck_match_is_finalized_from_full_fetch(self, captured_upsert):
+        # Fixture 42 is stored as "2H" but absent from the live feed → stuck.
+        # Full fetch returns it as "FT" → upserted with the real final status.
+        full_match = FakeMatch(42, status="FT", home_score=2, away_score=1)
+        stored = [_stored_row(42, status="2H")]
+        client = FakeClient(live=[], full=[full_match])
+        collect.collect_live(_factory_with_status(stored), client)
+        assert client.full_fetch_calls == 1
+        assert captured_upsert["rows"][0].fixture_id == 42
+        assert captured_upsert["rows"][0].status == "FT"
+
+    def test_live_match_not_double_finalized(self, captured_upsert):
+        # Fixture 7 is both in DB (status="2H") and in the live feed → normal upsert only.
+        live_m = FakeMatch(7, status="2H")
+        stored = [_stored_row(7, status="2H")]
+        client = FakeClient(live=[live_m], full=None)
+        collect.collect_live(_factory_with_status(stored), client)
+        # Full fetch must NOT be called when no fixtures are stuck.
+        assert client.full_fetch_calls == 0
+        assert captured_upsert["rows"][0].fixture_id == 7
+
+    def test_no_full_fetch_when_nothing_stuck(self, captured_upsert):
+        # No stored fixtures at all → nothing is stuck → no full fetch.
+        client = FakeClient(live=[], full=None)
+        collect.collect_live(_factory_with_status([]), client)
+        assert client.full_fetch_calls == 0
+
+    def test_full_fetch_failure_does_not_abort_normal_poll(self, captured_upsert, monkeypatch):
+        # If the full fetch raises, the normal live poll must still complete.
+        live_m = FakeMatch(5, status="1H")
+        stored = [
+            _stored_row(5, status="1H"),   # in live feed → normal
+            _stored_row(99, status="2H"),  # stuck → triggers full fetch
+        ]
+
+        def boom(live=False):
+            if not live:
+                raise RuntimeError("full fetch failed")
+            return [live_m]
+
+        client = FakeClient(live=[live_m])
+        client.get_fixtures = boom
+        collect.collect_live(_factory_with_status(stored), client)
+        # Normal match still upserted despite full-fetch failure.
+        assert any(r.fixture_id == 5 for r in captured_upsert["rows"])

@@ -35,6 +35,9 @@ log = logging.getLogger(__name__)
 # layer into the collector. Used to skip injury attachment on finished fixtures.
 _FINISHED_FIXTURE_STATUSES = {"FT", "AET", "PEN"}
 
+# Mirror of fixtures.LIVE_STATUSES — kept local for the same reason.
+_LIVE_STATUSES = {"1H", "HT", "2H", "ET", "BT", "P", "LIVE"}
+
 
 def _parse_date(val: str) -> date:
     return date.fromisoformat(val)
@@ -201,8 +204,6 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
     (goal / red / status / ~15' bucket), and is gated on DEEPSEEK_API_KEY.
     """
     live = client.get_fixtures(live=True)
-    if not live:
-        return 0
     with session_factory() as session:
         stored = {
             r["fixture_id"]: r
@@ -210,6 +211,8 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
                 select(
                     matches_table.c.fixture_id,
                     matches_table.c.group_name,
+                    matches_table.c.status,
+                    matches_table.c.kickoff_utc,
                     matches_table.c.forecast_json,
                     matches_table.c.live_winprob_adj_json,
                     matches_table.c.live_winprob_history_json,
@@ -217,7 +220,10 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
                 )
             ).mappings().all()
         }
+
+        live_ids = {m.fixture_id for m in live}
         ours = [m for m in live if m.fixture_id in stored]
+
         # Attach the live event feed (incl. final events at FT) so the match page
         # timeline updates on the poll. A failed events fetch must not abort the
         # score/status upsert, so it is per-fixture guarded.
@@ -241,8 +247,30 @@ def collect_live(session_factory, client: APIFootballClient) -> int:
                 log.warning("Live win-prob update failed for %s: %s", m.fixture_id, exc)
         if ours:
             upsert_matches(session, ours)
-    log.info("Live refresh: %d in-play (%d ours) upserted", len(live), len(ours))
-    return len(ours)
+
+        # Detect matches we still hold as in-play that dropped off the live feed.
+        # They ended but the final status was never written by this poller — fetch
+        # the authoritative full set once and settle them.
+        stuck = [
+            fid for fid, r in stored.items()
+            if (r.get("status") or "").strip().upper() in _LIVE_STATUSES
+            and fid not in live_ids
+        ]
+        if stuck:
+            try:
+                full = client.get_fixtures()
+                full_by_id = {m.fixture_id: m for m in full}
+                to_finalize = [full_by_id[fid] for fid in stuck if fid in full_by_id]
+                if to_finalize:
+                    upsert_matches(session, to_finalize)
+                log.info("Finalized %d matches that left the live feed", len(to_finalize))
+            except Exception as exc:
+                log.warning("Finalize-on-drop full fetch failed: %s", exc)
+
+    n = len(ours)
+    if live or stored:
+        log.info("Live refresh: %d in-play (%d ours) upserted", len(live), n)
+    return n
 
 
 # Max win-prob history points kept per match (events + a point every ~15' stays
