@@ -146,11 +146,14 @@ export default function MatchLive({ initial, formSlot, stakesSlot, teamStatusSlo
           <h2 className="section-title">Forecast vs Reality</h2>
           <ForecastVsReality
             forecast={fixture.forecast}
+            forecastSignals={fixture.forecast_signals ?? null}
             homeScore={fixture.home_score}
             awayScore={fixture.away_score}
             elapsed={minute}
             homeTeam={homeTeam}
             awayTeam={awayTeam}
+            statistics={fixture.statistics}
+            liveRead={fixture.live_read ?? null}
           />
         </>
       ) : null}

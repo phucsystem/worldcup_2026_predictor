@@ -167,6 +167,18 @@ export interface SocialHighlight {
   why: string | null;
 }
 
+// Mirrors backend app.api.fixtures.ForecastSignalsSide.
+export interface ForecastSignalsSide {
+  fifa_rank?: number | null;
+  form?: string | null;       // e.g. "WWDWL" — last 5, oldest-first
+  goals_per_game?: number | null;
+}
+
+export interface ForecastSignals {
+  home: ForecastSignalsSide;
+  away: ForecastSignalsSide;
+}
+
 // Mirrors backend app.api.fixtures.MatchLiveWinProb — the final hybrid live split.
 export interface LiveWinProb {
   home: number;
@@ -191,6 +203,7 @@ export interface FixtureDetail extends FixtureRow {
   verdict: string | null;
   verdict_model: string | null;
   forecast: Forecast | null;
+  forecast_signals?: ForecastSignals | null;
   social_highlights: SocialHighlight[];
   social_model: string | null;
   live_winprob?: LiveWinProb | null;

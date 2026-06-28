@@ -12,6 +12,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.data.availability import build_team_status, last_match_contributors
+from app.data.fifa_rankings import get_fifa_rank
 from app.data.models import Match, StandingRow, TeamStatus
 from app.data.repository import (
     finished_group_matches_for_team,
@@ -145,12 +146,24 @@ class LiveWinProbPoint(BaseModel):
     label: Optional[str] = None
 
 
+class ForecastSignalsSide(BaseModel):
+    fifa_rank: Optional[int] = None
+    form: Optional[str] = None          # e.g. "WWDWL" — last 5, oldest-first
+    goals_per_game: Optional[float] = None
+
+
+class ForecastSignals(BaseModel):
+    home: ForecastSignalsSide
+    away: ForecastSignalsSide
+
+
 class FixtureDetail(FixtureRow):
     events: list[MatchEvent] = []
     statistics: list[MatchStat] = []
     verdict: Optional[str] = None
     verdict_model: Optional[str] = None
     forecast: Optional[MatchForecast] = None
+    forecast_signals: Optional[ForecastSignals] = None
     # Curated fan-discussion highlights for an upcoming fixture; empty list when
     # none stored. `social_model` names the producing model.
     social_highlights: list[SocialHighlight] = []
@@ -408,6 +421,53 @@ def select_fixtures_needing_social(matches, now: datetime) -> list[int]:
     ]
     upcoming.sort(key=lambda m: m.kickoff_utc)
     return [m.fixture_id for m in upcoming[: settings.SOCIAL_MAX_FIXTURES_PER_RUN]]
+
+
+def _team_forecast_signals(session, team: str) -> ForecastSignalsSide:
+    """Compute FIFA rank, last-5 form string, and goals/game for `team` from
+    finished group-stage matches. Returns a ForecastSignalsSide with whatever
+    data is available; missing data fields stay None."""
+    rank = get_fifa_rank(team)
+    matches = finished_group_matches_for_team(session, team)
+
+    form: Optional[str] = None
+    goals_per_game: Optional[float] = None
+
+    if matches:
+        letters = []
+        total_gf = 0
+        for m in matches:
+            is_home = m["home_team"] == team
+            gf = (m["home_score"] if is_home else m["away_score"]) or 0
+            ga = (m["away_score"] if is_home else m["home_score"]) or 0
+            total_gf += gf
+            if gf > ga:
+                letters.append("W")
+            elif gf == ga:
+                letters.append("D")
+            else:
+                letters.append("L")
+        # last 5, oldest-first (matches are already sorted by kickoff_utc asc)
+        form = "".join(letters[-5:])
+        n = len(matches)
+        goals_per_game = round(total_gf / n, 2) if n else None
+
+    return ForecastSignalsSide(fifa_rank=rank, form=form, goals_per_game=goals_per_game)
+
+
+def _compute_forecast_signals(session, home_team: Optional[str], away_team: Optional[str]) -> Optional[ForecastSignals]:
+    """Build ForecastSignals for both sides. Returns None when both teams are
+    unknown (no rank, no matches) — avoids a meaningless empty object."""
+    if not home_team and not away_team:
+        return None
+    home_side = _team_forecast_signals(session, home_team or "")
+    away_side = _team_forecast_signals(session, away_team or "")
+    # At least one signal must be populated for the object to be meaningful
+    has_data = any([
+        home_side.fifa_rank, home_side.form, home_side.goals_per_game,
+        away_side.fifa_rank, away_side.form, away_side.goals_per_game,
+    ])
+    return ForecastSignals(home=home_side, away=away_side) if has_data else None
 
 
 def _enrich(row: dict, logos: dict[str, str]) -> FixtureRow:
@@ -671,6 +731,12 @@ def get_fixture(fixture_id: int):
             (None, None) if is_finished
             else _team_statuses(session, home_team, away_team, injury_records or [])
         )
+        # Compute key signals for the forecast column only when a forecast exists
+        # (avoids unnecessary queries on every fixture; null-safe for non-group teams).
+        forecast_signals = (
+            _compute_forecast_signals(session, home_team, away_team)
+            if forecast_json else None
+        )
     finally:
         session.close()
     base = _enrich(_row_to_dict(row), logos)
@@ -696,6 +762,7 @@ def get_fixture(fixture_id: int):
         verdict=verdict_text,
         verdict_model=verdict_model,
         forecast=forecast,
+        forecast_signals=forecast_signals,
         social_highlights=social_highlights,
         social_model=social_model if social_highlights else None,
         live_winprob=live_winprob,

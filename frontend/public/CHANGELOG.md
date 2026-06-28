@@ -4,6 +4,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 
 ## 28 Jun 2026
 
+- **Improved** — The "Forecast vs Reality" section now shows richer detail on both sides: the Forecast column adds pre-match key signals (FIFA rank, recent form, goals per game) and the Reality column shows an AI live read plus live match stats (possession, shots, xG) — both columns equal weight and bottom-aligned.
 - **New** — Live match pages now show a "Forecast vs Reality" section comparing the pre-kickoff prediction to the actual scoreline as the game unfolds — with a live verdict (On track, Tighter than forecast, or Upset in progress) that updates as goals go in.
 - **New** — Match forecasts now cover the knockout rounds too, not just the group stage — so every upcoming game (Round of 32 onward) gets a win/draw/win prediction with reasoning.
 - **Improved** — Forecasts now weigh far more than the league table: world ranking, scoring rate, recent form, key absences (injuries/suspensions), and standout players — including famous names who haven't scored yet — for sharper, better-reasoned predictions.
