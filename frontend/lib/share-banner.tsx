@@ -38,8 +38,28 @@ export async function loadShareFonts() {
   ];
 }
 
+function hasKickedOff(kickoffUtc: string | null): boolean {
+  if (!kickoffUtc) return false;
+  const t = Date.parse(kickoffUtc);
+  return Number.isFinite(t) && t <= Date.now();
+}
+
 export function isLiveFixture(fixture: FixtureDetail): boolean {
-  return matchState(fixture.status) === "live";
+  const state = matchState(fixture.status);
+  if (state === "live") return true;
+  if (state === "finished") return false;
+  // Status hasn't flipped to live yet (poller lag) but kickoff has passed — treat
+  // as live so the share image shows the score layout, not an upcoming "VS" card.
+  return hasKickedOff(fixture.kickoff_utc);
+}
+
+// Which banner layout to draw. Only a genuinely upcoming match (status not
+// live/finished AND kickoff still in the future) gets the "VS" preview; a
+// kicked-off match renders the score layout even if its status lags at NS.
+export function shareBannerVariant(fixture: FixtureDetail): "preview" | "result" {
+  return matchState(fixture.status) === "preview" && !isLiveFixture(fixture)
+    ? "preview"
+    : "result";
 }
 
 // Strict positive-integer id — rejects "5.7", "abc", " 5", "0x10", "1e3" so the
@@ -405,7 +425,7 @@ export function renderShareBanner(fixture: FixtureDetail) {
   const homeFlag = flagDataUri(fixture.home_team);
   const awayFlag = flagDataUri(fixture.away_team);
   const content =
-    matchState(fixture.status) === "preview"
+    shareBannerVariant(fixture) === "preview"
       ? previewContent(fixture, context)
       : resultContent(fixture, context);
   return shareFrame(homeFlag, awayFlag, content);
