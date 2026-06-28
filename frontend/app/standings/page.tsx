@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getStandings, getKnockout } from "@/lib/api";
+import { getStandings } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Group Standings",
@@ -7,12 +7,13 @@ export const metadata: Metadata = {
     "Live Group A–L standings for the 2026 World Cup — points, goal difference, form and qualification scenarios for all 48 teams.",
   alternates: { canonical: "/standings" },
 };
-import StandingsView from "@/components/standings-view";
+import StandingsTable from "@/components/standings-table";
+import EmptyState from "@/components/empty-state";
 
 export const dynamic = "force-dynamic";
 
 export default async function StandingsPage() {
-  const [snapshot, knockout] = await Promise.all([getStandings(), getKnockout()]);
+  const snapshot = await getStandings();
 
   const snapshotLabel = snapshot?.snapshot_date
     ? new Date(snapshot.snapshot_date + "T00:00:00").toLocaleDateString("en-AU", {
@@ -38,7 +39,18 @@ export default async function StandingsPage() {
         )}
       </div>
 
-      <StandingsView snapshot={snapshot} knockout={knockout} />
+      {!snapshot || snapshot.groups.length === 0 ? (
+        <EmptyState
+          message="Standings will appear once match data is available."
+          subtext="Check back after the first group stage matches."
+        />
+      ) : (
+        <div className="grid gap-6 grid-cols-1">
+          {snapshot.groups.map((g) => (
+            <StandingsTable key={g.group_name} groupName={g.group_name} rows={g.rows} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

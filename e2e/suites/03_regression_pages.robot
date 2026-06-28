@@ -22,6 +22,12 @@ Fixtures Page Renders
     Wait For Load State    networkidle    timeout=15s
     Get Title   contains    WC26
 
+Knockout Page Renders
+    Go To       ${BASE_URL}/knockout
+    Wait For Load State    networkidle    timeout=15s
+    Get Title   contains    WC26
+    Get Text    body    contains    Knockout
+
 Changelog Page Renders
     Go To       ${BASE_URL}/changelog
     Wait For Load State    networkidle    timeout=15s

@@ -1,4 +1,4 @@
-import { getUpcomingFixtures, getKnockout } from "@/lib/api";
+import { getUpcomingFixtures } from "@/lib/api";
 import FixturesView from "@/components/fixtures-view";
 import { TimezoneNote } from "@/components/local-time";
 
@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 export const metadata: import("next").Metadata = {
   title: "Fixtures & Schedule",
   description:
-    "The full 2026 World Cup fixture list and knockout bracket — upcoming kickoffs shown in your local time.",
+    "The full 2026 World Cup fixture list — upcoming kickoffs shown in your local time.",
   alternates: { canonical: "/fixtures" },
 };
 
 export default async function FixturesPage() {
-  const [upcoming, knockout] = await Promise.all([getUpcomingFixtures(), getKnockout()]);
+  const upcoming = await getUpcomingFixtures();
 
   return (
     <div className="px-6 py-8" style={{ maxWidth: "960px", margin: "0 auto" }}>
@@ -23,7 +23,7 @@ export default async function FixturesPage() {
         <TimezoneNote className="text-xs" style={{ color: "#6B7A9E" }} />
       </div>
 
-      <FixturesView upcoming={upcoming} knockout={knockout} />
+      <FixturesView upcoming={upcoming} />
     </div>
   );
 }

@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { UpcomingFixtures, KnockoutBracket, FixtureRow as Fixture } from "@/lib/api";
+import type { UpcomingFixtures, FixtureRow as Fixture } from "@/lib/api";
 import FixtureRow from "@/components/fixture-row";
-import KnockoutBracketView from "@/components/knockout-bracket";
 import EmptyState from "@/components/empty-state";
 import { FALLBACK_TZ, resolveTz } from "@/components/local-time";
 
@@ -38,15 +37,11 @@ function dayLabel(iso: string, tz: string): string {
   });
 }
 
-type View = "upcoming" | "knockout";
-
 interface Props {
   upcoming: UpcomingFixtures;
-  knockout: KnockoutBracket;
 }
 
-export default function FixturesView({ upcoming, knockout }: Props) {
-  const [view, setView] = useState<View>("upcoming");
+export default function FixturesView({ upcoming }: Props) {
   // Group by the viewer's local day. First paint uses FALLBACK_TZ (matching the
   // server's Melbourne grouping → no hydration mismatch), then re-groups on mount.
   const [tz, setTz] = useState(FALLBACK_TZ);
@@ -59,59 +54,36 @@ export default function FixturesView({ upcoming, knockout }: Props) {
     [upcoming, tz],
   );
 
-  return (
-    <div>
-      <div role="tablist" aria-label="Fixtures view" className="inline-flex p-1 mb-6" style={{ backgroundColor: "#0A1B3D", borderRadius: "999px", border: "1px solid #1E3157" }}>
-        {(["upcoming", "knockout"] as View[]).map((v) => {
-          const active = view === v;
-          return (
-            <button
-              key={v}
-              role="tab"
-              aria-selected={active}
-              onClick={() => setView(v)}
-              className="px-4 py-1.5 text-sm font-semibold capitalize transition-colors"
-              style={{
-                backgroundColor: active ? "#2D6BF6" : "transparent",
-                color: active ? "#FFFFFF" : "#A9B6D4",
-                borderRadius: "999px",
-              }}
-            >
-              {v}
-            </button>
-          );
-        })}
-      </div>
+  if (days.length === 0) {
+    return (
+      <EmptyState
+        message="No upcoming fixtures scheduled"
+        subtext="Check back as the schedule fills in"
+      />
+    );
+  }
 
-      {view === "upcoming" ? (
-        days.length === 0 ? (
-          <EmptyState message="No upcoming fixtures scheduled" subtext="Check back as the schedule fills in" />
-        ) : (
-          <div className="flex flex-col gap-8">
-            {days.map((day) => {
-              const label = dayLabel(day.fixtures[0].kickoff_utc as string, tz);
-              return (
-                <section key={day.key} aria-label={label}>
-                  <h2
-                    className="text-xs font-semibold uppercase mb-3"
-                    style={{ color: "#A9B6D4", letterSpacing: "0.04em" }}
-                    suppressHydrationWarning
-                  >
-                    {label}
-                  </h2>
-                  <div className="flex flex-col gap-3">
-                    {day.fixtures.map((f) => (
-                      <FixtureRow key={f.fixture_id} fixture={f} showCountdown />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-        )
-      ) : (
-        <KnockoutBracketView bracket={knockout} />
-      )}
+  return (
+    <div className="flex flex-col gap-8">
+      {days.map((day) => {
+        const label = dayLabel(day.fixtures[0].kickoff_utc as string, tz);
+        return (
+          <section key={day.key} aria-label={label}>
+            <h2
+              className="text-xs font-semibold uppercase mb-3"
+              style={{ color: "#A9B6D4", letterSpacing: "0.04em" }}
+              suppressHydrationWarning
+            >
+              {label}
+            </h2>
+            <div className="flex flex-col gap-3">
+              {day.fixtures.map((f) => (
+                <FixtureRow key={f.fixture_id} fixture={f} showCountdown />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }
