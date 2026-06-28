@@ -18,16 +18,24 @@ export function matchState(status: string | null): MatchStateName {
   return "preview";
 }
 
-export function hasKickedOff(kickoffUtc: string | null): boolean {
+// A match plausibly still in play: kickoff has passed but not by more than a full
+// match's worth of time (90' + ET + penalties + stoppage, generously 4h). Bounds
+// the live fallback so a fixture left at NS for days (stale/postponed data, or an
+// old seeded fixture) is NOT treated as live — only a genuinely just-started one.
+const LIVE_FALLBACK_WINDOW_MS = 4 * 60 * 60 * 1000;
+
+export function isRecentlyKickedOff(kickoffUtc: string | null): boolean {
   if (!kickoffUtc) return false;
   const t = Date.parse(kickoffUtc);
-  return Number.isFinite(t) && t <= Date.now();
+  if (!Number.isFinite(t)) return false;
+  const now = Date.now();
+  return t <= now && now - t <= LIVE_FALLBACK_WINDOW_MS;
 }
 
-// Like matchState but treats a kicked-off NS match (poller lag) as "live".
+// Like matchState but treats a just-kicked-off NS match (poller lag) as "live".
 export function effectiveMatchState(status: string | null, kickoffUtc: string | null): MatchStateName {
   const state = matchState(status);
-  if (state === "preview" && hasKickedOff(kickoffUtc)) return "live";
+  if (state === "preview" && isRecentlyKickedOff(kickoffUtc)) return "live";
   return state;
 }
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   matchState,
-  hasKickedOff,
+  isRecentlyKickedOff,
   effectiveMatchState,
   buildTimeline,
   goalscorers,
@@ -46,19 +46,24 @@ describe("matchState", () => {
   });
 });
 
-describe("hasKickedOff", () => {
-  it("returns true for a past kickoff", () => {
+describe("isRecentlyKickedOff", () => {
+  it("returns true for a recent past kickoff (within the live window)", () => {
     const past = new Date(Date.now() - 60_000).toISOString();
-    expect(hasKickedOff(past)).toBe(true);
+    expect(isRecentlyKickedOff(past)).toBe(true);
   });
 
   it("returns false for a future kickoff", () => {
     const future = new Date(Date.now() + 60_000).toISOString();
-    expect(hasKickedOff(future)).toBe(false);
+    expect(isRecentlyKickedOff(future)).toBe(false);
+  });
+
+  it("returns false for a long-past kickoff (stale NS, not live)", () => {
+    const longPast = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
+    expect(isRecentlyKickedOff(longPast)).toBe(false);
   });
 
   it("returns false for null", () => {
-    expect(hasKickedOff(null)).toBe(false);
+    expect(isRecentlyKickedOff(null)).toBe(false);
   });
 });
 
@@ -72,9 +77,14 @@ describe("effectiveMatchState", () => {
     expect(effectiveMatchState("FT", new Date(Date.now() - 7_200_000).toISOString())).toBe("finished");
   });
 
-  it("returns live for NS with a past kickoff (poller-lag case)", () => {
+  it("returns live for NS with a recent past kickoff (poller-lag case)", () => {
     const past = new Date(Date.now() - 5 * 60_000).toISOString();
     expect(effectiveMatchState("NS", past)).toBe("live");
+  });
+
+  it("returns preview for NS kicked off long ago (stale fixture, not live)", () => {
+    const longPast = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
+    expect(effectiveMatchState("NS", longPast)).toBe("preview");
   });
 
   it("returns preview for NS with a future kickoff", () => {
