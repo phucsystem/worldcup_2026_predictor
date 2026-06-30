@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getFixture, getStandings } from "@/lib/api";
 import { SITE } from "@/lib/site";
-import { matchState } from "@/lib/match";
+import { effectiveMatchState } from "@/lib/match";
 import NextMatchCard from "@/components/next-match-card";
 import MatchHeroFinal from "@/components/match-hero-final";
 import MatchTimeline from "@/components/match-timeline";
@@ -33,7 +33,7 @@ export async function generateMetadata({
     fixture.home_score != null && fixture.away_score != null
       ? `${home} ${fixture.home_score}–${fixture.away_score} ${away}`
       : `${home} vs ${away}`;
-  const state = matchState(fixture.status);
+  const state = effectiveMatchState(fixture.status, fixture.kickoff_utc);
   const title =
     state === "live" ? `LIVE: ${scored}` : state === "finished" ? `${scored} · Full Time` : scored;
   const description = `${scored}${fixture.group_name ? ` · ${fixture.group_name}` : ""} — World Cup 2026 result, forecast and analysis.`;
@@ -53,7 +53,7 @@ export default async function MatchPage({ params }: { params: Promise<{ fixture_
   const [fixture, standings] = await Promise.all([getFixture(id), getStandings()]);
   if (!fixture) notFound();
 
-  const state = matchState(fixture.status);
+  const state = effectiveMatchState(fixture.status, fixture.kickoff_utc);
   const homeTeam = fixture.home_team ?? "Home";
   const awayTeam = fixture.away_team ?? "Away";
   const forecast = fixture.forecast;

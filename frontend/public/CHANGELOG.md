@@ -15,6 +15,7 @@ What's shipping on the World Cup 2026 Intelligence platform. Newest first, group
 
 ## 28 Jun 2026
 
+- **Fixed** — A match that has kicked off now shows its live view and live scoreline — on the match page, the shared/preview image, and link titles — instead of an "upcoming / VS" card during the first minutes before the live status has fully updated.
 - **Fixed** — Finished matches now switch from "live" to the final result on their own within a couple of minutes, instead of staying stuck on "live" until the next daily refresh.
 - **Improved** — The "Forecast vs Reality" section now shows richer detail on both sides: the Forecast column adds pre-match key signals (FIFA rank, recent form, goals per game) and the Reality column shows an AI live read plus live match stats (possession, shots, xG) — both columns equal weight and bottom-aligned.
 - **New** — Live match pages now show a "Forecast vs Reality" section comparing the pre-kickoff prediction to the actual scoreline as the game unfolds — with a live verdict (On track, Tighter than forecast, or Upset in progress) that updates as goals go in.

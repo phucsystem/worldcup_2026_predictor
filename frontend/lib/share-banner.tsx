@@ -3,8 +3,7 @@ import { join } from "node:path";
 import type { ReactNode } from "react";
 import type { FixtureDetail } from "@/lib/api";
 import { flagSvg } from "@/lib/flags";
-import { goalscorers } from "@/lib/match";
-import { matchState } from "@/lib/match";
+import { goalscorers, effectiveMatchState } from "@/lib/match";
 import { forecastSegments } from "@/lib/banner";
 import { SITE } from "@/lib/site";
 
@@ -39,7 +38,13 @@ export async function loadShareFonts() {
 }
 
 export function isLiveFixture(fixture: FixtureDetail): boolean {
-  return matchState(fixture.status) === "live";
+  return effectiveMatchState(fixture.status, fixture.kickoff_utc) === "live";
+}
+
+// Which banner layout to draw. Only a genuinely upcoming match gets the "VS"
+// preview; a kicked-off match renders the score layout even if status lags at NS.
+export function shareBannerVariant(fixture: FixtureDetail): "preview" | "result" {
+  return effectiveMatchState(fixture.status, fixture.kickoff_utc) === "preview" ? "preview" : "result";
 }
 
 // Strict positive-integer id — rejects "5.7", "abc", " 5", "0x10", "1e3" so the
@@ -405,7 +410,7 @@ export function renderShareBanner(fixture: FixtureDetail) {
   const homeFlag = flagDataUri(fixture.home_team);
   const awayFlag = flagDataUri(fixture.away_team);
   const content =
-    matchState(fixture.status) === "preview"
+    shareBannerVariant(fixture) === "preview"
       ? previewContent(fixture, context)
       : resultContent(fixture, context);
   return shareFrame(homeFlag, awayFlag, content);
