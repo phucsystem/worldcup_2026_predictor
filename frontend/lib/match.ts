@@ -11,11 +11,38 @@ export type MatchStateName = "preview" | "live" | "finished";
 const LIVE_STATUSES = new Set(["1H", "HT", "2H", "ET", "BT", "P", "LIVE"]);
 const FINISHED_STATUSES = new Set(["FT", "AET", "PEN"]);
 
-export function matchState(status: string | null): MatchStateName {
+export function matchState(status: string | null | undefined): MatchStateName {
   const code = (status ?? "").trim().toUpperCase();
   if (LIVE_STATUSES.has(code)) return "live";
   if (FINISHED_STATUSES.has(code)) return "finished";
   return "preview";
+}
+
+// Decided side of a finished match. Prefers winner_side (set on the advancing
+// side for knockout ties decided in extra time or on penalties — even when the
+// regulation score is level), else the regulation score. Returns null while
+// unfinished; "draw" only for a level regulation result with no winner_side.
+export function resolveWinner(m: {
+  status?: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  winner_side?: "home" | "away" | null;
+}): "home" | "away" | "draw" | null {
+  if (matchState(m.status) !== "finished") return null;
+  if (m.winner_side === "home" || m.winner_side === "away") return m.winner_side;
+  if (m.home_score == null || m.away_score == null) return null;
+  if (m.home_score > m.away_score) return "home";
+  if (m.away_score > m.home_score) return "away";
+  return "draw";
+}
+
+// Friendly label for how a finished match ended: knockout ties decided later
+// read "After Extra Time" / "Penalties"; everything else "Full Time".
+export function finishedStatusLabel(status: string | null | undefined): string {
+  const code = (status ?? "").trim().toUpperCase();
+  if (code === "PEN") return "Penalties";
+  if (code === "AET") return "After Extra Time";
+  return "Full Time";
 }
 
 // A match plausibly still in play: kickoff has passed but not by more than a full

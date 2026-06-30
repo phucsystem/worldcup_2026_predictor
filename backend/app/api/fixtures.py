@@ -117,6 +117,11 @@ class FixtureRow(BaseModel):
     home_score: Optional[int] = None
     away_score: Optional[int] = None
     status: Optional[str] = None
+    # Knockout result: advancing side + penalty-shootout score (None for group
+    # stage / unplayed / matches decided in regulation without a shootout).
+    winner_side: Optional[str] = None
+    home_pen: Optional[int] = None
+    away_pen: Optional[int] = None
     elapsed: Optional[int] = None
     stage: Optional[str] = None
     group_name: Optional[str] = None
@@ -528,6 +533,9 @@ def _enrich(row: dict, logos: dict[str, str]) -> FixtureRow:
         home_score=row.get("home_score"),
         away_score=row.get("away_score"),
         status=row.get("status"),
+        winner_side=row.get("winner_side"),
+        home_pen=row.get("home_pen"),
+        away_pen=row.get("away_pen"),
         elapsed=row.get("elapsed"),
         stage=row.get("stage"),
         group_name=row.get("group_name"),
@@ -579,11 +587,17 @@ def _is_finished(status: Optional[str]) -> bool:
 
 
 def _winner_team(tie: Optional[FixtureRow]) -> Optional[str]:
-    """Winning team of a finished tie by score; None if the tie is unplayed,
-    in-play, or level (a penalty-shootout result isn't derivable from the
-    90/120-minute score, so we leave the next slot TBD rather than guess)."""
+    """Advancing team of a finished tie. Prefers winner_side (from API-Football's
+    teams.winner flag — set even on a penalty/extra-time win), so a level
+    90/120-minute score still resolves. Falls back to the regulation score for
+    decisive matches that predate winner_side; a level score with no winner_side
+    stays None (next slot remains TBD rather than guess)."""
     if tie is None or not _is_finished(tie.status):
         return None
+    if tie.winner_side == "home":
+        return tie.home_team
+    if tie.winner_side == "away":
+        return tie.away_team
     if tie.home_score is None or tie.away_score is None:
         return None
     if tie.home_score > tie.away_score:
@@ -740,6 +754,9 @@ def _row_to_dict(r) -> dict:
         "home_score": r.home_score,
         "away_score": r.away_score,
         "status": r.status,
+        "winner_side": r.winner_side,
+        "home_pen": r.home_pen,
+        "away_pen": r.away_pen,
         "elapsed": r.elapsed,
         "stage": r.stage,
         "group_name": r.group_name,

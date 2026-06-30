@@ -28,6 +28,9 @@ matches_table = sa.Table(
     sa.Column("home_score", sa.Integer),
     sa.Column("away_score", sa.Integer),
     sa.Column("status", sa.String),
+    sa.Column("winner_side", sa.String),
+    sa.Column("home_pen", sa.Integer),
+    sa.Column("away_pen", sa.Integer),
     sa.Column("elapsed", sa.Integer),
     sa.Column("kickoff_utc", sa.DateTime(timezone=True)),
     sa.Column("events_json", sa.JSON),
@@ -229,6 +232,12 @@ def upsert_matches(session: Session, matches: list[Match]) -> None:
             home_score=m.home_score,
             away_score=m.away_score,
             status=m.status,
+            # Knockout result: written unconditionally (like home_score/status).
+            # _map_fixture is the sole producer; the live feed (`?live=all`) drops
+            # finished matches, so it never re-writes a decided tie with stale Nones.
+            winner_side=m.winner_side,
+            home_pen=m.home_pen,
+            away_pen=m.away_pen,
             elapsed=m.elapsed,
             kickoff_utc=m.kickoff_utc,
             stage=m.stage,

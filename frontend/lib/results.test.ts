@@ -10,6 +10,10 @@ function r(partial: Partial<RecentResult>): RecentResult {
     away_team: "Serbia",
     home_score: 3,
     away_score: 1,
+    status: "FT",
+    winner_side: null,
+    home_pen: null,
+    away_pen: null,
     kickoff_utc: "2026-06-12T18:00:00Z",
     ...partial,
   };
@@ -99,6 +103,23 @@ describe("groupedResultRows", () => {
     expect(rows).toHaveLength(6);
   });
 
+  it("advances the penalty winner and carries pen score (home widget)", () => {
+    const [row] = groupedResultRows([
+      group([
+        {
+          fixture_id: 5, kickoff_utc: "2026-07-05T18:00:00Z",
+          home_team: "Brazil", away_team: "Serbia",
+          home_score: 1, away_score: 1, status: "PEN",
+          winner_side: "home", home_pen: 5, away_pen: 4,
+        },
+      ]),
+    ]);
+    expect(row.winner).toBe("home");
+    expect(row.status).toBe("PEN");
+    expect(row.homePen).toBe(5);
+    expect(row.awayPen).toBe(4);
+  });
+
   it("does not cap a single busy day at a match count", () => {
     const many = Array.from({ length: 10 }, (_, i) => ({
       fixture_id: i + 1,
@@ -116,6 +137,10 @@ function item(partial: Partial<ResultItem>): ResultItem {
     away_team: "Serbia",
     home_score: 3,
     away_score: 1,
+    status: "FT",
+    winner_side: null,
+    home_pen: null,
+    away_pen: null,
     kickoff_utc: "2026-06-12T18:00:00Z",
     group_name: "A",
     stage: "Group Stage - 1",
@@ -161,5 +186,19 @@ describe("resultRowsFromResults", () => {
   it("draws when scores are level", () => {
     const [row] = resultRowsFromResults([item({ home_score: 2, away_score: 2 })]);
     expect(row.winner).toBe("draw");
+  });
+
+  it("advances the penalty winner on a level knockout score", () => {
+    const [row] = resultRowsFromResults([
+      item({
+        group_name: null, stage: "Round of 16",
+        home_score: 1, away_score: 1, status: "PEN",
+        winner_side: "away", home_pen: 3, away_pen: 4,
+      }),
+    ]);
+    expect(row.winner).toBe("away");
+    expect(row.status).toBe("PEN");
+    expect(row.homePen).toBe(3);
+    expect(row.awayPen).toBe(4);
   });
 });

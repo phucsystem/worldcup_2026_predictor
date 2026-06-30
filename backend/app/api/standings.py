@@ -39,6 +39,13 @@ class RecentResult(BaseModel):
     away_team: str | None
     home_score: int | None
     away_score: int | None
+    # Knockout result: status ("FT"/"AET"/"PEN"), advancing side, and penalty
+    # shootout score. None for group-stage rows. Let the widget render the
+    # ET/penalty label + shootout score and the correct advancing team.
+    status: str | None = None
+    winner_side: str | None = None
+    home_pen: int | None = None
+    away_pen: int | None = None
     kickoff_utc: datetime | None
     # Whether the pre-match forecast called the right side; None when the match
     # carried no forecast (forecast scope is group-stage only).
@@ -84,9 +91,15 @@ class StandingsSnapshot(BaseModel):
 # ---------------------------------------------------------------------------
 
 def match_outcome(team: str, match: dict) -> str:
-    """W/D/L from `team`'s perspective. Assumes scores are present."""
+    """W/D/L from `team`'s perspective. Assumes scores are present. Knockout ties
+    decided in extra time / on penalties carry winner_side (set even on a level
+    score), so prefer it before the raw score — else a penalty win reads as a draw."""
+    is_home = match.get("home_team") == team
+    winner_side = match.get("winner_side")
+    if winner_side in ("home", "away"):
+        return "W" if (winner_side == "home") == is_home else "L"
     hs, as_ = match.get("home_score"), match.get("away_score")
-    gf, ga = (hs, as_) if match.get("home_team") == team else (as_, hs)
+    gf, ga = (hs, as_) if is_home else (as_, hs)
     if gf > ga:
         return "W"
     if gf == ga:
@@ -149,6 +162,10 @@ def recent_results_by_team(
                     away_team=m.get("away_team"),
                     home_score=m.get("home_score"),
                     away_score=m.get("away_score"),
+                    status=m.get("status"),
+                    winner_side=m.get("winner_side"),
+                    home_pen=m.get("home_pen"),
+                    away_pen=m.get("away_pen"),
                     kickoff_utc=m.get("kickoff_utc"),
                     forecast_correct=forecast_correct(
                         m.get("forecast_json"),
@@ -203,6 +220,9 @@ def get_standings(date: Optional[date] = None):
                 matches_table.c.home_score,
                 matches_table.c.away_score,
                 matches_table.c.status,
+                matches_table.c.winner_side,
+                matches_table.c.home_pen,
+                matches_table.c.away_pen,
                 matches_table.c.kickoff_utc,
                 matches_table.c.forecast_json,
             ).where(matches_table.c.status.in_(_FINISHED))
@@ -219,6 +239,9 @@ def get_standings(date: Optional[date] = None):
                 "home_score": m.home_score,
                 "away_score": m.away_score,
                 "status": m.status,
+                "winner_side": m.winner_side,
+                "home_pen": m.home_pen,
+                "away_pen": m.away_pen,
                 "kickoff_utc": m.kickoff_utc,
                 "forecast_json": m.forecast_json,
             }

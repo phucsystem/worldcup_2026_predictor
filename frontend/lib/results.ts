@@ -1,6 +1,7 @@
 // Pure data→view helper mapping recent finished matches into ResultChip props.
 import type { GroupStandings, RecentResult, ResultItem } from "@/lib/api";
 import { dateKey, kickoffDayLabel } from "@/lib/time";
+import { resolveWinner } from "@/lib/match";
 
 export type ChipVariant = "win" | "draw" | "loss";
 
@@ -38,6 +39,11 @@ export interface ResultWidgetRow {
   homeScore: number;
   awayScore: number;
   winner: "home" | "away" | "draw";
+  // Knockout result: how the tie ended ("FT"/"AET"/"PEN") and the penalty
+  // shootout score; null/undefined for group-stage rows (rendered as "Full Time").
+  status?: string | null;
+  homePen?: number | null;
+  awayPen?: number | null;
   forecastCorrect: boolean | null; // null when the match carried no forecast
 }
 
@@ -80,7 +86,12 @@ export function groupedResultRows(
           away: r.away_team,
           homeScore: hs,
           awayScore: as,
-          winner: hs > as ? "home" : hs < as ? "away" : "draw",
+          // honour winner_side for knockout ET/penalty ties; level group-stage
+          // matches (no winner_side) still fall through to "draw".
+          winner: resolveWinner(r) ?? "draw",
+          status: r.status,
+          homePen: r.home_pen,
+          awayPen: r.away_pen,
           forecastCorrect: r.forecast_correct ?? null,
         });
       }
@@ -116,6 +127,9 @@ export function resultRowsFromResults(items: ResultItem[]): ResultWidgetRow[] {
     }
     const hs = item.home_score;
     const as = item.away_score;
+    // resolveWinner honours winner_side (knockout ET/penalty ties); only a level
+    // result with no winner_side stays "draw".
+    const winner = resolveWinner(item) ?? "draw";
     rows.push({
       key: `${item.kickoff_utc}-${item.home_team}-${item.away_team}`,
       fixtureId: item.fixture_id ?? null,
@@ -126,7 +140,10 @@ export function resultRowsFromResults(items: ResultItem[]): ResultWidgetRow[] {
       away: item.away_team,
       homeScore: hs,
       awayScore: as,
-      winner: hs > as ? "home" : hs < as ? "away" : "draw",
+      winner,
+      status: item.status,
+      homePen: item.home_pen,
+      awayPen: item.away_pen,
       forecastCorrect: item.forecast_correct ?? null,
     });
   }

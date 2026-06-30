@@ -85,6 +85,20 @@ def _map_fixture(raw: dict) -> Match:
     home_score = _parse_score(goals.get("home")) if in_play_or_done else None
     away_score = _parse_score(goals.get("away")) if in_play_or_done else None
 
+    # Knockout result fields. winner_side comes from API-Football's per-team
+    # `winner` flag (set on the advancing side even for a penalty win); the
+    # penalty shootout score lives under score.penalty, separate from `goals`.
+    home = teams.get("home", {})
+    away = teams.get("away", {})
+    winner_side: str | None = None
+    if home.get("winner") is True:
+        winner_side = "home"
+    elif away.get("winner") is True:
+        winner_side = "away"
+    penalty = (raw.get("score", {}) or {}).get("penalty", {}) or {}
+    home_pen = _parse_score(penalty.get("home"))
+    away_pen = _parse_score(penalty.get("away"))
+
     return Match(
         fixture_id=fixture.get("id", 0),
         # group_name is assigned by the collector from the standings team->group
@@ -96,6 +110,9 @@ def _map_fixture(raw: dict) -> Match:
         home_score=home_score,
         away_score=away_score,
         status=status,
+        winner_side=winner_side,
+        home_pen=home_pen,
+        away_pen=away_pen,
         elapsed=status_obj.get("elapsed"),
         kickoff_utc=kickoff_utc,
         events=None,

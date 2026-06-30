@@ -11,6 +11,14 @@ class Match(BaseModel):
     home_score: Optional[int]
     away_score: Optional[int]
     status: Optional[str]
+    # Knockout advancement: winner_side is the advancing side ('home'/'away'),
+    # derived from API-Football's teams.{home,away}.winner flag (set even on a
+    # penalty win); None until the tie is decided. home_pen/away_pen carry the
+    # penalty-shootout score (None when no shootout). The 90/ET-aggregate score
+    # stays in home_score/away_score.
+    winner_side: Optional[str] = None
+    home_pen: Optional[int] = None
+    away_pen: Optional[int] = None
     # Live match minute from API-Football (fixture.status.elapsed); None when not in play.
     elapsed: Optional[int] = None
     kickoff_utc: Optional[datetime]

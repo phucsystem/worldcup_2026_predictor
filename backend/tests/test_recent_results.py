@@ -17,7 +17,8 @@ def _dt(y, m, d, h=12):
     return datetime(y, m, d, h, 0, tzinfo=timezone.utc)
 
 
-def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None, forecast=None):
+def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None, forecast=None,
+           winner_side=None, home_pen=None, away_pen=None):
     return {
         "fixture_id": fixture_id,
         "home_team": home,
@@ -25,6 +26,9 @@ def _match(home, away, hs, as_, status="FT", kickoff=None, fixture_id=None, fore
         "home_score": hs,
         "away_score": as_,
         "status": status,
+        "winner_side": winner_side,
+        "home_pen": home_pen,
+        "away_pen": away_pen,
         "kickoff_utc": kickoff,
         "forecast_json": forecast,
     }
@@ -53,6 +57,13 @@ class TestMatchOutcome:
         m = _match("Brazil", "Serbia", 1, 1)
         assert match_outcome("Brazil", m) == "D"
         assert match_outcome("Serbia", m) == "D"
+
+    def test_penalty_win_prefers_winner_side_over_level_score(self):
+        # 1-1 after extra time; away advance on penalties → W/L, not D/D.
+        m = _match("Brazil", "Serbia", 1, 1, status="PEN", winner_side="away",
+                   home_pen=3, away_pen=4)
+        assert match_outcome("Serbia", m) == "W"
+        assert match_outcome("Brazil", m) == "L"
 
 
 # ---------------------------------------------------------------------------

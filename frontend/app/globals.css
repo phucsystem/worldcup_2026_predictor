@@ -1368,6 +1368,7 @@ a.next-match.is-live:hover {
   text-align: center;
 }
 .mr-score.win { color: var(--status-live); }
+.mr-pen { font-size: 13px; font-weight: 700; margin-left: 3px; color: var(--text-secondary); vertical-align: super; }
 .match-row.winner-home .mr-score:not(.win),
 .match-row.winner-away .mr-score:not(.win) { color: var(--text-secondary); opacity: 0.5; }
 .mr-center {

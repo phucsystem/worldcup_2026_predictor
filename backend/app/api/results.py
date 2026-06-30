@@ -34,6 +34,10 @@ class ResultItem(BaseModel):
     away_team: str | None
     home_score: int | None
     away_score: int | None
+    status: str | None  # "FT" | "AET" | "PEN" — drives the ET/penalty label
+    winner_side: str | None  # "home" | "away" | None — advancing side for knockout ties
+    home_pen: int | None
+    away_pen: int | None
     kickoff_utc: datetime | None
     group_name: str | None  # "A"–"L" for group stage; None for knockout
     stage: str | None  # raw round, e.g. "Round of 16"; labels knockout matches
@@ -61,6 +65,10 @@ def shape_results(matches: list[dict]) -> list[ResultItem]:
             away_team=m.get("away_team"),
             home_score=m.get("home_score"),
             away_score=m.get("away_score"),
+            status=m.get("status"),
+            winner_side=m.get("winner_side"),
+            home_pen=m.get("home_pen"),
+            away_pen=m.get("away_pen"),
             kickoff_utc=m.get("kickoff_utc"),
             group_name=m.get("group_name"),
             stage=m.get("stage"),
@@ -88,6 +96,9 @@ def list_results():
                 matches_table.c.home_score,
                 matches_table.c.away_score,
                 matches_table.c.status,
+                matches_table.c.winner_side,
+                matches_table.c.home_pen,
+                matches_table.c.away_pen,
                 matches_table.c.kickoff_utc,
                 matches_table.c.forecast_json,
             ).where(matches_table.c.status.in_(_FINISHED))

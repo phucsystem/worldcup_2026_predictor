@@ -22,7 +22,7 @@ def _dt(y, m, d, h=12):
 
 def _match(
     fid, home, away, kickoff, stage=None, group=None, hs=None, as_=None,
-    status="NS", elapsed=None, updated_at=None,
+    status="NS", elapsed=None, updated_at=None, winner_side=None, hp=None, ap=None,
 ):
     return {
         "fixture_id": fid,
@@ -31,6 +31,9 @@ def _match(
         "home_score": hs,
         "away_score": as_,
         "status": status,
+        "winner_side": winner_side,
+        "home_pen": hp,
+        "away_pen": ap,
         "elapsed": elapsed,
         "stage": stage,
         "group_name": group,
@@ -159,6 +162,7 @@ def _r32_rows(overrides=None):
             1000 + n, ov.get("home", home), ov.get("away", away),
             _dt(2026, 6, 28), stage="Round of 32",
             hs=ov.get("hs"), as_=ov.get("as_"), status=ov.get("status", "NS"),
+            winner_side=ov.get("winner_side"), hp=ov.get("hp"), ap=ov.get("ap"),
         ))
     return rows
 
@@ -214,6 +218,33 @@ class TestShapeKnockout:
         )
         slot90 = _round(out, "Round of 16").ties[1]
         assert slot90.home_team is None
+
+    def test_penalty_winner_propagates_via_winner_side(self):
+        # Match 73 level after ET (1-1), home advance on penalties (4-3). The
+        # advancer comes from winner_side, not the score, so the next slot fills.
+        out = shape_knockout(
+            _r32_rows({73: {
+                "home": "South Africa", "away": "Canada",
+                "hs": 1, "as_": 1, "hp": 4, "ap": 3,
+                "status": "PEN", "winner_side": "home",
+            }}),
+            LOGOS,
+        )
+        slot90 = _round(out, "Round of 16").ties[1]
+        assert slot90.home_team == "South Africa"  # penalty winner of match 73
+        assert slot90.away_team is None             # match 75 not played yet
+
+    def test_winner_side_decides_even_when_scores_level(self):
+        # away winner_side on a level AET score → away advances.
+        out = shape_knockout(
+            _r32_rows({73: {
+                "home": "South Africa", "away": "Canada",
+                "hs": 2, "as_": 2, "status": "AET", "winner_side": "away",
+            }}),
+            LOGOS,
+        )
+        slot90 = _round(out, "Round of 16").ties[1]
+        assert slot90.home_team == "Canada"
 
     def test_feed_fixture_overrides_synthesized_slot(self):
         # Both feeders of R16 #90 decided → a real feed R16 fixture for those two

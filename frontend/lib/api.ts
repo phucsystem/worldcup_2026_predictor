@@ -66,6 +66,11 @@ export interface RecentResult {
   away_team: string | null;
   home_score: number | null;
   away_score: number | null;
+  // Knockout result: status + advancing side + penalty score (null for group stage).
+  status?: string | null;
+  winner_side?: "home" | "away" | null;
+  home_pen?: number | null;
+  away_pen?: number | null;
   kickoff_utc: string | null;
   // Whether the pre-match forecast called the right side; null when the match
   // carried no forecast (forecast scope is group-stage only).
@@ -80,6 +85,10 @@ export interface ResultItem {
   away_team: string | null;
   home_score: number | null;
   away_score: number | null;
+  status: string | null; // "FT" | "AET" | "PEN" — drives the ET/penalty label
+  winner_side: "home" | "away" | null; // advancing side for knockout ties
+  home_pen: number | null;
+  away_pen: number | null;
   kickoff_utc: string | null;
   group_name: string | null; // "A"–"L" for group stage; null for knockout
   stage: string | null; // raw round, e.g. "Round of 16"; labels knockout matches
@@ -112,6 +121,11 @@ export interface FixtureRow {
   home_score: number | null;
   away_score: number | null;
   status: string | null;
+  // Knockout result: advancing side + penalty-shootout score (null for group
+  // stage / unplayed / regulation wins without a shootout).
+  winner_side: "home" | "away" | null;
+  home_pen: number | null;
+  away_pen: number | null;
   elapsed: number | null;
   stage: string | null;
   group_name: string | null;

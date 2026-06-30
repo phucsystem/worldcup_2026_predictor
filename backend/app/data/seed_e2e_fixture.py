@@ -26,8 +26,13 @@ from app.data.repository import (
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-# Fixed, high id so it never collides with real API-Football fixture ids.
+# Fixed, high ids so they never collide with real API-Football fixture ids.
 E2E_FIXTURE_ID = 990001
+# A knockout tie decided on penalties — exercises winner_side advancement and the
+# "(a.e.t.) / pens" result rendering end-to-end. 990002 is taken by the social
+# fixture (seed_social_fixture), which seeds AFTER this one and would otherwise
+# overwrite the penalty row — so this uses 990003.
+E2E_KO_FIXTURE_ID = 990003
 
 
 def _pick_two_teams(session) -> tuple[str, str, str]:
@@ -51,6 +56,25 @@ def _pick_two_teams(session) -> tuple[str, str, str]:
         if len(teams) >= 2:
             return teams[0], teams[1], group_name
     return "Brazil", "Serbia", "Group G"
+
+
+def _pick_ko_teams(session, exclude: set[str]) -> tuple[str, str]:
+    """Two teams (not in `exclude`) for the seeded knockout tie, so it is a
+    distinct row from the group-stage fixture in the results list."""
+    snap = session.execute(
+        select(standings_table.c.snapshot_date)
+        .order_by(standings_table.c.snapshot_date.desc())
+    ).first()
+    if snap is not None:
+        rows = session.execute(
+            select(standings_table.c.team)
+            .where(standings_table.c.snapshot_date == snap[0])
+            .order_by(standings_table.c.group_name, standings_table.c.position)
+        ).fetchall()
+        picked = [t for (t,) in rows if t and t not in exclude]
+        if len(picked) >= 2:
+            return picked[0], picked[1]
+    return "Spain", "Germany"
 
 
 def _events(home: str, away: str) -> list[dict]:
@@ -123,8 +147,28 @@ def seed() -> int:
             },
             forecast_model="seeded",
         )
-        upsert_matches(session, [match])
+        ko_home, ko_away = _pick_ko_teams(session, exclude={home, away})
+        ko_match = Match(
+            fixture_id=E2E_KO_FIXTURE_ID,
+            group_name=None,  # knockout matches carry no group
+            home_team=ko_home,
+            away_team=ko_away,
+            home_score=1,
+            away_score=1,
+            status="PEN",
+            winner_side="away",  # level after extra time; away advance on penalties
+            home_pen=3,
+            away_pen=4,
+            elapsed=None,
+            kickoff_utc=datetime(2026, 7, 5, 12, 0, tzinfo=timezone.utc),
+            stage="Round of 16",
+        )
+        upsert_matches(session, [match, ko_match])
     log.info("Seeded e2e fixture %s (%s 3-1 %s)", E2E_FIXTURE_ID, home, away)
+    log.info(
+        "Seeded e2e knockout fixture %s (%s 1-1 %s, %s win 4-3 on pens)",
+        E2E_KO_FIXTURE_ID, ko_home, ko_away, ko_away,
+    )
     return 0
 
 

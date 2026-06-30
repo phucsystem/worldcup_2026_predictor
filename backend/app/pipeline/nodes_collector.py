@@ -38,6 +38,9 @@ def _load_from_db(brief_date: date) -> tuple[list[Match], list[StandingRow]]:
                 home_score=r["home_score"],
                 away_score=r["away_score"],
                 status=r["status"],
+                winner_side=r["winner_side"],
+                home_pen=r["home_pen"],
+                away_pen=r["away_pen"],
                 kickoff_utc=r["kickoff_utc"],
                 events=r["events_json"],
             )

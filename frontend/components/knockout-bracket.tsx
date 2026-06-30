@@ -5,7 +5,7 @@ import TeamFlag from "@/components/team-flag";
 import LiveBadge from "@/components/live-badge";
 import LocalTime from "@/components/local-time";
 import EmptyState from "@/components/empty-state";
-import { matchState } from "@/lib/match";
+import { matchState, resolveWinner } from "@/lib/match";
 
 // Bracket geometry lives in real CSS classes (pseudo-free, explicit segments) so
 // the connector columns can draw the ┤ tree without depending on card width.
@@ -33,6 +33,7 @@ const KB_CSS = `
 .kb-row{display:flex;align-items:center;gap:8px;padding:3px 0}
 .kb-name{flex:1;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kb-score{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:#FFFFFF}
+.kb-pen{font-size:11px;font-weight:600;color:#A9B6D4;margin-left:3px}
 .kb-sep{height:1px;background:#1E3157;margin:2px 0}
 `;
 
@@ -48,11 +49,13 @@ function TieTeam({
   team,
   logo,
   score,
+  pen,
   winner,
 }: {
   team: string | null;
   logo: string | null;
   score: number | null;
+  pen: number | null;
   winner: boolean;
 }) {
   return (
@@ -64,7 +67,12 @@ function TieTeam({
       >
         {team ?? "TBD"}
       </span>
-      {score != null && <span className="kb-score">{score}</span>}
+      {score != null && (
+        <span className="kb-score">
+          {score}
+          {pen != null && <span className="kb-pen">({pen})</span>}
+        </span>
+      )}
     </div>
   );
 }
@@ -73,8 +81,12 @@ function TieCard({ tie }: { tie: FixtureRow }) {
   const st = matchState(tie.status);
   const showScore =
     st !== "preview" && tie.home_score != null && tie.away_score != null;
-  const homeWon = showScore && (tie.home_score as number) > (tie.away_score as number);
-  const awayWon = showScore && (tie.away_score as number) > (tie.home_score as number);
+  // Winner highlight follows the advancing side (winner_side for ET/penalty
+  // ties), not the raw score — so a 1-1 won on penalties still highlights.
+  const decided = resolveWinner(tie);
+  const homeWon = decided === "home";
+  const awayWon = decided === "away";
+  const showPen = tie.status === "PEN";
   const body = (
     <>
       <div className="kb-chead">
@@ -85,6 +97,7 @@ function TieCard({ tie }: { tie: FixtureRow }) {
         team={tie.home_team}
         logo={tie.home_logo}
         score={showScore ? tie.home_score : null}
+        pen={showPen ? tie.home_pen : null}
         winner={homeWon}
       />
       <div className="kb-sep" />
@@ -92,6 +105,7 @@ function TieCard({ tie }: { tie: FixtureRow }) {
         team={tie.away_team}
         logo={tie.away_logo}
         score={showScore ? tie.away_score : null}
+        pen={showPen ? tie.away_pen : null}
         winner={awayWon}
       />
     </>
@@ -113,13 +127,14 @@ function TieCard({ tie }: { tie: FixtureRow }) {
   );
 }
 
-// Winning team of a finished tie, by score; null if undecided or level (a
-// penalty result isn't derivable from the score). Drives winner-path highlight.
+// Advancing team of a finished tie (winner_side for ET/penalty ties, else the
+// score); null if undecided or a level result with no winner. Drives the
+// winner-path highlight on the connector edges.
 function winnerOf(tie: FixtureRow | undefined): string | null {
-  if (!tie || matchState(tie.status) !== "finished") return null;
-  if (tie.home_score == null || tie.away_score == null) return null;
-  if (tie.home_score > tie.away_score) return tie.home_team;
-  if (tie.away_score > tie.home_score) return tie.away_team;
+  if (!tie) return null;
+  const side = resolveWinner(tie);
+  if (side === "home") return tie.home_team;
+  if (side === "away") return tie.away_team;
   return null;
 }
 

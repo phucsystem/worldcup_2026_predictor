@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { ResultWidgetRow } from "@/lib/results";
 import TeamFlag from "@/components/team-flag";
+import { finishedStatusLabel } from "@/lib/match";
 
 function accuracyTier(pct: number): "high" | "mid" | "low" {
   if (pct >= 67) return "high";
@@ -159,6 +160,7 @@ export default function ResultsWidget({
         {rows.map((row) => {
           const winHome = row.winner === "home";
           const winAway = row.winner === "away";
+          const showPen = row.status === "PEN";
           return (
             <Link
               key={row.key}
@@ -171,12 +173,18 @@ export default function ResultsWidget({
                 <span className="mr-name">{row.home}</span>
                 <TeamFlag team={row.home} size={18} />
               </span>
-              <span className={`mr-score${winHome ? " win" : ""}`}>{row.homeScore}</span>
+              <span className={`mr-score${winHome ? " win" : ""}`}>
+                {row.homeScore}
+                {showPen && row.homePen != null && <span className="mr-pen">({row.homePen})</span>}
+              </span>
               <span className="mr-center">
                 <span className="mr-group">{row.group}</span>
-                <span className="mr-status">Full Time</span>
+                <span className="mr-status">{finishedStatusLabel(row.status)}</span>
               </span>
-              <span className={`mr-score${winAway ? " win" : ""}`}>{row.awayScore}</span>
+              <span className={`mr-score${winAway ? " win" : ""}`}>
+                {row.awayScore}
+                {showPen && row.awayPen != null && <span className="mr-pen">({row.awayPen})</span>}
+              </span>
               <span className={`mr-team away${winHome ? " lose" : ""}`}>
                 <TeamFlag team={row.away} size={18} />
                 <span className="mr-name">{row.away}</span>

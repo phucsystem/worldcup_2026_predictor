@@ -2,6 +2,10 @@
 
 What's shipping on the World Cup 2026 Intelligence platform. Newest first, grouped by release date.
 
+## 30 Jun 2026
+
+- **Fixed** — Knockout matches decided in **extra time or on penalties** now advance the bracket correctly — the winner's path no longer stalls on "TBD" after a draw. Results and the bracket show the shootout score (e.g. **1-1 (a.e.t.) 4-3 pens**) with the advancing team highlighted.
+
 ## 29 Jun 2026
 
 - **New** — The Knockout bracket now **highlights each winner's path** — the connector lines light up as ties finish, tracing every advancing team's route toward the Final.

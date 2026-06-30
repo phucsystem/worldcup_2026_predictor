@@ -10,9 +10,42 @@ import {
   freshEventKeys,
   forecastOutcome,
   sbsSearchUrl,
+  resolveWinner,
+  finishedStatusLabel,
 } from "./match";
 import type { Forecast } from "./match";
 import type { MatchEvent } from "./api";
+
+describe("resolveWinner", () => {
+  it("uses winner_side for a penalty win on a level score", () => {
+    expect(
+      resolveWinner({ status: "PEN", home_score: 1, away_score: 1, winner_side: "away" }),
+    ).toBe("away");
+  });
+  it("uses winner_side for an extra-time win", () => {
+    expect(
+      resolveWinner({ status: "AET", home_score: 2, away_score: 1, winner_side: "home" }),
+    ).toBe("home");
+  });
+  it("falls back to the score when winner_side is absent (FT)", () => {
+    expect(resolveWinner({ status: "FT", home_score: 0, away_score: 2 })).toBe("away");
+  });
+  it("returns draw for a level FT result with no winner_side", () => {
+    expect(resolveWinner({ status: "FT", home_score: 1, away_score: 1 })).toBe("draw");
+  });
+  it("returns null while unfinished", () => {
+    expect(resolveWinner({ status: "NS", home_score: null, away_score: null })).toBeNull();
+  });
+});
+
+describe("finishedStatusLabel", () => {
+  it("labels penalties and extra time, else full time", () => {
+    expect(finishedStatusLabel("PEN")).toBe("Penalties");
+    expect(finishedStatusLabel("AET")).toBe("After Extra Time");
+    expect(finishedStatusLabel("FT")).toBe("Full Time");
+    expect(finishedStatusLabel(null)).toBe("Full Time");
+  });
+});
 
 function ev(partial: Partial<MatchEvent>): MatchEvent {
   return {
